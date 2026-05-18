@@ -1,0 +1,21 @@
+using GatumsGourmet.Application.Common;
+using GatumsGourmet.Application.Interfaces;
+
+namespace GatumsGourmet.Application.UseCases.Produtos.DeleteProduto;
+
+public interface IDeleteProdutoHandler
+{
+    Task<Result<bool>> Handle(Guid id, CancellationToken ct = default);
+}
+
+public sealed class DeleteProdutoHandler(IProdutoRepository produtos) : IDeleteProdutoHandler
+{
+    public async Task<Result<bool>> Handle(Guid id, CancellationToken ct = default)
+    {
+        var produto = await produtos.GetByIdAsync(id, ct);
+        if (produto is null) return Result<bool>.Fail("Produto não encontrado.");
+        await produtos.DeleteAsync(produto, ct);
+        await produtos.SaveChangesAsync(ct);
+        return Result<bool>.Ok(true);
+    }
+}

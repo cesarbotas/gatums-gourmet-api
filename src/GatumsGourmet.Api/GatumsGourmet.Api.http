@@ -1,0 +1,6 @@
+@GatumsGourmet.Api_HostAddress = http://localhost:5166
+
+GET {{GatumsGourmet.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
