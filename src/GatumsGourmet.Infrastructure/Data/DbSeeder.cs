@@ -1,5 +1,7 @@
-using GatumsGourmet.Domain.Entities;
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Entities.Auth;
+using GatumsGourmet.Domain.Entities.Produtos;
+using GatumsGourmet.Domain.Enums.Auth;
+using GatumsGourmet.Domain.Enums.Produtos;
 using GatumsGourmet.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 

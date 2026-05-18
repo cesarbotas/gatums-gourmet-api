@@ -17,7 +17,6 @@ public sealed class GetCarrinhoHandler(ICarrinhoRepository carrinho) : IGetCarri
     {
         var itens = await carrinho.GetByUsuarioAsync(usuarioId, ct);
         var dtos = itens.Select(i => new CarrinhoItemResponse(i.ProdutoId, i.Nome, i.Preco, i.FotoUrl, i.Quantidade)).ToList();
-        var total = dtos.Sum(i => i.Preco * i.Quantidade);
-        return Result<CarrinhoResponse>.Ok(new CarrinhoResponse(dtos, total));
+        return Result<CarrinhoResponse>.Ok(new CarrinhoResponse(dtos, dtos.Sum(i => i.Preco * i.Quantidade)));
     }
 }

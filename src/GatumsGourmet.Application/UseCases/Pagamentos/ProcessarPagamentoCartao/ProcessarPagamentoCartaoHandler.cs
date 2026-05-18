@@ -1,6 +1,6 @@
 using GatumsGourmet.Application.Common;
 using GatumsGourmet.Application.Interfaces;
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Enums.Pagamentos;
 using GatumsGourmet.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -25,8 +25,7 @@ public sealed class ProcessarPagamentoCartaoHandler(
         if (transacao is null) return Result<TransacaoResponse>.Fail("Transação não encontrada.");
         if (transacao.Status != StatusTransacao.Pendente) return Result<TransacaoResponse>.Fail("Transação já processada.");
 
-        var cartaoInput = new CartaoInput(request.Numero, request.Nome, request.Validade, request.Cvv);
-        var resultado = await gateway.ProcessarAsync(transacao.Id, transacao.Valor, transacao.Metodo, cartaoInput, ct);
+        var resultado = await gateway.ProcessarAsync(transacao.Id, transacao.Valor, transacao.Metodo, new CartaoInput(request.Numero, request.Nome, request.Validade, request.Cvv), ct);
 
         transacao.Status = resultado.Aprovado ? StatusTransacao.Aprovado : StatusTransacao.Recusado;
         transacao.OperadoraRef = resultado.Referencia;

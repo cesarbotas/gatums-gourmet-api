@@ -1,5 +1,11 @@
-using GatumsGourmet.Domain.Entities;
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Entities.Auth;
+using GatumsGourmet.Domain.Entities.Carrinho;
+using GatumsGourmet.Domain.Entities.Clientes;
+using GatumsGourmet.Domain.Entities.Pagamentos;
+using GatumsGourmet.Domain.Entities.Pedidos;
+using GatumsGourmet.Domain.Entities.Produtos;
+using GatumsGourmet.Domain.Entities.Vendas;
+using GatumsGourmet.Domain.Enums.Produtos;
 
 namespace GatumsGourmet.Application.Interfaces;
 

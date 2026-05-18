@@ -1,5 +1,4 @@
-using GatumsGourmet.Domain.Entities;
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Enums.Pedidos;
 
 namespace GatumsGourmet.Domain.Interfaces;
 
