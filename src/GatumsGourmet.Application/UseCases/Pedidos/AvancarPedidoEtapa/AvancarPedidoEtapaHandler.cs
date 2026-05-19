@@ -1,7 +1,7 @@
 using GatumsGourmet.Application.Common;
 using GatumsGourmet.Application.Interfaces;
-using GatumsGourmet.Domain.Entities;
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Entities.Pedidos;
+using GatumsGourmet.Domain.Enums.Pedidos;
 using GatumsGourmet.Domain.Exceptions;
 using GatumsGourmet.Domain.Interfaces;
 
@@ -27,16 +27,7 @@ public sealed class AvancarPedidoEtapaHandler(IPedidoRepository pedidos, IPedido
         workflow.ValidarTransicao(pedido.StatusAtual, request.ProximaEtapa, actor);
 
         pedido.StatusAtual = request.ProximaEtapa;
-        pedido.Timeline.Add(new PedidoTimelineEvento
-        {
-            Id = Guid.NewGuid(),
-            PedidoId = pedido.Id,
-            Etapa = request.ProximaEtapa,
-            Em = clock.UtcNow,
-            Por = actor,
-            Observacao = request.Observacao,
-            EntregaTipo = request.EntregaTipo
-        });
+        pedido.Timeline.Add(new PedidoTimelineEvento { Id = Guid.NewGuid(), PedidoId = pedido.Id, Etapa = request.ProximaEtapa, Em = clock.UtcNow, Por = actor, Observacao = request.Observacao, EntregaTipo = request.EntregaTipo });
 
         await pedidos.SaveChangesAsync(ct);
         return Result<bool>.Ok(true);

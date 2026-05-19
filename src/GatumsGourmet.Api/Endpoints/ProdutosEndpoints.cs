@@ -5,7 +5,7 @@ using GatumsGourmet.Application.UseCases.Produtos.GetProdutoById;
 using GatumsGourmet.Application.UseCases.Produtos.ListCategorias;
 using GatumsGourmet.Application.UseCases.Produtos.ListProdutos;
 using GatumsGourmet.Application.UseCases.Produtos.UpdateProduto;
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Enums.Produtos;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GatumsGourmet.Api.Endpoints;

@@ -1,18 +1,12 @@
 using GatumsGourmet.Application.Common;
 using GatumsGourmet.Application.Interfaces;
-using GatumsGourmet.Domain.Entities;
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Entities.Pedidos;
+using GatumsGourmet.Domain.Entities.Vendas;
+using GatumsGourmet.Domain.Enums.Pedidos;
 using GatumsGourmet.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace GatumsGourmet.Application.UseCases.Pedidos.CheckoutPedido;
-
-public record CheckoutPedidoResponse(Guid PedidoId);
-
-public interface ICheckoutPedidoHandler
-{
-    Task<Result<CheckoutPedidoResponse>> Handle(Guid usuarioId, string clienteNome, CancellationToken ct = default);
-}
 
 public sealed class CheckoutPedidoHandler(
     ICarrinhoRepository carrinho,

@@ -1,4 +1,4 @@
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Enums.Pagamentos;
 
 namespace GatumsGourmet.Application.Interfaces;
 
