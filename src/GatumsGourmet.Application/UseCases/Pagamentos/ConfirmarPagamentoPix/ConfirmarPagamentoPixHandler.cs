@@ -1,6 +1,6 @@
 using GatumsGourmet.Application.Common;
 using GatumsGourmet.Application.Interfaces;
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Enums.Pagamentos;
 using GatumsGourmet.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 

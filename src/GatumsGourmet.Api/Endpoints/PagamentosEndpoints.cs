@@ -1,8 +1,8 @@
 using GatumsGourmet.Api.Extensions;
-using GatumsGourmet.Application.UseCases.Pagamentos;
 using GatumsGourmet.Application.UseCases.Pagamentos.ConfirmarPagamentoPix;
 using GatumsGourmet.Application.UseCases.Pagamentos.ConsultarStatusPagamento;
 using GatumsGourmet.Application.UseCases.Pagamentos.IniciarPagamento;
+using GatumsGourmet.Application.UseCases.Pagamentos.ListOpcoesPagamento;
 using GatumsGourmet.Application.UseCases.Pagamentos.ProcessarPagamentoCartao;
 using GatumsGourmet.Application.UseCases.Pagamentos.ValidarPagamentoParaAprovacao;
 using Microsoft.AspNetCore.Mvc;

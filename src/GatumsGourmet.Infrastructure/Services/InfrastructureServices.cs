@@ -2,7 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using GatumsGourmet.Application.Interfaces;
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Enums.Pagamentos;
 using GatumsGourmet.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;

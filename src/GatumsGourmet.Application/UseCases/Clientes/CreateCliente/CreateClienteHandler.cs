@@ -1,7 +1,7 @@
 using FluentValidation;
 using GatumsGourmet.Application.Common;
 using GatumsGourmet.Application.Interfaces;
-using GatumsGourmet.Domain.Entities;
+using GatumsGourmet.Domain.Entities.Clientes;
 using GatumsGourmet.Domain.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Clientes.CreateCliente;

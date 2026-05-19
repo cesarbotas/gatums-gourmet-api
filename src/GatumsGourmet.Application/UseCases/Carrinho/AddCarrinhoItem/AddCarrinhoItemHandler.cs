@@ -1,7 +1,7 @@
 using FluentValidation;
 using GatumsGourmet.Application.Common;
 using GatumsGourmet.Application.Interfaces;
-using GatumsGourmet.Domain.Entities;
+using GatumsGourmet.Domain.Entities.Carrinho;
 
 namespace GatumsGourmet.Application.UseCases.Carrinho.AddCarrinhoItem;
 
@@ -30,22 +30,9 @@ public sealed class AddCarrinhoItemHandler(ICarrinhoRepository carrinho, IProdut
 
         var existing = await carrinho.GetItemAsync(usuarioId, request.ProdutoId, ct);
         if (existing is not null)
-        {
             existing.Quantidade += request.Quantidade;
-        }
         else
-        {
-            await carrinho.AddAsync(new CarrinhoItem
-            {
-                Id = Guid.NewGuid(),
-                UsuarioId = usuarioId,
-                ProdutoId = produto.Id,
-                Quantidade = request.Quantidade,
-                Nome = produto.Nome,
-                Preco = produto.Preco,
-                FotoUrl = produto.FotoUrl
-            }, ct);
-        }
+            await carrinho.AddAsync(new CarrinhoItem { Id = Guid.NewGuid(), UsuarioId = usuarioId, ProdutoId = produto.Id, Quantidade = request.Quantidade, Nome = produto.Nome, Preco = produto.Preco, FotoUrl = produto.FotoUrl }, ct);
 
         await carrinho.SaveChangesAsync(ct);
         return Result<bool>.Ok(true);

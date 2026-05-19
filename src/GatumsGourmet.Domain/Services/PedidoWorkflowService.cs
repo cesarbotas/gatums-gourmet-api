@@ -1,4 +1,4 @@
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Enums.Pedidos;
 using GatumsGourmet.Domain.Exceptions;
 using GatumsGourmet.Domain.Interfaces;
 
