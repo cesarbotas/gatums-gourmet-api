@@ -5,7 +5,7 @@ using GatumsGourmet.Application.UseCases.Pedidos.CheckoutPedido;
 using GatumsGourmet.Application.UseCases.Pedidos.ConcluirPagamentoPedido;
 using GatumsGourmet.Application.UseCases.Pedidos.GetPedidoById;
 using GatumsGourmet.Application.UseCases.Pedidos.ListPedidos;
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Enums.Pedidos;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GatumsGourmet.Api.Endpoints;

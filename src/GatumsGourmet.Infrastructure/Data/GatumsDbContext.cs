@@ -1,5 +1,17 @@
-using GatumsGourmet.Domain.Entities;
-using GatumsGourmet.Infrastructure.Data.Configurations;
+using GatumsGourmet.Domain.Entities.Auth;
+using GatumsGourmet.Domain.Entities.Carrinho;
+using GatumsGourmet.Domain.Entities.Clientes;
+using GatumsGourmet.Domain.Entities.Pagamentos;
+using GatumsGourmet.Domain.Entities.Pedidos;
+using GatumsGourmet.Domain.Entities.Produtos;
+using GatumsGourmet.Domain.Entities.Vendas;
+using GatumsGourmet.Infrastructure.Data.Configurations.Auth;
+using GatumsGourmet.Infrastructure.Data.Configurations.Carrinho;
+using GatumsGourmet.Infrastructure.Data.Configurations.Clientes;
+using GatumsGourmet.Infrastructure.Data.Configurations.Pagamentos;
+using GatumsGourmet.Infrastructure.Data.Configurations.Pedidos;
+using GatumsGourmet.Infrastructure.Data.Configurations.Produtos;
+using GatumsGourmet.Infrastructure.Data.Configurations.Vendas;
 using Microsoft.EntityFrameworkCore;
 
 namespace GatumsGourmet.Infrastructure.Data;

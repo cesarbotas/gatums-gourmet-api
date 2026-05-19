@@ -1,7 +1,8 @@
 using GatumsGourmet.Application.Common;
 using GatumsGourmet.Application.Interfaces;
-using GatumsGourmet.Domain.Entities;
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Entities.Pedidos;
+using GatumsGourmet.Domain.Enums.Pagamentos;
+using GatumsGourmet.Domain.Enums.Pedidos;
 using GatumsGourmet.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -26,15 +27,10 @@ public sealed class ConcluirPagamentoPedidoHandler(
         if (pedido is null) return Result<bool>.Fail("Pedido não encontrado.");
 
         var transacao = await transacoes.GetByIdAsync(request.TransacaoId, ct);
-        if (transacao is null || transacao.PedidoId != pedidoId)
-            return Result<bool>.Fail("Transação inválida.");
+        if (transacao is null || transacao.PedidoId != pedidoId) return Result<bool>.Fail("Transação inválida.");
+        if (transacao.Status != StatusTransacao.Aprovado) return Result<bool>.Fail("Transação não aprovada.");
 
-        if (transacao.Status != StatusTransacao.Aprovado)
-            return Result<bool>.Fail("Transação não aprovada.");
-
-        var resumo = transacao.Metodo == MetodoPagamento.Pix
-            ? "Pix"
-            : $"{transacao.CartaoBandeira} **** {transacao.CartaoUltimos4}";
+        var resumo = transacao.Metodo == MetodoPagamento.Pix ? "Pix" : $"{transacao.CartaoBandeira} **** {transacao.CartaoUltimos4}";
 
         pedido.Pagamento = new PedidoPagamento { PedidoId = pedidoId, TransacaoId = transacao.Id, Resumo = resumo, AprovadoEm = clock.UtcNow };
         pedido.StatusAtual = PedidoEtapa.Pagamento;

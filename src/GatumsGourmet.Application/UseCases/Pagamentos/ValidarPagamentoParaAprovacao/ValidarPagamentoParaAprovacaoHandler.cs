@@ -1,6 +1,6 @@
 using GatumsGourmet.Application.Common;
 using GatumsGourmet.Application.Interfaces;
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Enums.Pagamentos;
 
 namespace GatumsGourmet.Application.UseCases.Pagamentos.ValidarPagamentoParaAprovacao;
 

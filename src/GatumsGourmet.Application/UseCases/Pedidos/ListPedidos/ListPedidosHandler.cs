@@ -1,6 +1,6 @@
 using GatumsGourmet.Application.Common;
 using GatumsGourmet.Application.Interfaces;
-using GatumsGourmet.Domain.Entities;
+using GatumsGourmet.Domain.Entities.Pedidos;
 
 namespace GatumsGourmet.Application.UseCases.Pedidos.ListPedidos;
 

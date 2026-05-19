@@ -16,16 +16,10 @@ public sealed class UpdateCarrinhoItemQuantidadeHandler(ICarrinhoRepository carr
     {
         var item = await carrinho.GetItemAsync(usuarioId, produtoId, ct);
         if (item is null) return Result<bool>.Fail("Item não encontrado no carrinho.");
-
         if (quantidade <= 0)
-        {
             await carrinho.RemoveAsync(item, ct);
-        }
         else
-        {
             item.Quantidade = quantidade;
-        }
-
         await carrinho.SaveChangesAsync(ct);
         return Result<bool>.Ok(true);
     }

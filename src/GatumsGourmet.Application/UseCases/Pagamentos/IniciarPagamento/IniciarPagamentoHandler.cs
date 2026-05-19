@@ -1,8 +1,8 @@
 using FluentValidation;
 using GatumsGourmet.Application.Common;
 using GatumsGourmet.Application.Interfaces;
-using GatumsGourmet.Domain.Entities;
-using GatumsGourmet.Domain.Enums;
+using GatumsGourmet.Domain.Entities.Pagamentos;
+using GatumsGourmet.Domain.Enums.Pagamentos;
 using GatumsGourmet.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 
