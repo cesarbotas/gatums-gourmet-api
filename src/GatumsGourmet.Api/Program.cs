@@ -39,7 +39,7 @@ builder.Services.AddAuthorization(opt =>
 });
 
 builder.Services.AddCors(opt =>
-    opt.AddDefaultPolicy(p => p.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
+    opt.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opt =>
@@ -59,7 +59,9 @@ builder.Services.AddSwaggerGen(opt =>
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
-app.UseCors();
+
+app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+
 app.UseAuthentication();
 app.UseAuthorization();
 
