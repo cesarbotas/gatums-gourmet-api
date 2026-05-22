@@ -14,15 +14,9 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         b.Property(x => x.Telefone).HasMaxLength(20);
         b.Property(x => x.CriadoEm).IsRequired();
 
-        b.OwnsOne(x => x.Endereco, e =>
-        {
-            e.Property(p => p.Logradouro).HasMaxLength(200).IsRequired();
-            e.Property(p => p.Numero).HasMaxLength(20).IsRequired();
-            e.Property(p => p.Complemento).HasMaxLength(100);
-            e.Property(p => p.Bairro).HasMaxLength(100).IsRequired();
-            e.Property(p => p.Cidade).HasMaxLength(100).IsRequired();
-            e.Property(p => p.Estado).HasMaxLength(2).IsRequired();
-            e.Property(p => p.Cep).HasMaxLength(8).IsRequired();
-        });
+        b.HasOne(x => x.Endereco)
+            .WithOne("ClienteId")
+            .HasForeignKey<Endereco>(x => x.ClienteId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
