@@ -27,9 +27,19 @@ public sealed class CreateClienteHandler(IClienteRepository clientes, IClock clo
 {
     public async Task<Result<CreateClienteResponse>> Handle(CreateClienteRequest request, CancellationToken ct = default)
     {
-        var cliente = new Cliente { Id = Guid.NewGuid(), Nome = request.Nome, Email = request.Email, Telefone = request.Telefone, Cidade = request.Cidade, CriadoEm = clock.UtcNow };
+        var cliente = new Cliente
+        {
+            Id = Guid.NewGuid(),
+            Nome = request.Nome,
+            Email = request.Email,
+            Telefone = request.Telefone,
+            CriadoEm = clock.UtcNow
+        };
+
         await clientes.AddAsync(cliente, ct);
+
         await clientes.SaveChangesAsync(ct);
+        
         return Result<CreateClienteResponse>.Ok(new CreateClienteResponse(cliente.Id));
     }
 }

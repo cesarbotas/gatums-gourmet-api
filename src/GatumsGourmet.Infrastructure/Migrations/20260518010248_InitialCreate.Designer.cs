@@ -440,9 +440,7 @@ namespace GatumsGourmet.Infrastructure.Migrations
             modelBuilder.Entity("GatumsGourmet.Domain.Entities.Pedido", b =>
                 {
                     b.Navigation("Itens");
-
                     b.Navigation("Pagamento");
-
                     b.Navigation("Timeline");
                 });
 
