@@ -1,0 +1,64 @@
+# Docker Compose para produção na VPS Locaweb.
+# Uso: docker compose -f docker-compose.production.yml --env-file .env up -d --build
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gatums-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - gatums-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+    command: >
+      postgres
+        -c shared_buffers=32MB
+        -c work_mem=2MB
+        -c maintenance_work_mem=16MB
+        -c effective_cache_size=64MB
+        -c max_connections=20
+    networks:
+      - gatums-net
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: gatums-api
+    restart: always
+    ports:
+      - "80:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}"
+      Jwt__Secret: "${JWT_SECRET}"
+      Jwt__Issuer: "${JWT_ISSUER}"
+      Jwt__Audience: "${JWT_AUDIENCE}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - gatums-net
+
+volumes:
+  gatums-pgdata:
+
+networks:
+  gatums-net:
+    driver: bridge

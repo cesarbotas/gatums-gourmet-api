@@ -1,0 +1,759 @@
+{
+  "info": {
+    "_postman_id": "gatums-gourmet-api-collection",
+    "name": "Gatums Gourmet API",
+    "description": "Coleção completa da API Gatums Gourmet (.NET 8).\n\nBase URL: {{baseUrl}}/api/v1\nAuth: JWT Bearer (header Authorization: Bearer <token>). Token válido por 8h.\n\nCredenciais seed (admin): admin@gatums.com / Admin@123\n\nImportante — enums no body JSON: como não há JsonStringEnumConverter, enviar INTEIROS nos corpos JSON (ex.: metodo=2 para Pix). Parâmetros de query (ex.: tipo=simples) aceitam o nome da string (case-insensitive).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5166", "type": "string" },
+    { "key": "adminEmail", "value": "admin@gatums.com", "type": "string" },
+    { "key": "adminPassword", "value": "Admin@123", "type": "string" },
+    { "key": "adminToken", "value": "", "type": "string" },
+    { "key": "clienteEmail", "value": "cliente@exemplo.com", "type": "string" },
+    { "key": "clientePassword", "value": "Cliente@123", "type": "string" },
+    { "key": "clienteToken", "value": "", "type": "string" },
+    { "key": "clienteUserId", "value": "", "type": "string" },
+    { "key": "produtoId", "value": "", "type": "string" },
+    { "key": "clienteId", "value": "", "type": "string" },
+    { "key": "pedidoId", "value": "", "type": "string" },
+    { "key": "transacaoId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Autenticação JWT. Login e registro são públicos; /me e /logout exigem token.",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login admin OK', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('adminToken', json.token); }",
+                  "console.log('adminToken salvo.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login (Cliente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login cliente OK', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('clienteToken', json.token);",
+                  "  if (json.user && json.user.id) { pm.collectionVariables.set('clienteUserId', json.user.id); }",
+                  "}",
+                  "console.log('clienteToken salvo.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{clienteEmail}}\",\n  \"senha\": \"{{clientePassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar (Cliente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Registro criado', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Cliente Exemplo\",\n  \"email\": \"{{clienteEmail}}\",\n  \"senha\": \"{{clientePassword}}\",\n  \"telefone\": \"11999999999\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Me (usuário atual)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Produtos",
+      "description": "Catálogo público (GET) e administração (POST/PUT/DELETE = AdminOnly).",
+      "item": [
+        {
+          "name": "Listar Categorias",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos/categorias",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "produtos", "categorias"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Produtos (paginado + filtros)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos?page=1&pageSize=10&search=&categoria=&tipo=&disponivel=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "produtos"],
+              "query": [
+                { "key": "page", "value": "1", "description": "Página (default 1)" },
+                { "key": "pageSize", "value": "10", "description": "Itens por página (default 10)" },
+                { "key": "search", "value": "", "description": "Busca textual no nome/descrição" },
+                { "key": "categoria", "value": "", "description": "Filtro por categoria (string)" },
+                { "key": "tipo", "value": "", "description": "simples | combo (string, case-insensitive)" },
+                { "key": "disponivel", "value": "", "description": "true | false" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obter Produto por Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "produtos", "{{produtoId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Criar Produto (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Produto criado', () => pm.response.to.have.status(201));",
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('produtoId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Combo Família\",\n  \"descricao\": \"2 hambúrgueres + batata + 2 refris\",\n  \"categoria\": \"Combos\",\n  \"preco\": 89.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Combo\",\n  \"disponivel\": true,\n  \"tipo\": 1,\n  \"itens\": [\n    { \"produtoId\": \"{{produtoId}}\", \"quantidade\": 2 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "tipo: 0 = Simples, 1 = Combo. Combo exige itens[] não vazio. itens[].produtoId deve referenciar produtos já cadastrados (use Listar Produtos para obter um id válido antes).",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "produtos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar Produto (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{produtoId}}\",\n  \"nome\": \"Combo Família Atualizado\",\n  \"descricao\": \"2 hambúrgueres + batata + 2 refris\",\n  \"categoria\": \"Combos\",\n  \"preco\": 94.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Combo\",\n  \"disponivel\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "O id no body é sobrescrito pelo id da rota. UpdateProdutoRequest não inclui tipo/itens.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "produtos", "{{produtoId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Excluir Produto (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "produtos", "{{produtoId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Clientes (admin)",
+      "description": "CRUD de clientes — todos AdminOnly. Cliente é um registro CRM gerenciado pelo admin, distinto do Usuario/Auth.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Listar Clientes (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes?page=1&pageSize=10&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clientes"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "search", "value": "", "description": "Busca por nome/email" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Criar Cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Cliente criado', () => pm.response.to.have.status(201));",
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('clienteId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"João da Silva\",\n  \"email\": \"joao@exemplo.com\",\n  \"telefone\": \"11988887777\",\n  \"endereco\": {\n    \"logradouro\": \"Rua das Flores\",\n    \"numero\": \"123\",\n    \"complemento\": \"Apto 45\",\n    \"bairro\": \"Centro\",\n    \"cidade\": \"São Paulo\",\n    \"estado\": \"SP\",\n    \"cep\": \"01000000\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "estado deve ter 2 caracteres. cep máx 8 caracteres.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clientes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar Cliente",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{clienteId}}\",\n  \"nome\": \"João da Silva Souza\",\n  \"email\": \"joao.souza@exemplo.com\",\n  \"telefone\": \"11988887777\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "O id do body é sobrescrito pelo id da rota. UpdateClienteRequest não inclui endereco.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clientes", "{{clienteId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Excluir Cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clientes", "{{clienteId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Carrinho",
+      "description": "Carrinho por usuário (token). Todos ClienteOnly. userId é extraído do JWT.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Ver Carrinho",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/carrinho",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "carrinho"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Adicionar Item",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produtoId\": \"{{produtoId}}\",\n  \"quantidade\": 2\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Substitua {{produtoId}} por um id de produto válido (use Listar Produtos).",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/carrinho/itens",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "carrinho", "itens"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar Quantidade do Item",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantidade\": 3\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/carrinho/itens/{{produtoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "carrinho", "itens", "{{produtoId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remover Item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/carrinho/itens/{{produtoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "carrinho", "itens", "{{produtoId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Limpar Carrinho",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/carrinho",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "carrinho"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pedidos",
+      "description": "Checkout (cliente), listagem/consulta (auth qualquer), avanço de etapa (auth qualquer), conclusão de pagamento (cliente).",
+      "item": [
+        {
+          "name": "Checkout (carrinho → pedido)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Checkout OK', () => pm.response.to.have.status(201));",
+                  "var json = pm.response.json();",
+                  "if (json.pedidoId) { pm.collectionVariables.set('pedidoId', json.pedidoId); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteNome\": \"Cliente Exemplo\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Cria o pedido a partir do carrinho atual do usuário. Etapa inicial: criado.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/checkout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos", "checkout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Pedidos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos?page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            },
+            "description": "Admin vê todos; cliente vê apenas os próprios (filtro automático por userId do token)."
+          },
+          "response": []
+        },
+        {
+          "name": "Obter Pedido por Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos", "{{pedidoId}}"]
+            },
+            "description": "Admin vê qualquer pedido; cliente não-admin recebe 400 se o pedido não for seu."
+          },
+          "response": []
+        },
+        {
+          "name": "Avançar Etapa do Pedido",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proximaEtapa\": 1,\n  \"observacao\": \"Pedido confirmado\",\n  \"entregaTipo\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "proximaEtapa (int): 0=Criado, 1=Aprovado, 2=Pagamento, 3=PagamentoAprovado, 4=EnvioPendente, 5=Entregue, 6=Finalizado.\nentregaTipo (int): 0=Transporte, 1=Retirada. Necessário quando a etapa é Entregue.\nActor é derivado do role do token (admin → PedidoActor.Admin, cliente → PedidoActor.Cliente).",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/etapas/avancar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos", "{{pedidoId}}", "etapas", "avancar"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Concluir Pagamento do Pedido (cliente)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transacaoId\": \"{{transacaoId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Vincula uma transação aprovada ao pedido. Use após POST /pagamentos/{transacaoId}/pix/confirmar ou /cartao.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/pagamento/concluir",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos", "{{pedidoId}}", "pagamento", "concluir"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pagamentos",
+      "description": "Fluxo de pagamento. ClienteOnly, exceto /validar (AdminOnly).",
+      "item": [
+        {
+          "name": "Listar Opções de Pagamento (cliente)",
+          "auth": {
+            "type": "bearer",
+            "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/opcoes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pagamentos", "opcoes"]
+            },
+            "description": "Retorna [{metodo:'cartao_credito',label:'Cartão de Crédito',disponivel:true}, ...]. ATENÇÃO: o campo 'metodo' aqui usa underscore, mas o body de /iniciar espera o enum MetodoPagamento como INTEIRO."
+          },
+          "response": []
+        },
+        {
+          "name": "Iniciar Pagamento (cliente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Pagamento iniciado', () => pm.response.to.have.status(201));",
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('transacaoId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "auth": {
+            "type": "bearer",
+            "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}", "description": "Opcional (não enforceado no mock atual)" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedidoId\": \"{{pedidoId}}\",\n  \"metodo\": 2,\n  \"valor\": 89.90\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "metodo (int): 0=CartaoDebito, 1=CartaoCredito, 2=Pix.\nSe já existe transação pendente para o pedido, retorna a existente.\nPara Pix, a resposta inclui pixCopiaCola e pixExpiraEm.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/iniciar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pagamentos", "iniciar"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Processar Cartão (cliente)",
+          "auth": {
+            "type": "bearer",
+            "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
+          },
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": \"4111111111111111\",\n  \"nome\": \"CLIENTE EXEMPLO\",\n  \"validade\": \"12/28\",\n  \"cvv\": \"123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Use quando metodo=0 (CartaoDebito) ou metodo=1 (CartaoCredito). Em produção, o front tokeniza o cartão no PSP e a API recebe o token — não o PAN.",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/cartao",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "cartao"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar Status (cliente)",
+          "auth": {
+            "type": "bearer",
+            "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "status"]
+            },
+            "description": "status (string): pendente | aprovado | recusado | expirado."
+          },
+          "response": []
+        },
+        {
+          "name": "Confirmar Pix (cliente)",
+          "auth": {
+            "type": "bearer",
+            "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
+          },
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/pix/confirmar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "pix", "confirmar"]
+            },
+            "description": "Sem body. Confirma pagamento Pix (mock aprova automaticamente)."
+          },
+          "response": []
+        },
+        {
+          "name": "Validar Pagamento (admin)",
+          "auth": {
+            "type": "bearer",
+            "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+          },
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/validar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "validar"]
+            },
+            "description": "Sem body. AdminOnly. Valida a transação para aprovação do pedido (chamado antes de avançar para PagamentoAprovado)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Relatórios",
+      "description": "AdminOnly. Resumo de vendas dos últimos 30 dias.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Resumo de Vendas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/relatorios/vendas/resumo",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "relatorios", "vendas", "resumo"]
+            },
+            "description": "Retorna faturamento, totalPedidos, ticketMedio, topProdutos[] e serieDiaria[] (últimos 30 dias)."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
