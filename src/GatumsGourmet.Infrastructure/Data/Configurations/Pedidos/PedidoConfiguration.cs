@@ -9,6 +9,11 @@ public class PedidoConfiguration : IEntityTypeConfiguration<Pedido>
     public void Configure(EntityTypeBuilder<Pedido> b)
     {
         b.HasKey(x => x.Id);
+        // PK gerada no código (Guid.NewGuid). Sem isso, o EF usa a convenção
+        // "chave preenchida = entidade existente" e marca novos filhos adicionados
+        // a um pedido já rastreado como Modified, causando UPDATE em 0 linhas
+        // (DbUpdateConcurrencyException) ao avançar etapa / concluir pagamento.
+        b.Property(x => x.Id).ValueGeneratedNever();
         b.HasIndex(x => x.UsuarioId);
         b.Property(x => x.Total).HasColumnType("numeric(18,2)");
         b.Property(x => x.StatusAtual).HasConversion<string>();
@@ -23,6 +28,7 @@ public class PedidoItemConfiguration : IEntityTypeConfiguration<PedidoItem>
     public void Configure(EntityTypeBuilder<PedidoItem> b)
     {
         b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever();
         b.Property(x => x.Preco).HasColumnType("numeric(18,2)");
     }
 }
@@ -32,6 +38,7 @@ public class PedidoTimelineEventoConfiguration : IEntityTypeConfiguration<Pedido
     public void Configure(EntityTypeBuilder<PedidoTimelineEvento> b)
     {
         b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever();
         b.Property(x => x.Etapa).HasConversion<string>();
         b.Property(x => x.Por).HasConversion<string>();
         b.Property(x => x.EntregaTipo).HasConversion<string>();

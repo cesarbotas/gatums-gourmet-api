@@ -60,8 +60,10 @@ jobs:
       - name: Build
         run: dotnet build GatumsGourmet.sln --configuration ${{ env.CONFIGURATION }} --no-restore
 
-      - name: Test
-        run: dotnet test GatumsGourmet.sln --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+      # Roda apenas os testes unitários. Os testes de integração dependem de Docker
+      # (Testcontainers/PostgreSQL) e não executam no runner do GitHub Actions.
+      - name: Test (unit only)
+        run: dotnet test tests/GatumsGourmet.UnitTests/GatumsGourmet.UnitTests.csproj --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload test results
         if: always()
