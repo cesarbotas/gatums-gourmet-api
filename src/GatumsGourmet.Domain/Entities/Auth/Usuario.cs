@@ -11,4 +11,6 @@ public class Usuario
     public string SenhaHash { get; set; } = default!;
     public UserRole Role { get; set; }
     public DateTime CriadoEm { get; set; }
+
+    public Usuario() { }
 }
