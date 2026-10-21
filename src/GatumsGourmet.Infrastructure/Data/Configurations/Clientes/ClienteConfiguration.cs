@@ -14,9 +14,22 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         b.Property(x => x.Telefone).HasMaxLength(20);
         b.Property(x => x.CriadoEm).IsRequired();
 
-        b.HasOne(x => x.Endereco)
-            .WithOne("ClienteId")
-            .HasForeignKey<Endereco>(x => x.ClienteId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // Endereco é uma owned entity do Cliente: suas colunas ficam na própria tabela Clientes
+        // (Endereco_Logradouro, Endereco_Cidade, ...), conforme a migration NovaTabelaEnderecoCliente.
+        // A PK da owned entity é a FK ClienteId, espelhando o snapshot das migrations.
+        b.OwnsOne(x => x.Endereco, e =>
+        {
+            e.WithOwner().HasForeignKey("ClienteId");
+            e.HasKey("ClienteId");
+
+            e.Property(p => p.Logradouro).HasMaxLength(200).IsRequired();
+            e.Property(p => p.Numero).HasMaxLength(20).IsRequired();
+            e.Property(p => p.Complemento).HasMaxLength(100);
+            e.Property(p => p.Bairro).HasMaxLength(100).IsRequired();
+            e.Property(p => p.Cidade).HasMaxLength(100).IsRequired();
+            e.Property(p => p.Estado).HasMaxLength(2).IsRequired();
+            e.Property(p => p.Cep).HasMaxLength(8).IsRequired();
+        });
+        b.Navigation(x => x.Endereco).IsRequired();
     }
 }

@@ -13,7 +13,9 @@ services:
     volumes:
       - gatums-pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      # -d ${DB_NAME}: sem o -d, o pg_isready usa um banco com o nome do usuário,
+      # que pode não existir (gera "database ... does not exist" no log).
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 10
