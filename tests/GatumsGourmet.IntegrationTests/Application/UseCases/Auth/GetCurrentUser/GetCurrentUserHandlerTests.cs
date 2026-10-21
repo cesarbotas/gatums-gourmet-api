@@ -5,6 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using GatumsGourmet.IntegrationTests.Factory;
 using GatumsGourmet.Application.Common;
+using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Entities.Auth;
+using GatumsGourmet.Domain.Enums.Auth;
 
 namespace GatumsGourmet.IntegrationTests.Application.UseCases.Auth.GetCurrentUser;
 
@@ -29,8 +32,15 @@ public class GetCurrentUserHandlerIntegrationTests : IClassFixture<CustomWebAppl
         await dbContext.Database.EnsureCreatedAsync();
 
         var userId = Guid.NewGuid();
-        // Ajuste a instanciação da entidade Usuario de acordo com o construtor do seu projeto
-        var usuario = new Usuario(userId, "César Botas", "cesar@gatums.com", "admin");
+        var usuario = new Usuario
+        {
+            Id = userId,
+            Nome = "César Botas",
+            Email = "cesar@gatums.com",
+            SenhaHash = "hash_fake_para_teste",
+            Role = UserRole.Admin, // Ajuste conforme os valores do seu Enum
+            CriadoEm = DateTime.UtcNow
+        };
         
         dbContext.Usuarios.Add(usuario);
         await dbContext.SaveChangesAsync();
@@ -42,11 +52,11 @@ public class GetCurrentUserHandlerIntegrationTests : IClassFixture<CustomWebAppl
 
         // Assert
         Assert.True(result.IsSuccess);
-        Assert.NotNull(result.Value);
-        Assert.Equal(userId, result.Value.Id);
-        Assert.Equal("César Botas", result.Value.Nome);
-        Assert.Equal("cesar@gatums.com", result.Value.Email);
-        Assert.Equal("admin", result.Value.Role);
+        Assert.NotNull(result.Data);
+        Assert.Equal(userId, result.Data.Id);
+        Assert.Equal("César Botas", result.Data.Nome);
+        Assert.Equal("cesar@gatums.com", result.Data.Email);
+        Assert.Equal("admin", result.Data.Role);
     }
 
     [Fact]

@@ -31,7 +31,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             // Opcional: Aplica as migrações automaticamente no banco de testes ao iniciar
             using var scope = services.BuildServiceProvider().CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<GatumsDbContext>();
-            db.Database.EnsureCreated(); // Ou db.Database.Migrate();
+            db.Database.Migrate(); // Aplica todas as migrations pendentes (igual ao que vai para Produção)
         });
     }
 }
