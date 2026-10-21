@@ -13,6 +13,7 @@ using GatumsGourmet.Infrastructure.Data.Configurations.Pedidos;
 using GatumsGourmet.Infrastructure.Data.Configurations.Produtos;
 using GatumsGourmet.Infrastructure.Data.Configurations.Vendas;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 
 namespace GatumsGourmet.Infrastructure.Data;
 
@@ -43,5 +44,16 @@ public class GatumsDbContext(DbContextOptions<GatumsDbContext> options) : DbCont
         modelBuilder.ApplyConfiguration(new PedidoPagamentoConfiguration());
         modelBuilder.ApplyConfiguration(new TransacaoPagamentoConfiguration());
         modelBuilder.ApplyConfiguration(new VendaConfiguration());
+    }
+}
+
+public class GatumsDbContextFactory : IDesignTimeDbContextFactory<GatumsDbContext>
+{
+    public GatumsDbContext CreateDbContext(string[] args)
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<GatumsDbContext>();
+        optionsBuilder.UseNpgsql(); // Or the specific provider you are using
+
+        return new GatumsDbContext(optionsBuilder.Options);
     }
 }

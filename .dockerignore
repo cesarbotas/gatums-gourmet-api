@@ -1,0 +1,13 @@
+.git
+.github
+.vscode
+.qodo
+docs
+tests
+**/bin
+**/obj
+*.env
+.env
+docker/pgdata
+*.md
+GatumsGourmet.Api.http

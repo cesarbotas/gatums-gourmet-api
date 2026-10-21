@@ -4,11 +4,10 @@ using GatumsGourmet.Api.Middleware;
 using GatumsGourmet.Application;
 using GatumsGourmet.Infrastructure;
 using GatumsGourmet.Infrastructure.Data;
-using GatumsGourmet.Infrastructure.Services;
 using GatumsGourmet.Domain.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.IdentityModel.Tokens;// Adicionado para configurações do OpenAPI .NET 10
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,34 +38,49 @@ builder.Services.AddAuthorization(opt =>
 });
 
 builder.Services.AddCors(opt =>
-    opt.AddDefaultPolicy(p => p.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
+    opt.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(opt =>
+// Configuração OpenAPI nativa do .NET 10 com suporte ao Bearer Token
+/* builder.Services.AddOpenApi(options =>
 {
-    opt.SwaggerDoc("v1", new OpenApiInfo { Title = "Gatums Gourmet API", Version = "v1" });
-    opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
-        Name = "Authorization", Type = SecuritySchemeType.Http, Scheme = "bearer", BearerFormat = "JWT",
-        In = ParameterLocation.Header, Description = "JWT Bearer token"
+        document.Info.Title = "Gatums Gourmet API";
+        document.Info.Version = "v1";
+        
+        // Configura a autenticação global JWT para a interface do Scalar
+        document.Components ??= new();
+        document.Components.SecuritySchemes = requirements;
+        
+        return Task.CompletedTask;
     });
-    opt.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        [new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }] = []
-    });
-});
+}); */
 
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
-app.UseCors();
+
+app.UseCors(policy => policy
+    .AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+);
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    // Gera o endpoint JSON do OpenAPI (ex: /openapi/v1.json)
+    app.MapOpenApi();
+    
+    // Ativa a interface visual do Scalar apontando para o endpoint nativo
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("Gatums Gourmet Documentation")
+               .WithTheme(ScalarTheme.DeepSpace) // Escolha seu tema (Default, Purple, DeepSpace, etc.)
+               .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+    });
 }
 
 app.MapGatumsEndpoints();

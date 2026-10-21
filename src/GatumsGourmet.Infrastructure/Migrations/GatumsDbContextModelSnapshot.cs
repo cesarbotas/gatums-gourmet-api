@@ -22,7 +22,45 @@ namespace GatumsGourmet.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.CarrinhoItem", b =>
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Auth.Usuario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SenhaHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Telefone")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("Usuarios");
+                });
+
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Carrinho.CarrinhoItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -55,14 +93,11 @@ namespace GatumsGourmet.Infrastructure.Migrations
                     b.ToTable("CarrinhoItens");
                 });
 
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Cliente", b =>
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Clientes.Cliente", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Cidade")
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
@@ -78,196 +113,15 @@ namespace GatumsGourmet.Infrastructure.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("Telefone")
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Clientes");
                 });
 
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Pedido", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ClienteNome")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("Data")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("StatusAtual")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("Total")
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<Guid>("UsuarioId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("Pedidos");
-                });
-
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.PedidoItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("FotoUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("PedidoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("Preco")
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<Guid>("ProdutoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Quantidade")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PedidoId");
-
-                    b.ToTable("PedidoItens");
-                });
-
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.PedidoPagamento", b =>
-                {
-                    b.Property<Guid>("PedidoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("AprovadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Resumo")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("TransacaoId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("PedidoId");
-
-                    b.ToTable("PedidoPagamentos");
-                });
-
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.PedidoTimelineEvento", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("Em")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("EntregaTipo")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Etapa")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Observacao")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("PedidoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Por")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PedidoId");
-
-                    b.ToTable("PedidoTimelineEventos");
-                });
-
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Produto", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Categoria")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Descricao")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("Disponivel")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("FotoUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<decimal>("Preco")
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<string>("Tipo")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Produtos");
-                });
-
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.ProdutoComboItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ComboProdutoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ProdutoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Quantidade")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ComboProdutoId");
-
-                    b.HasIndex("ProdutoId");
-
-                    b.ToTable("ProdutoComboItens");
-                });
-
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.TransacaoPagamento", b =>
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Pagamentos.TransacaoPagamento", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -322,45 +176,189 @@ namespace GatumsGourmet.Infrastructure.Migrations
                     b.ToTable("TransacoesPagamento");
                 });
 
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Usuario", b =>
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Pedidos.Pedido", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CriadoEm")
+                    b.Property<string>("ClienteNome")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("Data")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Email")
+                    b.Property<string>("StatusAtual")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Pedidos");
+                });
+
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Pedidos.PedidoItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FotoUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Nome")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
-                    b.Property<string>("Role")
+                    b.Property<Guid>("PedidoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Preco")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("ProdutoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Quantidade")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PedidoId");
+
+                    b.ToTable("PedidoItens");
+                });
+
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Pedidos.PedidoPagamento", b =>
+                {
+                    b.Property<Guid>("PedidoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AprovadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Resumo")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("SenhaHash")
+                    b.Property<Guid>("TransacaoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("PedidoId");
+
+                    b.ToTable("PedidoPagamentos");
+                });
+
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Pedidos.PedidoTimelineEvento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Em")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EntregaTipo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Etapa")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Telefone")
+                    b.Property<string>("Observacao")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PedidoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Por")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email")
-                        .IsUnique();
+                    b.HasIndex("PedidoId");
 
-                    b.ToTable("Usuarios");
+                    b.ToTable("PedidoTimelineEventos");
                 });
 
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Venda", b =>
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Produtos.Produto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Disponivel")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("FotoUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("Preco")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Produtos");
+                });
+
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Produtos.ProdutoComboItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ComboProdutoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProdutoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Quantidade")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComboProdutoId");
+
+                    b.HasIndex("ProdutoId");
+
+                    b.ToTable("ProdutoComboItens");
+                });
+
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Vendas.Venda", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -390,42 +388,98 @@ namespace GatumsGourmet.Infrastructure.Migrations
                     b.ToTable("Vendas");
                 });
 
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.PedidoItem", b =>
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Clientes.Cliente", b =>
                 {
-                    b.HasOne("GatumsGourmet.Domain.Entities.Pedido", null)
+                    b.OwnsOne("GatumsGourmet.Domain.Entities.Clientes.Endereco", "Endereco", b1 =>
+                        {
+                            b1.Property<Guid>("ClienteId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Bairro")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)");
+
+                            b1.Property<string>("Cep")
+                                .IsRequired()
+                                .HasMaxLength(8)
+                                .HasColumnType("character varying(8)");
+
+                            b1.Property<string>("Cidade")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)");
+
+                            b1.Property<string>("Complemento")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)");
+
+                            b1.Property<string>("Estado")
+                                .IsRequired()
+                                .HasMaxLength(2)
+                                .HasColumnType("character varying(2)");
+
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Logradouro")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<string>("Numero")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)");
+
+                            b1.HasKey("ClienteId");
+
+                            b1.ToTable("Clientes");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ClienteId");
+                        });
+
+                    b.Navigation("Endereco")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Pedidos.PedidoItem", b =>
+                {
+                    b.HasOne("GatumsGourmet.Domain.Entities.Pedidos.Pedido", null)
                         .WithMany("Itens")
                         .HasForeignKey("PedidoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.PedidoPagamento", b =>
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Pedidos.PedidoPagamento", b =>
                 {
-                    b.HasOne("GatumsGourmet.Domain.Entities.Pedido", null)
+                    b.HasOne("GatumsGourmet.Domain.Entities.Pedidos.Pedido", null)
                         .WithOne("Pagamento")
-                        .HasForeignKey("GatumsGourmet.Domain.Entities.PedidoPagamento", "PedidoId")
+                        .HasForeignKey("GatumsGourmet.Domain.Entities.Pedidos.PedidoPagamento", "PedidoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.PedidoTimelineEvento", b =>
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Pedidos.PedidoTimelineEvento", b =>
                 {
-                    b.HasOne("GatumsGourmet.Domain.Entities.Pedido", null)
+                    b.HasOne("GatumsGourmet.Domain.Entities.Pedidos.Pedido", null)
                         .WithMany("Timeline")
                         .HasForeignKey("PedidoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.ProdutoComboItem", b =>
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Produtos.ProdutoComboItem", b =>
                 {
-                    b.HasOne("GatumsGourmet.Domain.Entities.Produto", null)
+                    b.HasOne("GatumsGourmet.Domain.Entities.Produtos.Produto", null)
                         .WithMany("ComboItens")
                         .HasForeignKey("ComboProdutoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GatumsGourmet.Domain.Entities.Produto", "Produto")
+                    b.HasOne("GatumsGourmet.Domain.Entities.Produtos.Produto", "Produto")
                         .WithMany()
                         .HasForeignKey("ProdutoId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -434,7 +488,7 @@ namespace GatumsGourmet.Infrastructure.Migrations
                     b.Navigation("Produto");
                 });
 
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Pedido", b =>
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Pedidos.Pedido", b =>
                 {
                     b.Navigation("Itens");
 
@@ -443,7 +497,7 @@ namespace GatumsGourmet.Infrastructure.Migrations
                     b.Navigation("Timeline");
                 });
 
-            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Produto", b =>
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Produtos.Produto", b =>
                 {
                     b.Navigation("ComboItens");
                 });
