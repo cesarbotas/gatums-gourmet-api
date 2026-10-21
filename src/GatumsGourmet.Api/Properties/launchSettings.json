@@ -9,7 +9,7 @@
     }
   },
   "profiles": {
-    "http": {
+    "Gatums.Gourmet.Api": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
@@ -19,7 +19,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "https": {
+    "Gatums.Gourmet.Api.Https": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,

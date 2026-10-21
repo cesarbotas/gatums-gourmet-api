@@ -1,0 +1,166 @@
+name: CI/CD — Build, Test & Deploy
+
+# ============================================================
+# Pipeline de validação e deploy da API Gatums Gourmet
+# para VPS Locaweb (Docker Compose: API .NET 10 + PostgreSQL 16).
+#
+# Tudo é automático: ao push para main, o Action valida o build,
+# roda os testes, sincroniza os arquivos via rsync, instala Docker
+# na VPS se ainda não estiver, cria o .env a partir de GitHub
+# Secrets, sobe os containers e faz health check.
+#
+# Secrets obrigatórios (Settings → Secrets and variables → Actions):
+#   VPS_HOST         — IP ou hostname da VPS (ex: 191.252.222.186)
+#   VPS_USER         — Usuário SSH (ex: root)
+#   VPS_SSH_KEY      — Chave privada SSH (conteúdo do id_ed25519/id_rsa)
+#   DB_PASSWORD      — Senha do PostgreSQL
+#   JWT_SECRET       — Chave de assinatura JWT (mín 32 caracteres)
+#
+# Secrets opcionais (com defaults):
+#   VPS_DEPLOY_PATH  — Caminho no servidor (default: /opt/gatums-gourmet-api)
+#   DB_USER          — Usuário do PostgreSQL (default: gatums)
+#   DB_NAME          — Nome do banco (default: gatums)
+#   JWT_ISSUER       — Emissor do JWT (default: GatumsGourmet)
+#   JWT_AUDIENCE     — Audiência do JWT (default: GatumsGourmet.Web)
+#
+# Guia completo: docs/Deploy-Locaweb.md
+# ============================================================
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  CONFIGURATION: Release
+
+jobs:
+  # ============================================================
+  # Job 1 — Build & Test (valida o processo em todo PR e push)
+  # ============================================================
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore GatumsGourmet.sln
+
+      - name: Build
+        run: dotnet build GatumsGourmet.sln --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Test
+        run: dotnet test GatumsGourmet.sln --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/test-results.trx'
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ============================================================
+  # Job 2 — Deploy automático para VPS Locaweb
+  # Roda apenas em push para main (após o build passar)
+  # ============================================================
+  deploy:
+    name: Deploy to Locaweb
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH || '/opt/gatums-gourmet-api' }}
+      DB_USER: ${{ secrets.DB_USER || 'gatums' }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME || 'gatums' }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_ISSUER: ${{ secrets.JWT_ISSUER || 'GatumsGourmet' }}
+      JWT_AUDIENCE: ${{ secrets.JWT_AUDIENCE || 'GatumsGourmet.Web' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Add VPS to known_hosts
+        run: ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+
+      - name: Ensure deploy directory exists on VPS
+        run: ssh $VPS_USER@$VPS_HOST "mkdir -p $VPS_DEPLOY_PATH"
+
+      - name: Sync files to VPS
+        run: |
+          rsync -avz --delete \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'bin' \
+            --exclude 'obj' \
+            --exclude 'node_modules' \
+            --exclude 'docs' \
+            --exclude 'tests' \
+            --exclude '.env' \
+            --exclude '.qodo' \
+            --exclude '.vscode' \
+            './' $VPS_USER@$VPS_HOST:$VPS_DEPLOY_PATH/
+
+      - name: Install Docker on VPS (if not present)
+        run: |
+          DOCKER_OK=$(ssh $VPS_USER@$VPS_HOST "command -v docker &>/dev/null && echo 'yes' || echo 'no'")
+          echo "Docker installed: $DOCKER_OK"
+          if [ "$DOCKER_OK" = "no" ]; then
+            echo "Running setup-vps.sh to install Docker + firewall + swap..."
+            ssh $VPS_USER@$VPS_HOST "bash $VPS_DEPLOY_PATH/deploy/setup-vps.sh"
+          else
+            echo "Docker already installed ✅"
+          fi
+
+      - name: Create .env on VPS from GitHub Secrets
+        run: |
+          printf 'DB_USER=%s\n' "$DB_USER" > /tmp/.env
+          printf 'DB_PASSWORD=%s\n' "$DB_PASSWORD" >> /tmp/.env
+          printf 'DB_NAME=%s\n' "$DB_NAME" >> /tmp/.env
+          printf 'JWT_SECRET=%s\n' "$JWT_SECRET" >> /tmp/.env
+          printf 'JWT_ISSUER=%s\n' "$JWT_ISSUER" >> /tmp/.env
+          printf 'JWT_AUDIENCE=%s\n' "$JWT_AUDIENCE" >> /tmp/.env
+          scp /tmp/.env $VPS_USER@$VPS_HOST:$VPS_DEPLOY_PATH/.env
+          ssh $VPS_USER@$VPS_HOST "chmod 600 $VPS_DEPLOY_PATH/.env"
+          rm /tmp/.env
+          echo ".env created on VPS ✅"
+
+      - name: Deploy on VPS (docker compose up)
+        run: ssh $VPS_USER@$VPS_HOST "cd $VPS_DEPLOY_PATH && bash deploy/deploy-locaweb.sh"
+
+      - name: Health check
+        run: |
+          sleep 15
+          for i in 1 2 3 4 5; do
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://$VPS_HOST/api/v1/produtos/categorias || echo "000")
+            echo "Tentativa $i — HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ API saudável!"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::warning::API não respondeu 200 após 5 tentativas. Últimos logs:"
+          ssh $VPS_USER@$VPS_HOST "docker logs gatums-api --tail 20"
