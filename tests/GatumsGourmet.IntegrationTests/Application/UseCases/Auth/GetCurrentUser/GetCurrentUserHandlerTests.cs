@@ -11,8 +11,8 @@ using GatumsGourmet.Domain.Enums.Auth;
 
 namespace GatumsGourmet.IntegrationTests.Application.UseCases.Auth.GetCurrentUser;
 
-[Collection("Database Collection")]
-public class GetCurrentUserHandlerIntegrationTests : IClassFixture<CustomWebApplicationFactory>
+[Collection("Integration")]
+public class GetCurrentUserHandlerIntegrationTests
 {
     private readonly CustomWebApplicationFactory _factory;
 
@@ -24,24 +24,25 @@ public class GetCurrentUserHandlerIntegrationTests : IClassFixture<CustomWebAppl
     [Fact]
     public async Task Handle_Deve_Retornar_Usuario_Quando_Existir_No_Banco()
     {
-        // Arrange
+        // Arrange — o banco já foi migrado no startup (InitializeDatabaseAsync); não usar
+        // EnsureCreatedAsync, que conflita com o histórico de migrations.
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<GatumsDbContext>();
-        
-        // Garante que o banco está criado/migrado
-        await dbContext.Database.EnsureCreatedAsync();
 
         var userId = Guid.NewGuid();
+        // E-mail único por execução: o banco de teste é persistente entre rodadas,
+        // então um e-mail fixo causaria violação de unicidade.
+        var email = $"cesar-{Guid.NewGuid():N}@gatums.com";
         var usuario = new Usuario
         {
             Id = userId,
             Nome = "César Botas",
-            Email = "cesar@gatums.com",
+            Email = email,
             SenhaHash = "hash_fake_para_teste",
-            Role = UserRole.Admin, // Ajuste conforme os valores do seu Enum
+            Role = UserRole.Admin,
             CriadoEm = DateTime.UtcNow
         };
-        
+
         dbContext.Usuarios.Add(usuario);
         await dbContext.SaveChangesAsync();
 
@@ -55,7 +56,7 @@ public class GetCurrentUserHandlerIntegrationTests : IClassFixture<CustomWebAppl
         Assert.NotNull(result.Data);
         Assert.Equal(userId, result.Data.Id);
         Assert.Equal("César Botas", result.Data.Nome);
-        Assert.Equal("cesar@gatums.com", result.Data.Email);
+        Assert.Equal(email, result.Data.Email);
         Assert.Equal("admin", result.Data.Role);
     }
 
