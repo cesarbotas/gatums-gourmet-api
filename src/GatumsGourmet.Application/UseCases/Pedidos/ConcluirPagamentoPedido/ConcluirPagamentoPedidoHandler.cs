@@ -1,9 +1,9 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Enums.Pagamentos;
 using GatumsGourmet.Domain.Enums.Pedidos;
-using GatumsGourmet.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace GatumsGourmet.Application.UseCases.Pedidos.ConcluirPagamentoPedido;
@@ -41,3 +41,4 @@ public sealed class ConcluirPagamentoPedidoHandler(
         return Result<bool>.Ok(true);
     }
 }
+

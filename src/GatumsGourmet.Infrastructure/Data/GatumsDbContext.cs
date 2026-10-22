@@ -21,6 +21,7 @@ public class GatumsDbContext(DbContextOptions<GatumsDbContext> options) : DbCont
 {
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<Produto> Produtos => Set<Produto>();
+    public DbSet<Categoria> Categorias => Set<Categoria>();
     public DbSet<ProdutoComboItem> ProdutoComboItens => Set<ProdutoComboItem>();
     public DbSet<Cliente> Clientes => Set<Cliente>();
     public DbSet<CarrinhoItem> CarrinhoItens => Set<CarrinhoItem>();
@@ -34,6 +35,7 @@ public class GatumsDbContext(DbContextOptions<GatumsDbContext> options) : DbCont
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new UsuarioConfiguration());
+        modelBuilder.ApplyConfiguration(new CategoriaConfiguration());
         modelBuilder.ApplyConfiguration(new ProdutoConfiguration());
         modelBuilder.ApplyConfiguration(new ProdutoComboItemConfiguration());
         modelBuilder.ApplyConfiguration(new ClienteConfiguration());

@@ -1,11 +1,12 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Pedidos.ConcluirPagamentoPedido;
 using GatumsGourmet.Domain.Entities.Pagamentos;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Enums.Pagamentos;
 using GatumsGourmet.Domain.Enums.Pedidos;
-using GatumsGourmet.Domain.Interfaces;
+using GatumsGourmet.Domain.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -111,3 +112,4 @@ public class ConcluirPagamentoPedidoHandlerTests
         pedido.Pagamento!.Resumo.Should().Be("VISA **** 1234");
     }
 }
+

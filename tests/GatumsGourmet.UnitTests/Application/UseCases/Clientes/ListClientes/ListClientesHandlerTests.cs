@@ -1,5 +1,6 @@
-using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+﻿using FluentAssertions;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Clientes.ListClientes;
 using GatumsGourmet.Domain.Entities.Clientes;
 using Moq;
@@ -63,3 +64,4 @@ public class ListClientesHandlerTests
         _clientes.Verify(r => r.ListAsync(2, 5, "joao", default), Times.Once);
     }
 }
+

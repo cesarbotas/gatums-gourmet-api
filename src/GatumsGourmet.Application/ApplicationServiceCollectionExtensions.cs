@@ -22,10 +22,14 @@ using GatumsGourmet.Application.UseCases.Pedidos.CheckoutPedido;
 using GatumsGourmet.Application.UseCases.Pedidos.ConcluirPagamentoPedido;
 using GatumsGourmet.Application.UseCases.Pedidos.GetPedidoById;
 using GatumsGourmet.Application.UseCases.Pedidos.ListPedidos;
+using GatumsGourmet.Application.UseCases.Categorias.CreateCategoria;
+using GatumsGourmet.Application.UseCases.Categorias.DeleteCategoria;
+using GatumsGourmet.Application.UseCases.Categorias.GetCategoriaById;
+using GatumsGourmet.Application.UseCases.Categorias.ListCategorias;
+using GatumsGourmet.Application.UseCases.Categorias.UpdateCategoria;
 using GatumsGourmet.Application.UseCases.Produtos.CreateProduto;
 using GatumsGourmet.Application.UseCases.Produtos.DeleteProduto;
 using GatumsGourmet.Application.UseCases.Produtos.GetProdutoById;
-using GatumsGourmet.Application.UseCases.Produtos.ListCategorias;
 using GatumsGourmet.Application.UseCases.Produtos.ListProdutos;
 using GatumsGourmet.Application.UseCases.Produtos.UpdateProduto;
 using GatumsGourmet.Application.UseCases.Relatorios.GetVendasResumo;
@@ -48,7 +52,12 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<ICreateProdutoHandler, CreateProdutoHandler>();
         services.AddScoped<IUpdateProdutoHandler, UpdateProdutoHandler>();
         services.AddScoped<IDeleteProdutoHandler, DeleteProdutoHandler>();
+
         services.AddScoped<IListCategoriasHandler, ListCategoriasHandler>();
+        services.AddScoped<IGetCategoriaByIdHandler, GetCategoriaByIdHandler>();
+        services.AddScoped<ICreateCategoriaHandler, CreateCategoriaHandler>();
+        services.AddScoped<IUpdateCategoriaHandler, UpdateCategoriaHandler>();
+        services.AddScoped<IDeleteCategoriaHandler, DeleteCategoriaHandler>();
 
         services.AddScoped<IListClientesHandler, ListClientesHandler>();
         services.AddScoped<ICreateClienteHandler, CreateClienteHandler>();

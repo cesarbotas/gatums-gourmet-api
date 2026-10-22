@@ -1,5 +1,6 @@
-using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+﻿using GatumsGourmet.Application.Common;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Relatorios.GetVendasResumo;
 
@@ -29,3 +30,4 @@ public sealed class GetVendasResumoHandler(IVendaRepository vendas) : IGetVendas
         return Result<VendasResumoResponse>.Ok(new VendasResumoResponse(faturamento, pedidosUnicos, ticket, top, serie));
     }
 }
+

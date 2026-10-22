@@ -1,5 +1,6 @@
-using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+﻿using FluentAssertions;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Relatorios.GetVendasResumo;
 using GatumsGourmet.Domain.Entities.Vendas;
 using Moq;
@@ -58,3 +59,4 @@ public class GetVendasResumoHandlerTests
         result.Data.SerieDiaria[0].Data.Should().Be("2026-01-10");
     }
 }
+

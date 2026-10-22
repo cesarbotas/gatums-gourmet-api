@@ -1,4 +1,5 @@
-using GatumsGourmet.Application.Interfaces;
+﻿using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Carrinho;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,3 +31,4 @@ public class CarrinhoRepository(GatumsDbContext db) : ICarrinhoRepository
 
     public Task SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);
 }
+

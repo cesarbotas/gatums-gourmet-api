@@ -1,5 +1,6 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Produtos.DeleteProduto;
 
@@ -14,3 +15,4 @@ public sealed class DeleteProdutoHandler(IProdutoRepository produtos) : IDeleteP
         return Result<bool>.Ok(true);
     }
 }
+

@@ -1,10 +1,11 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Pedidos.AvancarPedidoEtapa;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Enums.Pedidos;
 using GatumsGourmet.Domain.Exceptions;
-using GatumsGourmet.Domain.Interfaces;
+using GatumsGourmet.Domain.Services.Interfaces;
 using Moq;
 using Xunit;
 
@@ -82,3 +83,4 @@ public class AvancarPedidoEtapaHandlerTests
         _pedidos.Verify(r => r.SaveChangesAsync(default), Times.Never);
     }
 }
+

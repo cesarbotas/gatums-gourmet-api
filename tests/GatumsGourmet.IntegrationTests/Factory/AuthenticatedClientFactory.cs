@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using GatumsGourmet.Domain.Entities.Auth;
 using GatumsGourmet.Domain.Enums.Auth;
-using GatumsGourmet.Domain.Interfaces;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Infrastructure.Data;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -68,3 +68,4 @@ public static class AuthenticatedClientFactory
         return (client, new AuthenticatedUser(usuario.Id, usuario.Email, roleLower, token));
     }
 }
+

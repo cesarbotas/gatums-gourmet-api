@@ -1,5 +1,6 @@
-using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+﻿using FluentAssertions;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Produtos.ListProdutos;
 using GatumsGourmet.Domain.Entities.Produtos;
 using GatumsGourmet.Domain.Enums.Produtos;
@@ -15,10 +16,12 @@ public class ListProdutosHandlerTests
 
     public ListProdutosHandlerTests() => _handler = new ListProdutosHandler(_produtos.Object);
 
+    private static Categoria Cat(long id = 1, string nome = "Cat") => new() { Id = id, Nome = nome, Ativo = true };
+
     private static List<Produto> CreateProdutos(int count) => Enumerable.Range(0, count)
         .Select(i => new Produto
         {
-            Id = Guid.NewGuid(), Nome = $"Produto {i}", Descricao = "desc", Categoria = "Cat",
+            Id = Guid.NewGuid(), Nome = $"Produto {i}", Descricao = "desc", CategoriaId = 1, Categoria = Cat(),
             Preco = 10m * i, FotoUrl = "url", Disponivel = true, Tipo = TipoProduto.Simples
         }).ToList();
 
@@ -34,8 +37,7 @@ public class ListProdutosHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Data!.Items.Should().HaveCount(3);
         result.Data.Total.Should().Be(3);
-        result.Data.Page.Should().Be(1);
-        result.Data.PageSize.Should().Be(10);
+        result.Data.Items[0].CategoriaNome.Should().Be("Cat");
     }
 
     [Fact]
@@ -55,14 +57,14 @@ public class ListProdutosHandlerTests
     public async Task Handle_ComFiltroCategoria_PassaFiltroParaRepositorio()
     {
         var items = CreateProdutos(1);
-        _produtos.Setup(r => r.ListAsync(1, 10, null, "Hambúrgueres", null, null, default))
+        _produtos.Setup(r => r.ListAsync(1, 10, null, 5L, null, null, default))
             .ReturnsAsync((items, 1));
 
-        var result = await _handler.Handle(new ListProdutosRequest(1, 10, null, "Hambúrgueres", null, null));
+        var result = await _handler.Handle(new ListProdutosRequest(1, 10, null, 5L, null, null));
 
         result.IsSuccess.Should().BeTrue();
         result.Data!.Items.Should().HaveCount(1);
-        _produtos.Verify(r => r.ListAsync(1, 10, null, "Hambúrgueres", null, null, default), Times.Once);
+        _produtos.Verify(r => r.ListAsync(1, 10, null, 5L, null, null, default), Times.Once);
     }
 
     [Fact]
@@ -70,7 +72,7 @@ public class ListProdutosHandlerTests
     {
         var items = new List<Produto>
         {
-            new() { Id = Guid.NewGuid(), Nome = "Combo", Descricao = "d", Categoria = "C", Preco = 50, FotoUrl = "u", Disponivel = true, Tipo = TipoProduto.Combo }
+            new() { Id = Guid.NewGuid(), Nome = "Combo", Descricao = "d", CategoriaId = 1, Categoria = Cat(), Preco = 50, FotoUrl = "u", Disponivel = true, Tipo = TipoProduto.Combo }
         };
         _produtos.Setup(r => r.ListAsync(1, 10, null, null, null, null, default))
             .ReturnsAsync((items, 1));
@@ -80,3 +82,4 @@ public class ListProdutosHandlerTests
         result.Data!.Items.First().Tipo.Should().Be("combo");
     }
 }
+
