@@ -1,0 +1,74 @@
+﻿name: Release HML - API (Render + Neon)
+
+# ============================================================
+# Deploy de HOMOLOGACAO.
+# Dispara no push da branch "release": valida build + testes unitarios e,
+# se passar, aciona o Deploy Hook do Render (que builda a branch release a
+# partir do docker/Dockerfile). A API sobe com ASPNETCORE_ENVIRONMENT=Release
+# (definido nas env vars do Render), carregando appsettings.Release.json.
+# A connection string (Neon, branch "homologacao") e os Jwt__* ficam nas
+# env vars do Render, NAO no GitHub.
+# Producao (branch main) continua no deploy.yml -> VPS Locaweb.
+# ============================================================
+
+on:
+  push:
+    branches: [release]
+  pull_request:
+    branches: [release]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  CONFIGURATION: Release
+
+jobs:
+  build-and-test:
+    name: Build & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Restore
+        run: dotnet restore GatumsGourmet.sln
+      - name: Build
+        run: dotnet build GatumsGourmet.sln --configuration ${{ env.CONFIGURATION }} --no-restore
+      - name: Test (unit only)
+        run: dotnet test tests/GatumsGourmet.UnitTests/GatumsGourmet.UnitTests.csproj --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal
+
+  deploy-render:
+    name: Deploy to Render (HML)
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Trigger Render deploy hook
+        run: |
+          echo "Acionando deploy no Render (branch release)..."
+          curl -fsSL -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+      - name: Smoke test (tolera cold start do Render + wake do Neon)
+        run: |
+          echo "Aguardando build/deploy e wake do banco..."
+          sleep 45
+          for i in 1 2 3 4 5 6 7 8; do
+            S=$(curl -s -o /dev/null -w '%{http_code}' "${{ secrets.HML_API_URL }}/api/v1/produtos/categorias" || echo 000)
+            echo "tentativa $i -> HTTP $S"
+            if [ "$S" = "200" ]; then echo "API HML OK"; exit 0; fi
+            sleep 20
+          done
+          echo "::warning::API HML nao respondeu 200. Cold start do Render/Neon pode demorar; verifique o painel do Render."
+
+# ------------------------------------------------------------
+# Secrets (repo da API > Settings > Secrets and variables > Actions):
+#   RENDER_DEPLOY_HOOK_URL  -> Deploy Hook do servico no Render
+#   HML_API_URL             -> ex: https://gatums-api-hml.onrender.com
+#
+# Env vars DO RENDER (nao no GitHub):
+#   ASPNETCORE_ENVIRONMENT = Release
+#   ASPNETCORE_URLS        = http://+:8080
+#   ConnectionStrings__DefaultConnection = Host=ep-xxx-pooler....neon.tech;Database=<db>;Username=<u>;Password=<p>;SSL Mode=Require;Trust Server Certificate=true
+#   Jwt__Secret / Jwt__Issuer / Jwt__Audience
+# ------------------------------------------------------------
