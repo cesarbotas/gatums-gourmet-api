@@ -54,7 +54,16 @@ public static class DatabaseExtensions
         var targetDatabase = csBuilder.Database
             ?? throw new InvalidOperationException("Nome do banco não encontrado na connection string.");
 
-        // Substitui o banco alvo pelo banco de manutenção 'postgres'
+        // Se o banco alvo já responde, não há o que provisionar: pula a etapa de manutenção.
+        // Essencial para Postgres gerenciado (Neon, Supabase, RDS), que já vem com o banco
+        // criado e frequentemente NÃO permite conectar no database 'postgres' nem criar bancos.
+        if (await CanConnectToTargetAsync(connectionString, logger))
+        {
+            logger.LogInformation("Banco de dados '{Database}' acessível. Pulando provisionamento.", targetDatabase);
+            return;
+        }
+
+        // Substitui o banco alvo pelo banco de manutenção 'postgres' (cenário VPS: banco novo)
         csBuilder.Database = "postgres";
         var maintenanceCs = csBuilder.ToString();
 
@@ -109,5 +118,41 @@ public static class DatabaseExtensions
         throw new InvalidOperationException(
             $"Não foi possível garantir a existência do banco '{targetDatabase}' após {maxTentativas} tentativas. " +
             "Verifique a disponibilidade do PostgreSQL e as credenciais de conexão.");
+    }
+
+    /// <summary>
+    /// Tenta conectar diretamente ao banco alvo. Retorna true se o banco existe e aceita
+    /// conexão. Faz retry curto para tolerar o "wake" de bancos serverless (ex.: Neon
+    /// scale-to-zero, que acorda em ~0,5-2s). Retorna false se o banco não existe
+    /// (ex.: VPS com Postgres recém-provisionado), caso em que o provisionamento prossegue.
+    /// </summary>
+    private static async Task<bool> CanConnectToTargetAsync(string connectionString, ILogger logger)
+    {
+        const int tentativas = 5;
+        for (var i = 1; i <= tentativas; i++)
+        {
+            try
+            {
+                await using var conn = new NpgsqlConnection(connectionString);
+                await conn.OpenAsync();
+                return true;
+            }
+            catch (PostgresException pgEx) when (pgEx.SqlState == PostgresErrorCodes.InvalidCatalogName)
+            {
+                // "database does not exist" — precisa provisionar. Não adianta repetir.
+                return false;
+            }
+            catch (Exception ex) when (i < tentativas)
+            {
+                // Pode ser cold start do banco serverless ou indisponibilidade momentânea.
+                logger.LogInformation(
+                    "Aguardando o banco alvo ficar disponível (tentativa {Tentativa}/{Max}): {Mensagem}",
+                    i, tentativas, ex.Message);
+                await Task.Delay(TimeSpan.FromSeconds(2));
+            }
+        }
+
+        // Não conseguimos confirmar conexão ao alvo; deixa o fluxo de manutenção decidir.
+        return false;
     }
 }
