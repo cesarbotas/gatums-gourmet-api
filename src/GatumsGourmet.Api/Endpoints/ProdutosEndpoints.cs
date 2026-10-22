@@ -14,10 +14,10 @@ public static class ProdutosEndpoints
     public static void Map(RouteGroupBuilder group)
     {
         group.MapGet("/", async (
-            [FromQuery] int page, [FromQuery] int pageSize, [FromQuery] string? search,
+            [FromQuery] int pagina, [FromQuery] int tamanho, [FromQuery] string? search,
             [FromQuery] long? categoriaId, [FromQuery] TipoProduto? tipo, [FromQuery] bool? disponivel,
             IListProdutosHandler handler, CancellationToken ct) =>
-            (await handler.Handle(new ListProdutosRequest(page < 1 ? 1 : page, pageSize < 1 ? 10 : pageSize, search, categoriaId, tipo, disponivel), ct)).ToHttpResult());
+            (await handler.Handle(new ListProdutosRequest(pagina < 1 ? 1 : pagina, tamanho < 1 ? 10 : tamanho, search, categoriaId, tipo, disponivel), ct)).ToHttpResult());
 
         group.MapGet("/{id:guid}", async (Guid id, IGetProdutoByIdHandler handler, CancellationToken ct) =>
             (await handler.Handle(id, ct)).ToHttpResult());

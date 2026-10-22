@@ -4,7 +4,7 @@ namespace GatumsGourmet.Domain.Repositories;
 
 public interface ICategoriaRepository
 {
-    Task<IReadOnlyList<Categoria>> ListAsync(bool? apenasAtivas, CancellationToken ct = default);
+    Task<(IReadOnlyList<Categoria> Items, int Total)> ListAsync(int page, int pageSize, bool? apenasAtivas, CancellationToken ct = default);
     Task<Categoria?> GetByIdAsync(long id, CancellationToken ct = default);
     Task<bool> ExistsByNomeAsync(string nome, long? ignorarId = null, CancellationToken ct = default);
     Task<bool> TemProdutosVinculadosAsync(long categoriaId, CancellationToken ct = default);

@@ -384,9 +384,12 @@ Todos os DTOs da API. Propriedades em camelCase (padrão do System.Text.Json).
 ## Tipos comuns
 
 ### PaginatedResponse<T>
-| Campo | Tipo |
-|-------|------|
-| `items` | T[] |
-| `total` | number (int) |
-| `page` | number (int) |
-| `pageSize` | number (int) |
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `itens` | T[] | Itens da página atual |
+| `paginaAtual` | number (int) | Página atual (1-based) |
+| `tamanhoPagina` | number (int) | Itens por página |
+| `totalRegistros` | number (int) | Total de registros encontrados |
+| `totalPaginas` | number (int) | Total de páginas (calculado pela API) |
+| `temPaginaAnterior` | boolean | Existe página anterior |
+| `temProximaPagina` | boolean | Existe próxima página |

@@ -35,11 +35,11 @@ public class ListPedidosEndpointTests
     {
         var (cliente, pedidoId) = await CriarPedidoViaHttpAsync();
 
-        var resp = await cliente.GetAsync("/api/v1/pedidos?page=1&pageSize=50");
+        var resp = await cliente.GetAsync("/api/v1/pedidos?pagina=1&tamanho=50");
 
         resp.IsSuccessStatusCode.Should().BeTrue();
         using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
-        var ids = doc.RootElement.GetProperty("items").EnumerateArray()
+        var ids = doc.RootElement.GetProperty("itens").EnumerateArray()
             .Select(i => i.GetProperty("id").GetGuid());
         ids.Should().Contain(pedidoId);
     }
@@ -49,7 +49,7 @@ public class ListPedidosEndpointTests
     {
         var (admin, _) = await _factory.CreateAdminClientAsync();
 
-        var resp = await admin.GetAsync("/api/v1/pedidos?page=1&pageSize=10");
+        var resp = await admin.GetAsync("/api/v1/pedidos?pagina=1&tamanho=10");
 
         resp.IsSuccessStatusCode.Should().BeTrue();
     }

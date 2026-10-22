@@ -35,9 +35,9 @@ public class ListProdutosHandlerTests
         var result = await _handler.Handle(new ListProdutosRequest(1, 10, null, null, null, null));
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Items.Should().HaveCount(3);
-        result.Data.Total.Should().Be(3);
-        result.Data.Items[0].CategoriaNome.Should().Be("Cat");
+        result.Data!.Itens.Should().HaveCount(3);
+        result.Data.TotalRegistros.Should().Be(3);
+        result.Data.Itens[0].CategoriaNome.Should().Be("Cat");
     }
 
     [Fact]
@@ -49,8 +49,8 @@ public class ListProdutosHandlerTests
         var result = await _handler.Handle(new ListProdutosRequest());
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Items.Should().BeEmpty();
-        result.Data.Total.Should().Be(0);
+        result.Data!.Itens.Should().BeEmpty();
+        result.Data.TotalRegistros.Should().Be(0);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class ListProdutosHandlerTests
         var result = await _handler.Handle(new ListProdutosRequest(1, 10, null, 5L, null, null));
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Items.Should().HaveCount(1);
+        result.Data!.Itens.Should().HaveCount(1);
         _produtos.Verify(r => r.ListAsync(1, 10, null, 5L, null, null, default), Times.Once);
     }
 
@@ -79,7 +79,7 @@ public class ListProdutosHandlerTests
 
         var result = await _handler.Handle(new ListProdutosRequest());
 
-        result.Data!.Items.First().Tipo.Should().Be("combo");
+        result.Data!.Itens.First().Tipo.Should().Be("combo");
     }
 }
 

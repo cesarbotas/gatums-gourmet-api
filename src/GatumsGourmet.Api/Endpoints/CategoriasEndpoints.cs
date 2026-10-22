@@ -12,9 +12,11 @@ public static class CategoriasEndpoints
 {
     public static void Map(RouteGroupBuilder group)
     {
-        // Listagem pública. ?apenasAtivas=true para trazer só as ativas (uso típico do catálogo).
-        group.MapGet("/", async ([FromQuery] bool? apenasAtivas, IListCategoriasHandler handler, CancellationToken ct) =>
-            (await handler.Handle(apenasAtivas, ct)).ToHttpResult());
+        // Listagem pública paginada. ?apenasAtivas=true para trazer só as ativas (catálogo).
+        group.MapGet("/", async (
+            [FromQuery] int pagina, [FromQuery] int tamanho, [FromQuery] bool? apenasAtivas,
+            IListCategoriasHandler handler, CancellationToken ct) =>
+            (await handler.Handle(new ListCategoriasRequest(pagina < 1 ? 1 : pagina, tamanho < 1 ? 10 : tamanho, apenasAtivas), ct)).ToHttpResult());
 
         group.MapGet("/{id:long}", async (long id, IGetCategoriaByIdHandler handler, CancellationToken ct) =>
             (await handler.Handle(id, ct)).ToHttpResult());

@@ -1,8 +1,7 @@
 ﻿using FluentAssertions;
-using GatumsGourmet.Domain.Repositories;
-using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Categorias.ListCategorias;
 using GatumsGourmet.Domain.Entities.Produtos;
+using GatumsGourmet.Domain.Repositories;
 using Moq;
 using Xunit;
 
@@ -16,32 +15,35 @@ public class ListCategoriasHandlerTests
     public ListCategoriasHandlerTests() => _handler = new ListCategoriasHandler(_categorias.Object);
 
     [Fact]
-    public async Task Handle_RetornaCategoriasMapeadas()
+    public async Task Handle_RetornaCategoriasPaginadas()
     {
         var lista = new List<Categoria>
         {
             new() { Id = 1, Nome = "Bebidas", Descricao = "d", Ativo = true },
             new() { Id = 2, Nome = "Lanches", Descricao = null, Ativo = false }
         };
-        _categorias.Setup(r => r.ListAsync(null, default)).ReturnsAsync(lista);
+        _categorias.Setup(r => r.ListAsync(1, 10, null, default)).ReturnsAsync((lista, 2));
 
-        var result = await _handler.Handle(null);
+        var result = await _handler.Handle(new ListCategoriasRequest(1, 10, null));
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Should().HaveCount(2);
-        result.Data[0].Nome.Should().Be("Bebidas");
-        result.Data[1].Ativo.Should().BeFalse();
+        result.Data!.Itens.Should().HaveCount(2);
+        result.Data.TotalRegistros.Should().Be(2);
+        result.Data.PaginaAtual.Should().Be(1);
+        result.Data.TotalPaginas.Should().Be(1);
+        result.Data.Itens[0].Nome.Should().Be("Bebidas");
     }
 
     [Fact]
     public async Task Handle_ApenasAtivas_PassaFiltro()
     {
-        _categorias.Setup(r => r.ListAsync(true, default)).ReturnsAsync(new List<Categoria>());
+        _categorias.Setup(r => r.ListAsync(1, 10, true, default)).ReturnsAsync((new List<Categoria>(), 0));
 
-        var result = await _handler.Handle(true);
+        var result = await _handler.Handle(new ListCategoriasRequest(1, 10, true));
 
         result.IsSuccess.Should().BeTrue();
-        _categorias.Verify(r => r.ListAsync(true, default), Times.Once);
+        result.Data!.TotalRegistros.Should().Be(0);
+        result.Data.TotalPaginas.Should().Be(0);
+        _categorias.Verify(r => r.ListAsync(1, 10, true, default), Times.Once);
     }
 }
-

@@ -200,14 +200,19 @@ NÃO vem como `{ "isSuccess": true, "data": {...} }`.
 
 ```json
 {
-  "items": [...],
-  "total": 25,
-  "page": 1,
-  "pageSize": 10
+  "itens": [...],
+  "paginaAtual": 1,
+  "tamanhoPagina": 10,
+  "totalRegistros": 25,
+  "totalPaginas": 3,
+  "temPaginaAnterior": false,
+  "temProximaPagina": true
 }
 ```
 
-`total` é o total de registros (não de páginas).
+- `totalRegistros` é o total de registros encontrados (não de páginas).
+- `totalPaginas`, `temPaginaAnterior` e `temProximaPagina` são calculados pela API — o front não precisa derivar nada.
+- Query params das listagens: `pagina` (default 1) e `tamanho` (default 10).
 
 ---
 
