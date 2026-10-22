@@ -41,12 +41,10 @@ Base URL: `{API_BASE}/api/v1`
 
 ## Produtos
 
-### GET /produtos/categorias
-- **Auth**: público
-- **200**: array de strings
-  ```json
-  ["Hambúrgueres", "Acompanhamentos", "Bebidas"]
-  ```
+> **Mudança de contrato:** categoria deixou de ser texto livre e passou a ser uma
+> entidade própria (ver seção [Categorias](#categorias)). Produtos referenciam a
+> categoria por `categoriaId` (number). O antigo `GET /produtos/categorias` foi
+> **removido** — use `GET /categorias`.
 
 ### GET /produtos
 - **Auth**: público
@@ -57,11 +55,11 @@ Base URL: `{API_BASE}/api/v1`
   | `page` | int | 1 | Página |
   | `pageSize` | int | 10 | Itens por página |
   | `search` | string? | — | Busca no nome/descrição |
-  | `categoria` | string? | — | Filtro por categoria |
+  | `categoriaId` | number? | — | Filtro por id da categoria |
   | `tipo` | string? | — | `simples` ou `combo` (case-insensitive) |
   | `disponivel` | bool? | — | Filtra disponibilidade |
 
-  Exemplo: `GET /produtos?page=1&pageSize=20&categoria=Hambúrgueres&disponivel=true`
+  Exemplo: `GET /produtos?page=1&pageSize=20&categoriaId=1&disponivel=true`
 
 - **200**: `PaginatedResponse<ProdutoSummaryResponse>`
   ```json
@@ -71,7 +69,8 @@ Base URL: `{API_BASE}/api/v1`
         "id": "guid",
         "nome": "Hambúrguer Artesanal",
         "descricao": "Blend 180g, queijo cheddar...",
-        "categoria": "Hambúrgueres",
+        "categoriaId": 1,
+        "categoriaNome": "Hambúrgueres",
         "preco": 32.90,
         "fotoUrl": "https://...",
         "disponivel": true,
@@ -93,7 +92,8 @@ Base URL: `{API_BASE}/api/v1`
     "id": "guid",
     "nome": "string",
     "descricao": "string",
-    "categoria": "string",
+    "categoriaId": 1,
+    "categoriaNome": "string",
     "preco": 89.90,
     "fotoUrl": "string",
     "disponivel": true,
@@ -112,7 +112,7 @@ Base URL: `{API_BASE}/api/v1`
   {
     "nome": "string",
     "descricao": "string",
-    "categoria": "string",
+    "categoriaId": 1,
     "preco": 89.90,
     "fotoUrl": "string",
     "disponivel": true,
@@ -122,6 +122,7 @@ Base URL: `{API_BASE}/api/v1`
     ]
   }
   ```
+  > `categoriaId` (number): id de uma categoria existente (ver `GET /categorias`). Se a categoria não existir → `400 "Categoria não encontrada."`
   > `tipo`: `0` = Simples, `1` = Combo (inteiros). Combo exige `itens[]` não vazio.
 - **201**: `CreateProdutoResponse` → `{ "id": "guid" }`
 
@@ -134,18 +135,73 @@ Base URL: `{API_BASE}/api/v1`
     "id": "guid",
     "nome": "string",
     "descricao": "string",
-    "categoria": "string",
+    "categoriaId": 1,
     "preco": 94.90,
     "fotoUrl": "string",
     "disponivel": true
   }
   ```
   > O `id` do body é sobrescrito pelo `id` da rota. Não inclui `tipo`/`itens`.
+  > `categoriaId` deve referenciar categoria existente, senão `400 "Categoria não encontrada."`
 - **200**: `true` (boolean)
 
 ### DELETE /produtos/{id}
 - **Auth**: `AdminOnly`
 - **200**: `true` (boolean)
+
+---
+
+## Categorias
+
+Entidade de catálogo das categorias de produto. `id` é um inteiro (number, long).
+
+### GET /categorias
+- **Auth**: público
+- **Query params**:
+
+  | Param | Tipo | Default | Descrição |
+  |-------|------|---------|-----------|
+  | `apenasAtivas` | bool? | — | `true` traz só as categorias ativas (uso típico do catálogo) |
+
+- **200**: array de `CategoriaResponse`
+  ```json
+  [
+    { "id": 1, "nome": "Hambúrgueres", "descricao": "Lanches artesanais", "ativo": true },
+    { "id": 2, "nome": "Bebidas", "descricao": null, "ativo": true }
+  ]
+  ```
+
+### GET /categorias/{id}
+- **Auth**: público
+- **Route**: `id` (number)
+- **200**: `CategoriaResponse`
+- **400**: `"Categoria não encontrada."`
+
+### POST /categorias
+- **Auth**: `AdminOnly`
+- **Body**: `CreateCategoriaRequest`
+  ```json
+  { "nome": "string", "descricao": "string|null", "ativo": true }
+  ```
+- **201**: `CreateCategoriaResponse` → `{ "id": 1 }`
+- **400**: `"Já existe uma categoria com este nome."` (nome é único)
+
+### PUT /categorias/{id}
+- **Auth**: `AdminOnly`
+- **Route**: `id` (number)
+- **Body**: `UpdateCategoriaRequest`
+  ```json
+  { "id": 1, "nome": "string", "descricao": "string|null", "ativo": true }
+  ```
+  > O `id` do body é sobrescrito pelo `id` da rota.
+- **200**: `true`
+- **400**: `"Categoria não encontrada."` ou `"Já existe uma categoria com este nome."`
+
+### DELETE /categorias/{id}
+- **Auth**: `AdminOnly`
+- **Route**: `id` (number)
+- **200**: `true`
+- **400**: `"Categoria não encontrada."` ou `"Não é possível excluir: categoria possui produtos vinculados."`
 
 ---
 
