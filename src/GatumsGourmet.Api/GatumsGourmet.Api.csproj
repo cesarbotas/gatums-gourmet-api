@@ -22,6 +22,12 @@
     <InternalsVisibleTo Include="GatumsGourmet.IntegrationTests" />
   </ItemGroup>
 
+  <!-- Garante que o appsettings de cada ambiente vá para o publish/container. -->
+  <ItemGroup>
+    <Content Update="appsettings.Release.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Update="appsettings.LocalDocker.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\GatumsGourmet.Application\GatumsGourmet.Application.csproj" />
     <ProjectReference Include="..\GatumsGourmet.Infrastructure\GatumsGourmet.Infrastructure.csproj" />

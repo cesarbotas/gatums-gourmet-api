@@ -26,7 +26,11 @@ app.UseCors(policy => policy
 app.UseAuthentication();
 app.UseAuthorization();
 
-if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("LocalDocker"))
+// Scalar/OpenAPI exposto em Development, LocalDocker e Release (homologação) — útil para
+// testes externos. Em Production (VPS) fica desabilitado.
+if (app.Environment.IsDevelopment()
+    || app.Environment.IsEnvironment("LocalDocker")
+    || app.Environment.IsEnvironment("Release"))
 {
     app.MapGatumsOpenApi();
 }
