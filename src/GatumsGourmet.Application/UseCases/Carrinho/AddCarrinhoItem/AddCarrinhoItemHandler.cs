@@ -1,6 +1,7 @@
 using FluentValidation;
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Carrinho;
 
 namespace GatumsGourmet.Application.UseCases.Carrinho.AddCarrinhoItem;
@@ -38,3 +39,4 @@ public sealed class AddCarrinhoItemHandler(ICarrinhoRepository carrinho, IProdut
         return Result<bool>.Ok(true);
     }
 }
+

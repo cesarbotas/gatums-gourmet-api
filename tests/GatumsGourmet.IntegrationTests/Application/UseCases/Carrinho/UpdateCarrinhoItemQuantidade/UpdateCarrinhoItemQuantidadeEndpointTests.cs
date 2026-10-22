@@ -17,11 +17,16 @@ public class UpdateCarrinhoItemQuantidadeEndpointTests
     private async Task<Guid> CriarProdutoAsync(decimal preco)
     {
         var (admin, _) = await _factory.CreateAdminClientAsync();
+        var catResp = await admin.PostAsJsonAsync("/api/v1/categorias",
+            new { nome = $"Cat {Guid.NewGuid():N}", descricao = "d", ativo = true });
+        using var catDoc = JsonDocument.Parse(await catResp.Content.ReadAsStringAsync());
+        var categoriaId = catDoc.RootElement.GetProperty("id").GetInt64();
+
         var create = await admin.PostAsJsonAsync("/api/v1/produtos", new
         {
             nome = $"Item {Guid.NewGuid():N}",
             descricao = "d",
-            categoria = "Lanches",
+            categoriaId,
             preco,
             fotoUrl = "http://img/x.png",
             disponivel = true,

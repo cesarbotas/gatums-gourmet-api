@@ -1,9 +1,10 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Auth.Login;
 using GatumsGourmet.Domain.Entities.Auth;
 using GatumsGourmet.Domain.Enums.Auth;
-using GatumsGourmet.Domain.Interfaces;
+using GatumsGourmet.Domain.Services.Interfaces;
 using Moq;
 using Xunit;
 
@@ -78,3 +79,4 @@ public class LoginHandlerTests
         result.Data!.User.Role.Should().Be("cliente");
     }
 }
+

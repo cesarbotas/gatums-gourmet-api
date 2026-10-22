@@ -1,5 +1,6 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Pedidos.GetPedidoById;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Enums.Pedidos;
@@ -69,3 +70,4 @@ public class GetPedidoByIdHandlerTests
         result.Data!.Id.Should().Be(pedido.Id);
     }
 }
+

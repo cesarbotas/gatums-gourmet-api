@@ -1,5 +1,6 @@
-using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+﻿using FluentAssertions;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Carrinho.ClearCarrinho;
 using Moq;
 using Xunit;
@@ -28,3 +29,4 @@ public class ClearCarrinhoHandlerTests
         _carrinho.Verify(r => r.SaveChangesAsync(default), Times.Once);
     }
 }
+

@@ -160,7 +160,7 @@ jobs:
         run: |
           sleep 15
           for i in 1 2 3 4 5; do
-            STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://$VPS_HOST/api/v1/produtos/categorias || echo "000")
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://$VPS_HOST/api/v1/categorias || echo "000")
             echo "Tentativa $i — HTTP $STATUS"
             if [ "$STATUS" = "200" ]; then
               echo "✅ API saudável!"

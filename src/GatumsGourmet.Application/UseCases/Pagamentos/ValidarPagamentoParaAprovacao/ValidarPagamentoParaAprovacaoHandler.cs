@@ -1,5 +1,6 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Enums.Pagamentos;
 
 namespace GatumsGourmet.Application.UseCases.Pagamentos.ValidarPagamentoParaAprovacao;
@@ -19,3 +20,4 @@ public sealed class ValidarPagamentoParaAprovacaoHandler(ITransacaoRepository tr
         return Result<TransacaoResponse>.Ok(TransacaoMapper.Map(transacao));
     }
 }
+

@@ -1,5 +1,6 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Pedidos.ListPedidos;
 
 namespace GatumsGourmet.Application.UseCases.Pedidos.GetPedidoById;
@@ -19,3 +20,4 @@ public sealed class GetPedidoByIdHandler(IPedidoRepository pedidos) : IGetPedido
         return Result<PedidoResponse>.Ok(ListPedidosHandler.MapPedido(pedido));
     }
 }
+

@@ -1,5 +1,6 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Clientes.DeleteCliente;
 using GatumsGourmet.Domain.Entities.Clientes;
 using Moq;
@@ -41,3 +42,4 @@ public class DeleteClienteHandlerTests
         _clientes.Verify(r => r.DeleteAsync(It.IsAny<Cliente>(), default), Times.Never);
     }
 }
+

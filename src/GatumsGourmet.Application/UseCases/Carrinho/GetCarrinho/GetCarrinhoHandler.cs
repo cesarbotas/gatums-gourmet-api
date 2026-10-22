@@ -1,5 +1,6 @@
-using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+﻿using GatumsGourmet.Application.Common;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Carrinho.GetCarrinho;
 
@@ -20,3 +21,4 @@ public sealed class GetCarrinhoHandler(ICarrinhoRepository carrinho) : IGetCarri
         return Result<CarrinhoResponse>.Ok(new CarrinhoResponse(dtos, dtos.Sum(i => i.Preco * i.Quantidade)));
     }
 }
+

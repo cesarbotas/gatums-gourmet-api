@@ -1,5 +1,6 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Produtos.GetProdutoById;
 
@@ -10,6 +11,7 @@ public sealed class GetProdutoByIdHandler(IProdutoRepository produtos) : IGetPro
         var p = await produtos.GetByIdAsync(id, ct);
         if (p is null) return Result<ProdutoDetailResponse>.Fail("Produto não encontrado.");
         var itens = p.ComboItens.Select(i => new ComboItemResponse(i.ProdutoId, i.Quantidade)).ToList();
-        return Result<ProdutoDetailResponse>.Ok(new ProdutoDetailResponse(p.Id, p.Nome, p.Descricao, p.Categoria, p.Preco, p.FotoUrl, p.Disponivel, p.Tipo.ToString().ToLower(), itens));
+        return Result<ProdutoDetailResponse>.Ok(new ProdutoDetailResponse(p.Id, p.Nome, p.Descricao, p.CategoriaId, p.Categoria?.Nome ?? string.Empty, p.Preco, p.FotoUrl, p.Disponivel, p.Tipo.ToString().ToLower(), itens));
     }
 }
+

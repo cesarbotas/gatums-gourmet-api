@@ -54,7 +54,7 @@ jobs:
           echo "Aguardando build/deploy e wake do banco..."
           sleep 45
           for i in 1 2 3 4 5 6 7 8; do
-            S=$(curl -s -o /dev/null -w '%{http_code}' "${{ secrets.HML_API_URL }}/api/v1/produtos/categorias" || echo 000)
+            S=$(curl -s -o /dev/null -w '%{http_code}' "${{ secrets.HML_API_URL }}/api/v1/categorias" || echo 000)
             echo "tentativa $i -> HTTP $S"
             if [ "$S" = "200" ]; then echo "API HML OK"; exit 0; fi
             sleep 20

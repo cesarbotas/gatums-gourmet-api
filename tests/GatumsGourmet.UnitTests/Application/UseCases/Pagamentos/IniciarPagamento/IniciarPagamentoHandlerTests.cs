@@ -1,11 +1,12 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Pagamentos.IniciarPagamento;
 using GatumsGourmet.Domain.Entities.Pagamentos;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Enums.Pagamentos;
 using GatumsGourmet.Domain.Enums.Pedidos;
-using GatumsGourmet.Domain.Interfaces;
+using GatumsGourmet.Domain.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -103,3 +104,4 @@ public class IniciarPagamentoHandlerTests
         _pix.Verify(p => p.GerarAsync(It.IsAny<Guid>(), It.IsAny<decimal>(), default), Times.Never);
     }
 }
+

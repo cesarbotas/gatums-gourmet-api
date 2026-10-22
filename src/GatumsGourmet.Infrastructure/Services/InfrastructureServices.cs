@@ -1,9 +1,9 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Entities.Pagamentos;
 using GatumsGourmet.Domain.Enums.Pagamentos;
-using GatumsGourmet.Domain.Interfaces;
+using GatumsGourmet.Domain.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
@@ -47,7 +47,7 @@ public class JwtTokenGenerator(IConfiguration config) : IJwtTokenGenerator
     }
 }
 
-// Mock implementations for Development — replace with Stripe/PagSeguro in Production
+// Mock implementations for Development â€” replace with Stripe/PagSeguro in Production
 public class MockPaymentGateway : IPaymentGateway
 {
     public Task<CartaoResult> ProcessarAsync(Guid transacaoId, decimal valor, MetodoPagamento metodo, CartaoInput cartao, CancellationToken ct = default)
@@ -69,3 +69,4 @@ public class MockPixProvider : IPixProvider
     public Task<bool> ConfirmarAsync(Guid transacaoId, CancellationToken ct = default) =>
         Task.FromResult(true);
 }
+

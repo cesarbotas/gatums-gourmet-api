@@ -1,5 +1,6 @@
-using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+﻿using FluentAssertions;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Pedidos.ListPedidos;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Enums.Pedidos;
@@ -61,3 +62,4 @@ public class ListPedidosHandlerTests
         _pedidos.Verify(r => r.ListAsync(null, 1, 10, default), Times.Once);
     }
 }
+

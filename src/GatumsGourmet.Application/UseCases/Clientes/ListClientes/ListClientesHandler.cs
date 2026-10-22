@@ -1,5 +1,6 @@
-using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+﻿using GatumsGourmet.Application.Common;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Clientes.ListClientes;
 
@@ -30,3 +31,4 @@ public sealed class ListClientesHandler(IClienteRepository clientes) : IListClie
         return Result<PaginatedResponse<ClienteResponse>>.Ok(new PaginatedResponse<ClienteResponse>(dtos, total, request.Page, request.PageSize));
     }
 }
+

@@ -1,9 +1,9 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Entities.Vendas;
 using GatumsGourmet.Domain.Enums.Pedidos;
-using GatumsGourmet.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace GatumsGourmet.Application.UseCases.Pedidos.CheckoutPedido;
@@ -47,3 +47,4 @@ public sealed class CheckoutPedidoHandler(
         return Result<CheckoutPedidoResponse>.Ok(new CheckoutPedidoResponse(pedido.Id));
     }
 }
+

@@ -1,5 +1,6 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Produtos.DeleteProduto;
 using GatumsGourmet.Domain.Entities.Produtos;
 using GatumsGourmet.Domain.Enums.Produtos;
@@ -41,3 +42,4 @@ public class DeleteProdutoHandlerTests
         result.Error.Should().Be("Produto não encontrado.");
     }
 }
+

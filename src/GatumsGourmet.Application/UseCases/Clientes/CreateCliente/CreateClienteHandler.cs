@@ -1,8 +1,8 @@
-using FluentValidation;
+﻿using FluentValidation;
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Clientes;
-using GatumsGourmet.Domain.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Clientes.CreateCliente;
 
@@ -101,3 +101,4 @@ public sealed class CreateClienteHandler(IClienteRepository clientes, IClock clo
         return Result<CreateClienteResponse>.Ok(new CreateClienteResponse(cliente.Id));
     }
 }
+

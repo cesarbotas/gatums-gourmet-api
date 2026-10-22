@@ -38,9 +38,10 @@ Salvar o `token`. Usar em todas as chamadas seguintes como `Authorization: Beare
 
 #### 1.3 — Carregar categorias (para filtros)
 ```http
-GET /api/v1/produtos/categorias
+GET /api/v1/categorias?apenasAtivas=true
 ```
-→ 200 com `["Hambúrgueres", "Acompanhamentos", "Bebidas", ...]`
+→ 200 com `[{ "id": 1, "nome": "Hambúrgueres", "descricao": null, "ativo": true }, ...]`
+> Para filtrar produtos por categoria, use o `id`: `GET /api/v1/produtos?categoriaId=1`
 
 #### 1.4 — Listar produtos (catálogo)
 ```http
@@ -182,7 +183,7 @@ Content-Type: application/json
 {
   "nome": "Combo Família",
   "descricao": "2 hambúrgueres + batata + 2 refris",
-  "categoria": "Combos",
+  "categoriaId": 1,
   "preco": 89.90,
   "fotoUrl": "https://...",
   "disponivel": true,
@@ -191,12 +192,13 @@ Content-Type: application/json
 }
 ```
 → 201 `{ "id": "guid" }`
+> `categoriaId` deve referenciar uma categoria existente (crie via `POST /api/v1/categorias` ou liste com `GET /api/v1/categorias`).
 
 Atualizar:
 ```http
 PUT /api/v1/produtos/{id}
 Authorization: Bearer {adminToken}
-{ "id": "...", "nome": "...", "descricao": "...", "categoria": "...", "preco": 99.90, "fotoUrl": "...", "disponivel": true }
+{ "id": "...", "nome": "...", "descricao": "...", "categoriaId": 1, "preco": 99.90, "fotoUrl": "...", "disponivel": true }
 ```
 
 Excluir:
