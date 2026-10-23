@@ -323,9 +323,13 @@ O `docker-compose.production.yml` lê este `.env` e injeta as variáveis nos con
 | Porta | Serviço | Acesso |
 |-------|---------|--------|
 | 80 (VPS) → 8080 (container) | API .NET 10 | Público (internet) |
-| 5432 (container interno) | PostgreSQL | Apenas rede interna Docker |
+| 5432 (container interno) | PostgreSQL | Rede interna Docker + loopback da VPS |
+| 127.0.0.1:5433 → 5432 (container) | PostgreSQL | Apenas loopback da VPS (acesso externo só via túnel SSH) |
 
 A API responde em `http://<IP_DA_VPS>/api/v1/...`.
+
+> Acesso ao banco pelo DBeaver (via túnel SSH) e comandos de validação: ver
+> [`docs/Banco/`](Banco/README.md).
 
 ---
 
