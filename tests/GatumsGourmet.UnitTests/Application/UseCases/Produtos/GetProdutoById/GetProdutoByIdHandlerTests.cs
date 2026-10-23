@@ -1,5 +1,6 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Produtos.GetProdutoById;
 using GatumsGourmet.Domain.Entities.Produtos;
 using GatumsGourmet.Domain.Enums.Produtos;
@@ -20,7 +21,8 @@ public class GetProdutoByIdHandlerTests
     {
         var produto = new Produto
         {
-            Id = Guid.NewGuid(), Nome = "Combo", Descricao = "d", Categoria = "C",
+            Id = Guid.NewGuid(), Nome = "Combo", Descricao = "d", CategoriaId = 1,
+            Categoria = new GatumsGourmet.Domain.Entities.Produtos.Categoria { Id = 1, Nome = "C", Ativo = true },
             Preco = 89.90m, FotoUrl = "url", Disponivel = true, Tipo = TipoProduto.Combo,
             ComboItens = new List<ProdutoComboItem>
             {
@@ -54,7 +56,8 @@ public class GetProdutoByIdHandlerTests
     {
         var produto = new Produto
         {
-            Id = Guid.NewGuid(), Nome = "X", Descricao = "d", Categoria = "C",
+            Id = Guid.NewGuid(), Nome = "X", Descricao = "d", CategoriaId = 1,
+            Categoria = new GatumsGourmet.Domain.Entities.Produtos.Categoria { Id = 1, Nome = "C", Ativo = true },
             Preco = 10, FotoUrl = "u", Disponivel = true, Tipo = TipoProduto.Simples
         };
         _produtos.Setup(r => r.GetByIdAsync(produto.Id, default)).ReturnsAsync(produto);
@@ -65,3 +68,4 @@ public class GetProdutoByIdHandlerTests
         result.Data.Itens.Should().BeEmpty();
     }
 }
+

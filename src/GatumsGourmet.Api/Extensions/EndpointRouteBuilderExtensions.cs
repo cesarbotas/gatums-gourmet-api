@@ -10,6 +10,7 @@ public static class EndpointRouteBuilderExtensions
 
         AuthEndpoints.Map(v1.MapGroup("/auth").WithTags("Auth"));
         ProdutosEndpoints.Map(v1.MapGroup("/produtos").WithTags("Produtos"));
+        CategoriasEndpoints.Map(v1.MapGroup("/categorias").WithTags("Categorias"));
         ClientesEndpoints.Map(v1.MapGroup("/clientes").WithTags("Clientes"));
         CarrinhoEndpoints.Map(v1.MapGroup("/carrinho").WithTags("Carrinho"));
         PedidosEndpoints.Map(v1.MapGroup("/pedidos").WithTags("Pedidos"));

@@ -1,5 +1,6 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Pagamentos.ValidarPagamentoParaAprovacao;
 using GatumsGourmet.Domain.Entities.Pagamentos;
 using GatumsGourmet.Domain.Enums.Pagamentos;
@@ -56,3 +57,4 @@ public class ValidarPagamentoParaAprovacaoHandlerTests
         result.Data!.Status.Should().Be("aprovado");
     }
 }
+

@@ -1,6 +1,6 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
-using GatumsGourmet.Domain.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Auth.Login;
 
@@ -17,3 +17,4 @@ public sealed class LoginHandler(IUsuarioRepository usuarios, IPasswordHasher ha
         return Result<LoginResponse>.Ok(new LoginResponse(token, dto));
     }
 }
+

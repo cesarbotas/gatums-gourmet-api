@@ -47,7 +47,7 @@ public class ValidatorsTests
     [Fact]
     public void CreateProdutoValidator_PrecoZero_Falha()
     {
-        var req = new CreateProdutoRequest("Nome", "d", "Cat", 0m, "url", true, TipoProduto.Simples, null);
+        var req = new CreateProdutoRequest("Nome", "d", 1, 0m, "url", true, TipoProduto.Simples, null);
         var r = new CreateProdutoValidator().Validate(req);
         r.IsValid.Should().BeFalse();
     }
@@ -55,7 +55,7 @@ public class ValidatorsTests
     [Fact]
     public void CreateProdutoValidator_Valido_Passa()
     {
-        var req = new CreateProdutoRequest("Nome", "d", "Cat", 10m, "url", true, TipoProduto.Simples, null);
+        var req = new CreateProdutoRequest("Nome", "d", 1, 10m, "url", true, TipoProduto.Simples, null);
         var r = new CreateProdutoValidator().Validate(req);
         r.IsValid.Should().BeTrue();
     }

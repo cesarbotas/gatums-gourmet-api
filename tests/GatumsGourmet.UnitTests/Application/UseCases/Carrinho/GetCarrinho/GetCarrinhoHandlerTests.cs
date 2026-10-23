@@ -1,5 +1,6 @@
-using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+﻿using FluentAssertions;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Carrinho.GetCarrinho;
 using GatumsGourmet.Domain.Entities.Carrinho;
 using Moq;
@@ -45,3 +46,4 @@ public class GetCarrinhoHandlerTests
         result.Data.Total.Should().Be(0m);
     }
 }
+

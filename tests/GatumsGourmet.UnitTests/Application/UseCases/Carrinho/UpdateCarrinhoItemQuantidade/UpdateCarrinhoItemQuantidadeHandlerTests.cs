@@ -1,5 +1,6 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Carrinho.UpdateCarrinhoItemQuantidade;
 using GatumsGourmet.Domain.Entities.Carrinho;
 using Moq;
@@ -63,3 +64,4 @@ public class UpdateCarrinhoItemQuantidadeHandlerTests
         _carrinho.Verify(r => r.RemoveAsync(item, default), Times.Once);
     }
 }
+

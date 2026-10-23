@@ -1,9 +1,10 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Pagamentos.ProcessarPagamentoCartao;
 using GatumsGourmet.Domain.Entities.Pagamentos;
 using GatumsGourmet.Domain.Enums.Pagamentos;
-using GatumsGourmet.Domain.Interfaces;
+using GatumsGourmet.Domain.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -90,3 +91,4 @@ public class ProcessarPagamentoCartaoHandlerTests
         transacao.MensagemErro.Should().Be("Saldo insuficiente");
     }
 }
+

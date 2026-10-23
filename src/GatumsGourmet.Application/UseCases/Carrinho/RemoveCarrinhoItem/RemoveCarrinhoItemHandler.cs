@@ -1,5 +1,6 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Carrinho.RemoveCarrinhoItem;
 
@@ -19,3 +20,4 @@ public sealed class RemoveCarrinhoItemHandler(ICarrinhoRepository carrinho) : IR
         return Result<bool>.Ok(true);
     }
 }
+

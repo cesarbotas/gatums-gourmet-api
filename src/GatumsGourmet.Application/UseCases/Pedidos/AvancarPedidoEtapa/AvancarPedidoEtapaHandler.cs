@@ -1,9 +1,9 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Enums.Pedidos;
 using GatumsGourmet.Domain.Exceptions;
-using GatumsGourmet.Domain.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Pedidos.AvancarPedidoEtapa;
 
@@ -33,3 +33,4 @@ public sealed class AvancarPedidoEtapaHandler(IPedidoRepository pedidos, IPedido
         return Result<bool>.Ok(true);
     }
 }
+

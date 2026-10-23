@@ -1,4 +1,4 @@
-using GatumsGourmet.Domain.Interfaces;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -156,3 +156,4 @@ public static class DatabaseExtensions
         return false;
     }
 }
+

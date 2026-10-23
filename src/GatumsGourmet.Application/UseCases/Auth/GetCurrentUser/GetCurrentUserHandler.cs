@@ -1,5 +1,6 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Auth.GetCurrentUser;
 
@@ -15,3 +16,4 @@ public sealed class GetCurrentUserHandler(IUsuarioRepository usuarios) : IGetCur
             new GetCurrentUserResponse(usuario.Id, usuario.Nome, usuario.Email, usuario.Role.ToString().ToLower()));
     }
 }
+

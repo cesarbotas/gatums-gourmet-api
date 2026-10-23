@@ -1,5 +1,6 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Pagamentos.ConsultarStatusPagamento;
 using GatumsGourmet.Domain.Entities.Pagamentos;
 using GatumsGourmet.Domain.Enums.Pagamentos;
@@ -44,3 +45,4 @@ public class ConsultarStatusPagamentoHandlerTests
         result.Data.Metodo.Should().Be("pix");
     }
 }
+

@@ -1,4 +1,5 @@
-using GatumsGourmet.Application.Interfaces;
+﻿using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Pagamentos;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,3 +18,4 @@ public class TransacaoRepository(GatumsDbContext db) : ITransacaoRepository
 
     public Task SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);
 }
+

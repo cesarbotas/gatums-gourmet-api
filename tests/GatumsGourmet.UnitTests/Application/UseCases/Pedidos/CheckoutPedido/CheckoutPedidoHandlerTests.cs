@@ -1,11 +1,12 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Pedidos.CheckoutPedido;
 using GatumsGourmet.Domain.Entities.Carrinho;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Entities.Vendas;
 using GatumsGourmet.Domain.Enums.Pedidos;
-using GatumsGourmet.Domain.Interfaces;
+using GatumsGourmet.Domain.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -75,3 +76,4 @@ public class CheckoutPedidoHandlerTests
         result.Data!.PedidoId.Should().Be(criado.Id);
     }
 }
+

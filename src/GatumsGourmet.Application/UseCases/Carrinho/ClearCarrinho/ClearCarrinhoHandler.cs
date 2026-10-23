@@ -1,5 +1,6 @@
-using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+﻿using GatumsGourmet.Application.Common;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Carrinho.ClearCarrinho;
 
@@ -17,3 +18,4 @@ public sealed class ClearCarrinhoHandler(ICarrinhoRepository carrinho) : IClearC
         return Result<bool>.Ok(true);
     }
 }
+

@@ -1,4 +1,5 @@
-using GatumsGourmet.Application.Interfaces;
+﻿using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Auth;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,3 +19,4 @@ public class UsuarioRepository(GatumsDbContext db) : IUsuarioRepository
     public Task SaveChangesAsync(CancellationToken ct = default) =>
         db.SaveChangesAsync(ct);
 }
+

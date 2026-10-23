@@ -1,5 +1,5 @@
-using GatumsGourmet.Application.Interfaces;
-using GatumsGourmet.Domain.Interfaces;
+﻿using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Services;
 using GatumsGourmet.Infrastructure.Data;
 using GatumsGourmet.Infrastructure.Data.Repositories.Auth;
@@ -25,6 +25,7 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
         services.AddScoped<IProdutoRepository, ProdutoRepository>();
+        services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<IClienteRepository, ClienteRepository>();
         services.AddScoped<ICarrinhoRepository, CarrinhoRepository>();
         services.AddScoped<IPedidoRepository, PedidoRepository>();
@@ -42,3 +43,4 @@ public static class InfrastructureServiceCollectionExtensions
         return services;
     }
 }
+

@@ -1,7 +1,9 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Application.Common;
+using GatumsGourmet.Domain.Entities.Pagamentos;
 using GatumsGourmet.Domain.Enums.Pagamentos;
-using GatumsGourmet.Domain.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace GatumsGourmet.Application.UseCases.Pagamentos.ProcessarPagamentoCartao;
@@ -39,3 +41,4 @@ public sealed class ProcessarPagamentoCartaoHandler(
         return Result<TransacaoResponse>.Ok(TransacaoMapper.Map(transacao));
     }
 }
+

@@ -1,4 +1,5 @@
-using GatumsGourmet.Application.Interfaces;
+﻿using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Clientes;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,3 +30,4 @@ public class ClienteRepository(GatumsDbContext db) : IClienteRepository
 
     public Task SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);
 }
+

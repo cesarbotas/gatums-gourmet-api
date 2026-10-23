@@ -1,4 +1,5 @@
-using GatumsGourmet.Application.Interfaces;
+﻿using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,3 +24,4 @@ public class PedidoRepository(GatumsDbContext db) : IPedidoRepository
 
     public Task SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);
 }
+

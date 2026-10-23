@@ -1,5 +1,6 @@
-using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+﻿using GatumsGourmet.Application.Common;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Pedidos;
 
 namespace GatumsGourmet.Application.UseCases.Pedidos.ListPedidos;
@@ -28,3 +29,4 @@ public sealed class ListPedidosHandler(IPedidoRepository pedidos) : IListPedidos
         p.Timeline.OrderBy(t => t.Em).Select(t => new TimelineEventoResponse(t.Etapa.ToString().ToLower(), t.Em, t.Por.ToString().ToLower(), t.Observacao, t.EntregaTipo?.ToString().ToLower())).ToList(),
         p.Pagamento is null ? null : new PedidoPagamentoResponse(p.Pagamento.TransacaoId, p.Pagamento.Resumo, p.Pagamento.AprovadoEm));
 }
+

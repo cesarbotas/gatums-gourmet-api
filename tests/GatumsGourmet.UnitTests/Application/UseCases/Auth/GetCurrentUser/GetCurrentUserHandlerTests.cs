@@ -1,5 +1,6 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Auth.GetCurrentUser;
 using GatumsGourmet.Domain.Entities.Auth;
 using GatumsGourmet.Domain.Enums.Auth;
@@ -54,3 +55,4 @@ public class GetCurrentUserHandlerTests
         result.Data!.Role.Should().Be("admin");
     }
 }
+

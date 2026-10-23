@@ -1,8 +1,8 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Auth;
 using GatumsGourmet.Domain.Enums.Auth;
-using GatumsGourmet.Domain.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Auth.RegisterUser;
 
@@ -30,3 +30,4 @@ public sealed class RegisterUserHandler(IUsuarioRepository usuarios, IPasswordHa
         return Result<RegisterUserResponse>.Ok(new RegisterUserResponse(usuario.Id, usuario.Nome, usuario.Email, "cliente"));
     }
 }
+

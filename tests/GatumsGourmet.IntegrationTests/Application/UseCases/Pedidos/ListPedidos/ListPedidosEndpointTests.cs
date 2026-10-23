@@ -35,11 +35,11 @@ public class ListPedidosEndpointTests
     {
         var (cliente, pedidoId) = await CriarPedidoViaHttpAsync();
 
-        var resp = await cliente.GetAsync("/api/v1/pedidos?page=1&pageSize=50");
+        var resp = await cliente.GetAsync("/api/v1/pedidos?pagina=1&tamanho=50");
 
         resp.IsSuccessStatusCode.Should().BeTrue();
         using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
-        var ids = doc.RootElement.GetProperty("items").EnumerateArray()
+        var ids = doc.RootElement.GetProperty("itens").EnumerateArray()
             .Select(i => i.GetProperty("id").GetGuid());
         ids.Should().Contain(pedidoId);
     }
@@ -49,7 +49,7 @@ public class ListPedidosEndpointTests
     {
         var (admin, _) = await _factory.CreateAdminClientAsync();
 
-        var resp = await admin.GetAsync("/api/v1/pedidos?page=1&pageSize=10");
+        var resp = await admin.GetAsync("/api/v1/pedidos?pagina=1&tamanho=10");
 
         resp.IsSuccessStatusCode.Should().BeTrue();
     }
@@ -57,11 +57,16 @@ public class ListPedidosEndpointTests
     private async Task<(HttpClient Cliente, Guid PedidoId)> CriarPedidoViaHttpAsync()
     {
         var (admin, _) = await _factory.CreateAdminClientAsync();
+        var catResp = await admin.PostAsJsonAsync("/api/v1/categorias",
+            new { nome = $"Cat {Guid.NewGuid():N}", descricao = "d", ativo = true });
+        using var catDoc = JsonDocument.Parse(await catResp.Content.ReadAsStringAsync());
+        var categoriaId = catDoc.RootElement.GetProperty("id").GetInt64();
+
         var createProduto = await admin.PostAsJsonAsync("/api/v1/produtos", new
         {
             nome = $"Item {Guid.NewGuid():N}",
             descricao = "d",
-            categoria = "Combos",
+            categoriaId,
             preco = 30m,
             fotoUrl = "http://img/x.png",
             disponivel = true,

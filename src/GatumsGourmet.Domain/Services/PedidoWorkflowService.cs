@@ -1,6 +1,6 @@
 using GatumsGourmet.Domain.Enums.Pedidos;
 using GatumsGourmet.Domain.Exceptions;
-using GatumsGourmet.Domain.Interfaces;
+using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Domain.Services;
 
@@ -30,3 +30,4 @@ public class PedidoWorkflowService : IPedidoWorkflowService
             throw new BusinessRuleException($"Apenas '{match.Actor}' pode avançar para '{proxima}'.");
     }
 }
+

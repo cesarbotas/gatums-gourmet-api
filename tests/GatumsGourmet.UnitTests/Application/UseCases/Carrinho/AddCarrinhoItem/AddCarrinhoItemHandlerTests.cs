@@ -1,5 +1,6 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Carrinho.AddCarrinhoItem;
 using GatumsGourmet.Domain.Entities.Carrinho;
 using GatumsGourmet.Domain.Entities.Produtos;
@@ -19,7 +20,7 @@ public class AddCarrinhoItemHandlerTests
 
     private static Produto CreateProduto(Guid id) => new()
     {
-        Id = id, Nome = "Pizza", Descricao = "d", Categoria = "C",
+        Id = id, Nome = "Pizza", Descricao = "d", CategoriaId = 1,
         Preco = 40m, FotoUrl = "foto", Disponivel = true, Tipo = TipoProduto.Simples
     };
 
@@ -77,3 +78,4 @@ public class AddCarrinhoItemHandlerTests
         _carrinho.Verify(r => r.AddAsync(It.IsAny<CarrinhoItem>(), default), Times.Never);
     }
 }
+
