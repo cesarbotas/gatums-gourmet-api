@@ -7,11 +7,13 @@ namespace GatumsGourmet.Infrastructure.Data.Repositories.Produtos;
 
 public class CategoriaRepository(GatumsDbContext db) : ICategoriaRepository
 {
-    public async Task<IReadOnlyList<Categoria>> ListAsync(bool? apenasAtivas, CancellationToken ct = default)
+    public async Task<(IReadOnlyList<Categoria> Items, int Total)> ListAsync(int page, int pageSize, bool? apenasAtivas, CancellationToken ct = default)
     {
         var q = db.Categorias.AsNoTracking().AsQueryable();
         if (apenasAtivas == true) q = q.Where(c => c.Ativo);
-        return await q.OrderBy(c => c.Nome).ToListAsync(ct);
+        var total = await q.CountAsync(ct);
+        var items = await q.OrderBy(c => c.Nome).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+        return (items, total);
     }
 
     public Task<Categoria?> GetByIdAsync(long id, CancellationToken ct = default) =>

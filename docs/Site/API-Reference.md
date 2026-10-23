@@ -52,19 +52,19 @@ Base URL: `{API_BASE}/api/v1`
 
   | Param | Tipo | Default | Descrição |
   |-------|------|---------|-----------|
-  | `page` | int | 1 | Página |
-  | `pageSize` | int | 10 | Itens por página |
+  | `pagina` | int | 1 | Página (1-based) |
+  | `tamanho` | int | 10 | Itens por página |
   | `search` | string? | — | Busca no nome/descrição |
   | `categoriaId` | number? | — | Filtro por id da categoria |
   | `tipo` | string? | — | `simples` ou `combo` (case-insensitive) |
   | `disponivel` | bool? | — | Filtra disponibilidade |
 
-  Exemplo: `GET /produtos?page=1&pageSize=20&categoriaId=1&disponivel=true`
+  Exemplo: `GET /produtos?pagina=1&tamanho=20&categoriaId=1&disponivel=true`
 
 - **200**: `PaginatedResponse<ProdutoSummaryResponse>`
   ```json
   {
-    "items": [
+    "itens": [
       {
         "id": "guid",
         "nome": "Hambúrguer Artesanal",
@@ -77,9 +77,12 @@ Base URL: `{API_BASE}/api/v1`
         "tipo": "simples"
       }
     ],
-    "total": 25,
-    "page": 1,
-    "pageSize": 10
+    "paginaAtual": 1,
+    "tamanhoPagina": 10,
+    "totalRegistros": 25,
+    "totalPaginas": 3,
+    "temPaginaAnterior": false,
+    "temProximaPagina": true
   }
   ```
 
@@ -161,14 +164,24 @@ Entidade de catálogo das categorias de produto. `id` é um inteiro (number, lon
 
   | Param | Tipo | Default | Descrição |
   |-------|------|---------|-----------|
+  | `pagina` | int | 1 | Página (1-based) |
+  | `tamanho` | int | 10 | Itens por página |
   | `apenasAtivas` | bool? | — | `true` traz só as categorias ativas (uso típico do catálogo) |
 
-- **200**: array de `CategoriaResponse`
+- **200**: `PaginatedResponse<CategoriaResponse>`
   ```json
-  [
-    { "id": 1, "nome": "Hambúrgueres", "descricao": "Lanches artesanais", "ativo": true },
-    { "id": 2, "nome": "Bebidas", "descricao": null, "ativo": true }
-  ]
+  {
+    "itens": [
+      { "id": 1, "nome": "Hambúrgueres", "descricao": "Lanches artesanais", "ativo": true },
+      { "id": 2, "nome": "Bebidas", "descricao": null, "ativo": true }
+    ],
+    "paginaAtual": 1,
+    "tamanhoPagina": 10,
+    "totalRegistros": 2,
+    "totalPaginas": 1,
+    "temPaginaAnterior": false,
+    "temProximaPagina": false
+  }
   ```
 
 ### GET /categorias/{id}
@@ -209,11 +222,11 @@ Entidade de catálogo das categorias de produto. `id` é um inteiro (number, lon
 
 ### GET /clientes
 - **Auth**: `AdminOnly`
-- **Query params**: `page` (int, default 1), `pageSize` (int, default 10), `search` (string?)
+- **Query params**: `pagina` (int, default 1), `tamanho` (int, default 10), `search` (string?)
 - **200**: `PaginatedResponse<ClienteResponse>`
   ```json
   {
-    "items": [
+    "itens": [
       {
         "id": "guid",
         "nome": "string",
@@ -233,9 +246,12 @@ Entidade de catálogo das categorias de produto. `id` é um inteiro (number, lon
         "criadoEm": "2026-10-20T12:00:00Z"
       }
     ],
-    "total": 10,
-    "page": 1,
-    "pageSize": 10
+    "paginaAtual": 1,
+    "tamanhoPagina": 10,
+    "totalRegistros": 10,
+    "totalPaginas": 1,
+    "temPaginaAnterior": false,
+    "temProximaPagina": false
   }
   ```
 
@@ -331,7 +347,7 @@ Entidade de catálogo das categorias de produto. `id` é um inteiro (number, lon
 
 ### GET /pedidos
 - **Auth**: autenticado (qualquer role)
-- **Query params**: `page` (int), `pageSize` (int)
+- **Query params**: `pagina` (int, default 1), `tamanho` (int, default 10)
 - **Comportamento**: admin vê todos; cliente vê apenas os próprios (filtro automático por userId do token)
 - **200**: `PaginatedResponse<PedidoResponse>` (ver [Modelos-de-Dados.md](Modelos-de-Dados.md#pedidos))
 

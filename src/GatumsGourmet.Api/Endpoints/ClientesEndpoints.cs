@@ -11,8 +11,8 @@ public static class ClientesEndpoints
 {
     public static void Map(RouteGroupBuilder group)
     {
-        group.MapGet("/", async ([FromQuery] int page, [FromQuery] int pageSize, [FromQuery] string? search, IListClientesHandler handler, CancellationToken ct) =>
-            (await handler.Handle(new ListClientesRequest(page < 1 ? 1 : page, pageSize < 1 ? 10 : pageSize, search), ct)).ToHttpResult())
+        group.MapGet("/", async ([FromQuery] int pagina, [FromQuery] int tamanho, [FromQuery] string? search, IListClientesHandler handler, CancellationToken ct) =>
+            (await handler.Handle(new ListClientesRequest(pagina < 1 ? 1 : pagina, tamanho < 1 ? 10 : tamanho, search), ct)).ToHttpResult())
             .RequireAuthorization("AdminOnly");
 
         group.MapPost("/", async ([FromBody] CreateClienteRequest request, ICreateClienteHandler handler, CancellationToken ct) =>

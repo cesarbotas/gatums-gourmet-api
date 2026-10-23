@@ -45,7 +45,7 @@ GET /api/v1/categorias?apenasAtivas=true
 
 #### 1.4 — Listar produtos (catálogo)
 ```http
-GET /api/v1/produtos?page=1&pageSize=12&disponivel=true
+GET /api/v1/produtos?pagina=1&tamanho=12&disponivel=true
 ```
 → 200 com `PaginatedResponse<ProdutoSummaryResponse>`
 
@@ -150,7 +150,7 @@ Content-Type: application/json
 
 #### 1.15 — Ver meus pedidos
 ```http
-GET /api/v1/pedidos?page=1&pageSize=10
+GET /api/v1/pedidos?pagina=1&tamanho=10
 Authorization: Bearer {token}
 ```
 → 200 com `PaginatedResponse<PedidoResponse>` (cliente vê apenas os próprios)

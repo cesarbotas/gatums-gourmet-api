@@ -44,9 +44,9 @@ public class ListPedidosHandlerTests
         var result = await _handler.Handle(usuarioId, new ListPedidosRequest(1, 10));
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Total.Should().Be(1);
-        result.Data.Items[0].StatusAtual.Should().Be("criado");
-        result.Data.Items[0].Timeline[0].Por.Should().Be("cliente");
+        result.Data!.TotalRegistros.Should().Be(1);
+        result.Data.Itens[0].StatusAtual.Should().Be("criado");
+        result.Data.Itens[0].Timeline[0].Por.Should().Be("cliente");
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class ListPedidosHandlerTests
         var result = await _handler.Handle(null, new ListPedidosRequest());
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Items.Should().BeEmpty();
+        result.Data!.Itens.Should().BeEmpty();
         _pedidos.Verify(r => r.ListAsync(null, 1, 10, default), Times.Once);
     }
 }
