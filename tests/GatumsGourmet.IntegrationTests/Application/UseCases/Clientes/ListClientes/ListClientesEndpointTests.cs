@@ -58,7 +58,7 @@ public class ListClientesEndpointTests
         // Garante ao menos um cliente criado via POST antes de listar.
         await admin.PostAsJsonAsync("/api/v1/clientes", NovoCliente());
 
-        var resp = await admin.GetAsync("/api/v1/clientes?page=1&pageSize=50");
+        var resp = await admin.GetAsync("/api/v1/clientes?pagina=1&tamanho=50");
 
         resp.IsSuccessStatusCode.Should().BeTrue();
     }

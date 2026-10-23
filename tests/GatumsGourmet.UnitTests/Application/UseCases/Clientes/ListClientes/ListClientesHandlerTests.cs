@@ -1,5 +1,6 @@
-using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+﻿using FluentAssertions;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Clientes.ListClientes;
 using GatumsGourmet.Domain.Entities.Clientes;
 using Moq;
@@ -44,10 +45,10 @@ public class ListClientesHandlerTests
         var result = await _handler.Handle(new ListClientesRequest(1, 10, null));
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Total.Should().Be(1);
-        result.Data.Items.Should().HaveCount(1);
-        result.Data.Items[0].Endereco.Cidade.Should().Be("SP");
-        result.Data.Items[0].Email.Should().Be("cliente@x.com");
+        result.Data!.TotalRegistros.Should().Be(1);
+        result.Data.Itens.Should().HaveCount(1);
+        result.Data.Itens[0].Endereco.Cidade.Should().Be("SP");
+        result.Data.Itens[0].Email.Should().Be("cliente@x.com");
     }
 
     [Fact]
@@ -59,7 +60,8 @@ public class ListClientesHandlerTests
         var result = await _handler.Handle(new ListClientesRequest(2, 5, "joao"));
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Items.Should().BeEmpty();
+        result.Data!.Itens.Should().BeEmpty();
         _clientes.Verify(r => r.ListAsync(2, 5, "joao", default), Times.Once);
     }
 }
+

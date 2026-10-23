@@ -1,7 +1,7 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Enums.Pagamentos;
-using GatumsGourmet.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace GatumsGourmet.Application.UseCases.Pagamentos.ConfirmarPagamentoPix;
@@ -33,3 +33,4 @@ public sealed class ConfirmarPagamentoPixHandler(
         return Result<TransacaoResponse>.Ok(TransacaoMapper.Map(transacao));
     }
 }
+

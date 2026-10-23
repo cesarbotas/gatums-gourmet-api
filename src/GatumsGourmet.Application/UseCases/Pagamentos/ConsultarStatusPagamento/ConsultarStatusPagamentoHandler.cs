@@ -1,5 +1,6 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Pagamentos.ConsultarStatusPagamento;
 
@@ -17,3 +18,4 @@ public sealed class ConsultarStatusPagamentoHandler(ITransacaoRepository transac
         return Result<TransacaoResponse>.Ok(TransacaoMapper.Map(transacao));
     }
 }
+

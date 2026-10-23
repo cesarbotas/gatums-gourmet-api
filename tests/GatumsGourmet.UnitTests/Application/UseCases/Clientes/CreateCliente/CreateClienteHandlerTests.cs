@@ -1,8 +1,9 @@
-using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+﻿using FluentAssertions;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Clientes.CreateCliente;
 using GatumsGourmet.Domain.Entities.Clientes;
-using GatumsGourmet.Domain.Interfaces;
+using GatumsGourmet.Domain.Services.Interfaces;
 using Moq;
 using Xunit;
 
@@ -45,3 +46,4 @@ public class CreateClienteHandlerTests
         _clientes.Verify(r => r.SaveChangesAsync(default), Times.Once);
     }
 }
+

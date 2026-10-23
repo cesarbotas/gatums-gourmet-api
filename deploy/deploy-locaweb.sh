@@ -60,7 +60,7 @@ else
 fi
 
 # Health check (endpoint público)
-API_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/api/v1/produtos/categorias 2>/dev/null || echo "000")
+API_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/api/v1/categorias 2>/dev/null || echo "000")
 if [ "$API_STATUS" = "200" ]; then
     echo -e "${GREEN}Health check OK (HTTP 200) ✅${NC}"
 else
@@ -77,7 +77,7 @@ echo -e "${GREEN}  Deploy concluído! 🚀${NC}"
 echo "=========================================="
 echo ""
 echo "  🌐 API:        http://${SERVER_IP}/api/v1"
-echo "  🏥 Health:     http://${SERVER_IP}/api/v1/produtos/categorias"
+echo "  🏥 Health:     http://${SERVER_IP}/api/v1/categorias"
 echo "  📦 PostgreSQL: localhost:5432 (interno)"
 echo ""
 echo "  📋 Comandos úteis:"

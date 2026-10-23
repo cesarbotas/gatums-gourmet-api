@@ -15,11 +15,12 @@ public class ListProdutosEndpointTests
     [Fact]
     public async Task Listar_Publico_RetornaPaginado()
     {
-        var resp = await _client.GetAsync("/api/v1/produtos?page=1&pageSize=10");
+        var resp = await _client.GetAsync("/api/v1/produtos?pagina=1&tamanho=10");
 
         resp.IsSuccessStatusCode.Should().BeTrue();
         using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
-        doc.RootElement.TryGetProperty("items", out _).Should().BeTrue();
-        doc.RootElement.TryGetProperty("total", out _).Should().BeTrue();
+        doc.RootElement.TryGetProperty("itens", out _).Should().BeTrue();
+        doc.RootElement.TryGetProperty("totalRegistros", out _).Should().BeTrue();
+        doc.RootElement.TryGetProperty("totalPaginas", out _).Should().BeTrue();
     }
 }

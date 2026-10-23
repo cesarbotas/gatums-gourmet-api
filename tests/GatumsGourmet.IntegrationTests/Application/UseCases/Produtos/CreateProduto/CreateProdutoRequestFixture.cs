@@ -6,11 +6,11 @@ namespace GatumsGourmet.IntegrationTests.Application.UseCases.Produtos.CreatePro
 /// </summary>
 public static class CreateProdutoRequestFixture
 {
-    public static object Simples() => new
+    public static object Simples(long categoriaId) => new
     {
         nome = $"Pizza {Guid.NewGuid():N}",
         descricao = "Deliciosa",
-        categoria = "Pizzas",
+        categoriaId,
         preco = 49.90m,
         fotoUrl = "http://img/pizza.png",
         disponivel = true,

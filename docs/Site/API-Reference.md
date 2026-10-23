@@ -41,12 +41,10 @@ Base URL: `{API_BASE}/api/v1`
 
 ## Produtos
 
-### GET /produtos/categorias
-- **Auth**: público
-- **200**: array de strings
-  ```json
-  ["Hambúrgueres", "Acompanhamentos", "Bebidas"]
-  ```
+> **Mudança de contrato:** categoria deixou de ser texto livre e passou a ser uma
+> entidade própria (ver seção [Categorias](#categorias)). Produtos referenciam a
+> categoria por `categoriaId` (number). O antigo `GET /produtos/categorias` foi
+> **removido** — use `GET /categorias`.
 
 ### GET /produtos
 - **Auth**: público
@@ -54,33 +52,37 @@ Base URL: `{API_BASE}/api/v1`
 
   | Param | Tipo | Default | Descrição |
   |-------|------|---------|-----------|
-  | `page` | int | 1 | Página |
-  | `pageSize` | int | 10 | Itens por página |
+  | `pagina` | int | 1 | Página (1-based) |
+  | `tamanho` | int | 10 | Itens por página |
   | `search` | string? | — | Busca no nome/descrição |
-  | `categoria` | string? | — | Filtro por categoria |
+  | `categoriaId` | number? | — | Filtro por id da categoria |
   | `tipo` | string? | — | `simples` ou `combo` (case-insensitive) |
   | `disponivel` | bool? | — | Filtra disponibilidade |
 
-  Exemplo: `GET /produtos?page=1&pageSize=20&categoria=Hambúrgueres&disponivel=true`
+  Exemplo: `GET /produtos?pagina=1&tamanho=20&categoriaId=1&disponivel=true`
 
 - **200**: `PaginatedResponse<ProdutoSummaryResponse>`
   ```json
   {
-    "items": [
+    "itens": [
       {
         "id": "guid",
         "nome": "Hambúrguer Artesanal",
         "descricao": "Blend 180g, queijo cheddar...",
-        "categoria": "Hambúrgueres",
+        "categoriaId": 1,
+        "categoriaNome": "Hambúrgueres",
         "preco": 32.90,
         "fotoUrl": "https://...",
         "disponivel": true,
         "tipo": "simples"
       }
     ],
-    "total": 25,
-    "page": 1,
-    "pageSize": 10
+    "paginaAtual": 1,
+    "tamanhoPagina": 10,
+    "totalRegistros": 25,
+    "totalPaginas": 3,
+    "temPaginaAnterior": false,
+    "temProximaPagina": true
   }
   ```
 
@@ -93,7 +95,8 @@ Base URL: `{API_BASE}/api/v1`
     "id": "guid",
     "nome": "string",
     "descricao": "string",
-    "categoria": "string",
+    "categoriaId": 1,
+    "categoriaNome": "string",
     "preco": 89.90,
     "fotoUrl": "string",
     "disponivel": true,
@@ -112,7 +115,7 @@ Base URL: `{API_BASE}/api/v1`
   {
     "nome": "string",
     "descricao": "string",
-    "categoria": "string",
+    "categoriaId": 1,
     "preco": 89.90,
     "fotoUrl": "string",
     "disponivel": true,
@@ -122,6 +125,7 @@ Base URL: `{API_BASE}/api/v1`
     ]
   }
   ```
+  > `categoriaId` (number): id de uma categoria existente (ver `GET /categorias`). Se a categoria não existir → `400 "Categoria não encontrada."`
   > `tipo`: `0` = Simples, `1` = Combo (inteiros). Combo exige `itens[]` não vazio.
 - **201**: `CreateProdutoResponse` → `{ "id": "guid" }`
 
@@ -134,13 +138,14 @@ Base URL: `{API_BASE}/api/v1`
     "id": "guid",
     "nome": "string",
     "descricao": "string",
-    "categoria": "string",
+    "categoriaId": 1,
     "preco": 94.90,
     "fotoUrl": "string",
     "disponivel": true
   }
   ```
   > O `id` do body é sobrescrito pelo `id` da rota. Não inclui `tipo`/`itens`.
+  > `categoriaId` deve referenciar categoria existente, senão `400 "Categoria não encontrada."`
 - **200**: `true` (boolean)
 
 ### DELETE /produtos/{id}
@@ -149,15 +154,79 @@ Base URL: `{API_BASE}/api/v1`
 
 ---
 
+## Categorias
+
+Entidade de catálogo das categorias de produto. `id` é um inteiro (number, long).
+
+### GET /categorias
+- **Auth**: público
+- **Query params**:
+
+  | Param | Tipo | Default | Descrição |
+  |-------|------|---------|-----------|
+  | `pagina` | int | 1 | Página (1-based) |
+  | `tamanho` | int | 10 | Itens por página |
+  | `apenasAtivas` | bool? | — | `true` traz só as categorias ativas (uso típico do catálogo) |
+
+- **200**: `PaginatedResponse<CategoriaResponse>`
+  ```json
+  {
+    "itens": [
+      { "id": 1, "nome": "Hambúrgueres", "descricao": "Lanches artesanais", "ativo": true },
+      { "id": 2, "nome": "Bebidas", "descricao": null, "ativo": true }
+    ],
+    "paginaAtual": 1,
+    "tamanhoPagina": 10,
+    "totalRegistros": 2,
+    "totalPaginas": 1,
+    "temPaginaAnterior": false,
+    "temProximaPagina": false
+  }
+  ```
+
+### GET /categorias/{id}
+- **Auth**: público
+- **Route**: `id` (number)
+- **200**: `CategoriaResponse`
+- **400**: `"Categoria não encontrada."`
+
+### POST /categorias
+- **Auth**: `AdminOnly`
+- **Body**: `CreateCategoriaRequest`
+  ```json
+  { "nome": "string", "descricao": "string|null", "ativo": true }
+  ```
+- **201**: `CreateCategoriaResponse` → `{ "id": 1 }`
+- **400**: `"Já existe uma categoria com este nome."` (nome é único)
+
+### PUT /categorias/{id}
+- **Auth**: `AdminOnly`
+- **Route**: `id` (number)
+- **Body**: `UpdateCategoriaRequest`
+  ```json
+  { "id": 1, "nome": "string", "descricao": "string|null", "ativo": true }
+  ```
+  > O `id` do body é sobrescrito pelo `id` da rota.
+- **200**: `true`
+- **400**: `"Categoria não encontrada."` ou `"Já existe uma categoria com este nome."`
+
+### DELETE /categorias/{id}
+- **Auth**: `AdminOnly`
+- **Route**: `id` (number)
+- **200**: `true`
+- **400**: `"Categoria não encontrada."` ou `"Não é possível excluir: categoria possui produtos vinculados."`
+
+---
+
 ## Clientes (CRM admin)
 
 ### GET /clientes
 - **Auth**: `AdminOnly`
-- **Query params**: `page` (int, default 1), `pageSize` (int, default 10), `search` (string?)
+- **Query params**: `pagina` (int, default 1), `tamanho` (int, default 10), `search` (string?)
 - **200**: `PaginatedResponse<ClienteResponse>`
   ```json
   {
-    "items": [
+    "itens": [
       {
         "id": "guid",
         "nome": "string",
@@ -177,9 +246,12 @@ Base URL: `{API_BASE}/api/v1`
         "criadoEm": "2026-10-20T12:00:00Z"
       }
     ],
-    "total": 10,
-    "page": 1,
-    "pageSize": 10
+    "paginaAtual": 1,
+    "tamanhoPagina": 10,
+    "totalRegistros": 10,
+    "totalPaginas": 1,
+    "temPaginaAnterior": false,
+    "temProximaPagina": false
   }
   ```
 
@@ -275,7 +347,7 @@ Base URL: `{API_BASE}/api/v1`
 
 ### GET /pedidos
 - **Auth**: autenticado (qualquer role)
-- **Query params**: `page` (int), `pageSize` (int)
+- **Query params**: `pagina` (int, default 1), `tamanho` (int, default 10)
 - **Comportamento**: admin vê todos; cliente vê apenas os próprios (filtro automático por userId do token)
 - **200**: `PaginatedResponse<PedidoResponse>` (ver [Modelos-de-Dados.md](Modelos-de-Dados.md#pedidos))
 

@@ -62,7 +62,8 @@ Todos os DTOs da API. Propriedades em camelCase (padrão do System.Text.Json).
 | `id` | string (Guid) |
 | `nome` | string |
 | `descricao` | string |
-| `categoria` | string |
+| `categoriaId` | number (long) |
+| `categoriaNome` | string |
 | `preco` | number (decimal) |
 | `fotoUrl` | string |
 | `disponivel` | boolean |
@@ -74,7 +75,8 @@ Todos os DTOs da API. Propriedades em camelCase (padrão do System.Text.Json).
 | `id` | string (Guid) |
 | `nome` | string |
 | `descricao` | string |
-| `categoria` | string |
+| `categoriaId` | number (long) |
+| `categoriaNome` | string |
 | `preco` | number |
 | `fotoUrl` | string |
 | `disponivel` | boolean |
@@ -92,7 +94,7 @@ Todos os DTOs da API. Propriedades em camelCase (padrão do System.Text.Json).
 |-------|------|------------|------------|
 | `nome` | string | sim | |
 | `descricao` | string | sim | |
-| `categoria` | string | sim | |
+| `categoriaId` | number (long) | sim | Id de categoria existente (ver `GET /categorias`) |
 | `preco` | number | sim | |
 | `fotoUrl` | string | sim | |
 | `disponivel` | boolean | sim | |
@@ -116,12 +118,44 @@ Todos os DTOs da API. Propriedades em camelCase (padrão do System.Text.Json).
 | `id` | string (Guid) | Sobrescrito pelo id da rota |
 | `nome` | string | |
 | `descricao` | string | |
-| `categoria` | string | |
+| `categoriaId` | number (long) | Id de categoria existente |
 | `preco` | number | |
 | `fotoUrl` | string | |
 | `disponivel` | boolean | |
 
 > UpdateProdutoRequest não inclui `tipo` nem `itens`.
+
+---
+
+## Categorias
+
+### CategoriaResponse
+| Campo | Tipo |
+|-------|------|
+| `id` | number (long) |
+| `nome` | string |
+| `descricao` | string? |
+| `ativo` | boolean |
+
+### CreateCategoriaRequest
+| Campo | Tipo | Obrigatório | Observação |
+|-------|------|------------|------------|
+| `nome` | string | sim | máx 100, único |
+| `descricao` | string? | não | máx 500 |
+| `ativo` | boolean | não | default `true` |
+
+### CreateCategoriaResponse
+| Campo | Tipo |
+|-------|------|
+| `id` | number (long) |
+
+### UpdateCategoriaRequest
+| Campo | Tipo | Observação |
+|-------|------|------------|
+| `id` | number (long) | Sobrescrito pelo id da rota |
+| `nome` | string | máx 100, único |
+| `descricao` | string? | máx 500 |
+| `ativo` | boolean | |
 
 ---
 
@@ -350,9 +384,12 @@ Todos os DTOs da API. Propriedades em camelCase (padrão do System.Text.Json).
 ## Tipos comuns
 
 ### PaginatedResponse<T>
-| Campo | Tipo |
-|-------|------|
-| `items` | T[] |
-| `total` | number (int) |
-| `page` | number (int) |
-| `pageSize` | number (int) |
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `itens` | T[] | Itens da página atual |
+| `paginaAtual` | number (int) | Página atual (1-based) |
+| `tamanhoPagina` | number (int) | Itens por página |
+| `totalRegistros` | number (int) | Total de registros encontrados |
+| `totalPaginas` | number (int) | Total de páginas (calculado pela API) |
+| `temPaginaAnterior` | boolean | Existe página anterior |
+| `temProximaPagina` | boolean | Existe próxima página |

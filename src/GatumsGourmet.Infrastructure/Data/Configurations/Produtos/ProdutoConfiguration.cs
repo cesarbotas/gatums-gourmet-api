@@ -10,10 +10,29 @@ public class ProdutoConfiguration : IEntityTypeConfiguration<Produto>
     {
         b.HasKey(x => x.Id);
         b.Property(x => x.Nome).HasMaxLength(200).IsRequired();
-        b.Property(x => x.Categoria).HasMaxLength(100).IsRequired();
         b.Property(x => x.Preco).HasColumnType("numeric(18,2)");
         b.Property(x => x.Tipo).HasConversion<string>();
         b.HasMany(x => x.ComboItens).WithOne().HasForeignKey(x => x.ComboProdutoId).OnDelete(DeleteBehavior.Cascade);
+
+        // FK para Categoria. Restrict: não permite excluir categoria com produtos vinculados.
+        b.HasOne(x => x.Categoria)
+            .WithMany()
+            .HasForeignKey(x => x.CategoriaId)
+            .OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => x.CategoriaId);
+    }
+}
+
+public class CategoriaConfiguration : IEntityTypeConfiguration<Categoria>
+{
+    public void Configure(EntityTypeBuilder<Categoria> b)
+    {
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedOnAdd();   // long autoincremento (identity)
+        b.Property(x => x.Nome).HasMaxLength(100).IsRequired();
+        b.HasIndex(x => x.Nome).IsUnique();
+        b.Property(x => x.Descricao).HasMaxLength(500);
+        b.Property(x => x.Ativo).IsRequired();
     }
 }
 

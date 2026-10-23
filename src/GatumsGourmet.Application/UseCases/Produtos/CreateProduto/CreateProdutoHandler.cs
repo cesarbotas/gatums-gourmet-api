@@ -1,25 +1,28 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Produtos;
 using GatumsGourmet.Domain.Enums.Produtos;
 using GatumsGourmet.Domain.Exceptions;
-using GatumsGourmet.Domain.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Produtos.CreateProduto;
 
-public sealed class CreateProdutoHandler(IProdutoRepository produtos, IClock clock) : ICreateProdutoHandler
+public sealed class CreateProdutoHandler(IProdutoRepository produtos, ICategoriaRepository categorias, IClock clock) : ICreateProdutoHandler
 {
     public async Task<Result<CreateProdutoResponse>> Handle(CreateProdutoRequest request, CancellationToken ct = default)
     {
         if (request.Tipo == TipoProduto.Combo && (request.Itens is null || request.Itens.Count == 0))
             throw new BusinessRuleException("Combo exige ao menos um item.");
 
+        var categoria = await categorias.GetByIdAsync(request.CategoriaId, ct);
+        if (categoria is null) return Result<CreateProdutoResponse>.Fail("Categoria não encontrada.");
+
         var produto = new Produto
         {
             Id = Guid.NewGuid(),
             Nome = request.Nome,
             Descricao = request.Descricao,
-            Categoria = request.Categoria,
+            CategoriaId = request.CategoriaId,
             Preco = request.Preco,
             FotoUrl = request.FotoUrl,
             Disponivel = request.Disponivel,
@@ -36,3 +39,4 @@ public sealed class CreateProdutoHandler(IProdutoRepository produtos, IClock clo
         return Result<CreateProdutoResponse>.Ok(new CreateProdutoResponse(produto.Id));
     }
 }
+

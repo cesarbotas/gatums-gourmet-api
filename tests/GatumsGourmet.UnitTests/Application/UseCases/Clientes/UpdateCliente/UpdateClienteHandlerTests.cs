@@ -1,5 +1,6 @@
 using FluentAssertions;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.Clientes.UpdateCliente;
 using GatumsGourmet.Domain.Entities.Clientes;
 using Moq;
@@ -49,3 +50,4 @@ public class UpdateClienteHandlerTests
         _clientes.Verify(r => r.SaveChangesAsync(default), Times.Never);
     }
 }
+

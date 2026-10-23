@@ -1,5 +1,6 @@
 using GatumsGourmet.Application.Common;
-using GatumsGourmet.Application.Interfaces;
+using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.Clientes.UpdateCliente;
 
@@ -23,3 +24,4 @@ public sealed class UpdateClienteHandler(IClienteRepository clientes) : IUpdateC
         return Result<bool>.Ok(true);
     }
 }
+
