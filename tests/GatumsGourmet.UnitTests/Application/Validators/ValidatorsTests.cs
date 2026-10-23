@@ -1,10 +1,10 @@
-using FluentAssertions;
-using GatumsGourmet.Application.UseCases.Auth.Login;
-using GatumsGourmet.Application.UseCases.Auth.RegisterUser;
-using GatumsGourmet.Application.UseCases.Carrinho.AddCarrinhoItem;
-using GatumsGourmet.Application.UseCases.Clientes.CreateCliente;
-using GatumsGourmet.Application.UseCases.Pagamentos.IniciarPagamento;
-using GatumsGourmet.Application.UseCases.Produtos.CreateProduto;
+﻿using FluentAssertions;
+using GatumsGourmet.Application.UseCases.V1.Auth.Login;
+using GatumsGourmet.Application.UseCases.V1.Auth.RegisterUser;
+using GatumsGourmet.Application.UseCases.V1.Carrinho.AddCarrinhoItem;
+using GatumsGourmet.Application.UseCases.V1.Clientes.CreateCliente;
+using GatumsGourmet.Application.UseCases.V1.Pagamentos.IniciarPagamento;
+using GatumsGourmet.Application.UseCases.V1.Produtos.CreateProduto;
 using GatumsGourmet.Domain.Enums.Pagamentos;
 using GatumsGourmet.Domain.Enums.Produtos;
 using Xunit;

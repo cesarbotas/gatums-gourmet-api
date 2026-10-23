@@ -10,6 +10,12 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+    # Publica a porta APENAS no loopback da VPS (127.0.0.1), nunca na internet.
+    # Isso permite acesso externo somente via tunel SSH (ex.: DBeaver). A porta
+    # interna do Postgres (5432) e exposta no host como 5433 para evitar conflito
+    # com qualquer outro Postgres que ja escute em 5432 na VPS.
+    ports:
+      - "127.0.0.1:5433:5432"
     volumes:
       - gatums-pgdata:/var/lib/postgresql/data
     healthcheck:

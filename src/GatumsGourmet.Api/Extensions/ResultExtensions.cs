@@ -1,4 +1,4 @@
-using GatumsGourmet.Application.Common;
+﻿using GatumsGourmet.Domain.Common.V1;
 using Microsoft.AspNetCore.Http;
 
 namespace GatumsGourmet.Api.Extensions;
