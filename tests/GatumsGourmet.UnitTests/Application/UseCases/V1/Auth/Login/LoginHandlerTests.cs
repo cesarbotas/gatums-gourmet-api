@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using GatumsGourmet.Application.UseCases.V1.Auth.Login;
 using GatumsGourmet.Domain.Entities.Auth;
 using GatumsGourmet.Domain.Repositories;
@@ -6,6 +6,7 @@ using GatumsGourmet.Domain.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using Xunit;
+using RefreshTokenEntity = GatumsGourmet.Domain.Entities.Auth.RefreshToken;
 
 namespace GatumsGourmet.UnitTests.Application.UseCases.V1.Auth.Login;
 
@@ -67,7 +68,7 @@ public class LoginHandlerTests
         result.Data.RefreshToken.Should().Be("plain");
         result.Data.ExpiresIn.Should().Be(900);
         result.Data.User.Roles.Should().Contain("Admin");
-        _refreshStore.Verify(s => s.AddAsync(It.IsAny<RefreshToken>(), default), Times.Once);
+        _refreshStore.Verify(s => s.AddAsync(It.IsAny<RefreshTokenEntity>(), default), Times.Once);
     }
 
     [Fact]
@@ -79,7 +80,7 @@ public class LoginHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Credenciais inválidas.");
-        _refreshStore.Verify(s => s.AddAsync(It.IsAny<RefreshToken>(), default), Times.Never);
+        _refreshStore.Verify(s => s.AddAsync(It.IsAny<RefreshTokenEntity>(), default), Times.Never);
     }
 
     [Fact]
@@ -93,7 +94,7 @@ public class LoginHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Credenciais inválidas.");
-        _refreshStore.Verify(s => s.AddAsync(It.IsAny<RefreshToken>(), default), Times.Never);
+        _refreshStore.Verify(s => s.AddAsync(It.IsAny<RefreshTokenEntity>(), default), Times.Never);
     }
 
     [Fact]
@@ -107,6 +108,6 @@ public class LoginHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Usuário inativo.");
-        _refreshStore.Verify(s => s.AddAsync(It.IsAny<RefreshToken>(), default), Times.Never);
+        _refreshStore.Verify(s => s.AddAsync(It.IsAny<RefreshTokenEntity>(), default), Times.Never);
     }
 }

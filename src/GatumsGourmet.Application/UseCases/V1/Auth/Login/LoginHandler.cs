@@ -3,6 +3,7 @@ using GatumsGourmet.Domain.Entities.Auth;
 using GatumsGourmet.Domain.Repositories;
 using GatumsGourmet.Domain.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
+using RefreshTokenEntity = GatumsGourmet.Domain.Entities.Auth.RefreshToken;
 
 namespace GatumsGourmet.Application.UseCases.V1.Auth.Login;
 
@@ -32,7 +33,7 @@ public sealed class LoginHandler(
         var (plain, hash) = refreshGen.Generate();
         var refreshDays = config.GetValue<int?>("Jwt:RefreshTokenDays") ?? 7;
         var now = clock.UtcNow;
-        var token = new RefreshToken
+        var token = new RefreshTokenEntity
         {
             Id = Guid.NewGuid(),
             UsuarioId = usuario.Id,

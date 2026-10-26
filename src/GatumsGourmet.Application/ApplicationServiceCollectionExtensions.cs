@@ -1,6 +1,9 @@
 ﻿using FluentValidation;
 using GatumsGourmet.Application.UseCases.V1.Auth.GetCurrentUser;
 using GatumsGourmet.Application.UseCases.V1.Auth.Login;
+using GatumsGourmet.Application.UseCases.V1.Auth.Logout;
+using GatumsGourmet.Application.UseCases.V1.Auth.LogoutAll;
+using GatumsGourmet.Application.UseCases.V1.Auth.RefreshToken;
 using GatumsGourmet.Application.UseCases.V1.Auth.RegisterUser;
 using GatumsGourmet.Application.UseCases.V1.Carrinho.AddCarrinhoItem;
 using GatumsGourmet.Application.UseCases.V1.Carrinho.ClearCarrinho;
@@ -46,6 +49,9 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<ILoginHandler, LoginHandler>();
         services.AddScoped<IRegisterUserHandler, RegisterUserHandler>();
         services.AddScoped<IGetCurrentUserHandler, GetCurrentUserHandler>();
+        services.AddScoped<IRefreshTokenHandler, RefreshTokenHandler>();
+        services.AddScoped<ILogoutHandler, LogoutHandler>();
+        services.AddScoped<ILogoutAllHandler, LogoutAllHandler>();
 
         services.AddScoped<IListProdutosHandler, ListProdutosHandler>();
         services.AddScoped<IGetProdutoByIdHandler, GetProdutoByIdHandler>();
