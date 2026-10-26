@@ -26,6 +26,9 @@ public static class InfrastructureServiceCollectionExtensions
             opt.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
+        services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
         services.AddScoped<IProdutoRepository, ProdutoRepository>();
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<IClienteRepository, ClienteRepository>();
@@ -38,6 +41,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
+        services.AddScoped<IPermissionResolver, PermissionResolver>();
         services.AddScoped<IPedidoWorkflowService, PedidoWorkflowService>();
 
         services.AddScoped<IPaymentGateway, MockPaymentGateway>();
