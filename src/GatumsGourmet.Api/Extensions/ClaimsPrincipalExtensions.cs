@@ -11,4 +11,7 @@ public static class ClaimsPrincipalExtensions
 
     public static bool IsAdmin(this ClaimsPrincipal user) =>
         user.IsInRole("Admin");
+
+    public static bool HasPermission(this ClaimsPrincipal user, string codigo) =>
+        user.Claims.Any(c => c.Type == "perm" && c.Value == codigo);
 }
