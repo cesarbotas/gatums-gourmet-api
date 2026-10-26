@@ -7,7 +7,7 @@ namespace GatumsGourmet.Api.Authorization;
 /// Policy provider dinâmico: policies com o prefixo <see cref="Prefix"/> são
 /// criadas sob demanda com um <see cref="PermissionRequirement"/>, evitando
 /// registrar cada permissão no startup. Os demais nomes são delegados ao
-/// provider padrão (policies legadas como "AdminOnly"/"ClienteOnly").
+/// provider padrão (fallback para policies nomeadas convencionais).
 /// </summary>
 public sealed class PermissionPolicyProvider : IAuthorizationPolicyProvider
 {

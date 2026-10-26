@@ -1,4 +1,5 @@
-﻿using GatumsGourmet.Api.Extensions;
+﻿using GatumsGourmet.Api.Authorization;
+using GatumsGourmet.Api.Extensions;
 using GatumsGourmet.Application.UseCases.V1.Produtos.CreateProduto;
 using GatumsGourmet.Application.UseCases.V1.Produtos.DeleteProduto;
 using GatumsGourmet.Application.UseCases.V1.Produtos.GetProdutoById;
@@ -24,14 +25,14 @@ public static class ProdutosEndpoints
 
         group.MapPost("/", async ([FromBody] CreateProdutoRequest request, ICreateProdutoHandler handler, CancellationToken ct) =>
             (await handler.Handle(request, ct)).ToHttpResult(StatusCodes.Status201Created))
-            .RequireAuthorization("AdminOnly");
+            .RequirePermission("produtos:escrever");
 
         group.MapPut("/{id:guid}", async (Guid id, [FromBody] UpdateProdutoRequest request, IUpdateProdutoHandler handler, CancellationToken ct) =>
             (await handler.Handle(request with { Id = id }, ct)).ToHttpResult())
-            .RequireAuthorization("AdminOnly");
+            .RequirePermission("produtos:escrever");
 
         group.MapDelete("/{id:guid}", async (Guid id, IDeleteProdutoHandler handler, CancellationToken ct) =>
             (await handler.Handle(id, ct)).ToHttpResult())
-            .RequireAuthorization("AdminOnly");
+            .RequirePermission("produtos:escrever");
     }
 }

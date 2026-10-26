@@ -35,12 +35,9 @@ public static class AuthenticationExtensions
                 };
             });
 
-        services.AddAuthorization(opt =>
-        {
-            // Policies legadas por papel; a Task 11 as substitui por permissões ao migrar as rotas.
-            opt.AddPolicy("AdminOnly", p => p.RequireRole("Admin"));
-            opt.AddPolicy("ClienteOnly", p => p.RequireRole("Cliente"));
-        });
+        // Autorização baseada em permissão: as rotas usam RequirePermission("...") /
+        // RequireAuthorization(). As policies legadas por papel foram removidas na Task 11.
+        services.AddAuthorization();
 
         // Autorização dinâmica por permissão (policies "perm:{codigo}" criadas sob demanda).
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
