@@ -30,5 +30,7 @@ public static class EndpointRouteBuilderExtensions
         PedidosEndpoints.Map(v1.MapGroup("/pedidos").WithTags("Pedidos"));
         PagamentosEndpoints.Map(v1.MapGroup("/pagamentos").WithTags("Pagamentos"));
         RelatoriosEndpoints.Map(v1.MapGroup("/relatorios").WithTags("Relatorios"));
+        RolesEndpoints.Map(v1.MapGroup("/roles").WithTags("Roles"));
+        PermissionsEndpoints.Map(v1.MapGroup("/permissions").WithTags("Permissions"));
     }
 }

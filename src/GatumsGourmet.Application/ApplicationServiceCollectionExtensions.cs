@@ -36,6 +36,17 @@ using GatumsGourmet.Application.UseCases.V1.Produtos.GetProdutoById;
 using GatumsGourmet.Application.UseCases.V1.Produtos.ListProdutos;
 using GatumsGourmet.Application.UseCases.V1.Produtos.UpdateProduto;
 using GatumsGourmet.Application.UseCases.V1.Relatorios.GetVendasResumo;
+using GatumsGourmet.Application.UseCases.V1.Roles.CreateRole;
+using GatumsGourmet.Application.UseCases.V1.Roles.DeleteRole;
+using GatumsGourmet.Application.UseCases.V1.Roles.GetRoleById;
+using GatumsGourmet.Application.UseCases.V1.Roles.ListRoles;
+using GatumsGourmet.Application.UseCases.V1.Roles.SetRolePermissions;
+using GatumsGourmet.Application.UseCases.V1.Roles.UpdateRole;
+using GatumsGourmet.Application.UseCases.V1.Permissions.CreatePermission;
+using GatumsGourmet.Application.UseCases.V1.Permissions.DeletePermission;
+using GatumsGourmet.Application.UseCases.V1.Permissions.GetPermissionById;
+using GatumsGourmet.Application.UseCases.V1.Permissions.ListPermissions;
+using GatumsGourmet.Application.UseCases.V1.Permissions.UpdatePermission;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GatumsGourmet.Application;
@@ -90,6 +101,19 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IValidarPagamentoParaAprovacaoHandler, ValidarPagamentoParaAprovacaoHandler>();
 
         services.AddScoped<IGetVendasResumoHandler, GetVendasResumoHandler>();
+
+        services.AddScoped<IListRolesHandler, ListRolesHandler>();
+        services.AddScoped<IGetRoleByIdHandler, GetRoleByIdHandler>();
+        services.AddScoped<ICreateRoleHandler, CreateRoleHandler>();
+        services.AddScoped<IUpdateRoleHandler, UpdateRoleHandler>();
+        services.AddScoped<IDeleteRoleHandler, DeleteRoleHandler>();
+        services.AddScoped<ISetRolePermissionsHandler, SetRolePermissionsHandler>();
+
+        services.AddScoped<IListPermissionsHandler, ListPermissionsHandler>();
+        services.AddScoped<IGetPermissionByIdHandler, GetPermissionByIdHandler>();
+        services.AddScoped<ICreatePermissionHandler, CreatePermissionHandler>();
+        services.AddScoped<IUpdatePermissionHandler, UpdatePermissionHandler>();
+        services.AddScoped<IDeletePermissionHandler, DeletePermissionHandler>();
 
         return services;
     }
