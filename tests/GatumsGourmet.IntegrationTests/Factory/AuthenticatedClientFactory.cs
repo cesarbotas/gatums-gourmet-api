@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GatumsGourmet.Domain.Entities.Auth;
-using GatumsGourmet.Domain.Enums.Auth;
 using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -23,21 +22,20 @@ public sealed record AuthenticatedUser(Guid Id, string Email, string Role, strin
 public static class AuthenticatedClientFactory
 {
     public static Task<(HttpClient Client, AuthenticatedUser User)> CreateAdminClientAsync(this CustomWebApplicationFactory factory)
-        => factory.CreateAuthenticatedClientAsync(UserRole.Admin);
+        => factory.CreateAuthenticatedClientAsync("Admin");
 
     public static Task<(HttpClient Client, AuthenticatedUser User)> CreateClienteClientAsync(this CustomWebApplicationFactory factory)
-        => factory.CreateAuthenticatedClientAsync(UserRole.Cliente);
+        => factory.CreateAuthenticatedClientAsync("Cliente");
 
     public static async Task<(HttpClient Client, AuthenticatedUser User)> CreateAuthenticatedClientAsync(
-        this CustomWebApplicationFactory factory, UserRole role)
+        this CustomWebApplicationFactory factory, string roleNome)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<GatumsDbContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         var clock = scope.ServiceProvider.GetRequiredService<IClock>();
 
-        var roleLower = role.ToString().ToLower();
-        var roleNome = role.ToString();
+        var roleLower = roleNome.ToLowerInvariant();
         var usuario = new Usuario
         {
             Id = Guid.NewGuid(),
