@@ -1,6 +1,5 @@
 using GatumsGourmet.Domain.Entities.Auth;
 using GatumsGourmet.Domain.Entities.Produtos;
-using GatumsGourmet.Domain.Enums.Auth;
 using GatumsGourmet.Domain.Enums.Produtos;
 using GatumsGourmet.Domain.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +20,7 @@ public static class DbSeeder
                 Nome = "Admin",
                 Email = "admin@gatums.com",
                 SenhaHash = hasher.Hash("Admin@123"),
-                Role = UserRole.Admin,
+                Ativo = true,
                 CriadoEm = DateTime.UtcNow
             });
         }
