@@ -47,6 +47,12 @@ using GatumsGourmet.Application.UseCases.V1.Permissions.DeletePermission;
 using GatumsGourmet.Application.UseCases.V1.Permissions.GetPermissionById;
 using GatumsGourmet.Application.UseCases.V1.Permissions.ListPermissions;
 using GatumsGourmet.Application.UseCases.V1.Permissions.UpdatePermission;
+using GatumsGourmet.Application.UseCases.V1.Usuarios.CreateUsuario;
+using GatumsGourmet.Application.UseCases.V1.Usuarios.DeleteUsuario;
+using GatumsGourmet.Application.UseCases.V1.Usuarios.GetUsuarioById;
+using GatumsGourmet.Application.UseCases.V1.Usuarios.ListUsuarios;
+using GatumsGourmet.Application.UseCases.V1.Usuarios.SetUsuarioAtivo;
+using GatumsGourmet.Application.UseCases.V1.Usuarios.SetUsuarioRoles;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GatumsGourmet.Application;
@@ -114,6 +120,13 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<ICreatePermissionHandler, CreatePermissionHandler>();
         services.AddScoped<IUpdatePermissionHandler, UpdatePermissionHandler>();
         services.AddScoped<IDeletePermissionHandler, DeletePermissionHandler>();
+
+        services.AddScoped<IListUsuariosHandler, ListUsuariosHandler>();
+        services.AddScoped<IGetUsuarioByIdHandler, GetUsuarioByIdHandler>();
+        services.AddScoped<ICreateUsuarioHandler, CreateUsuarioHandler>();
+        services.AddScoped<ISetUsuarioRolesHandler, SetUsuarioRolesHandler>();
+        services.AddScoped<ISetUsuarioAtivoHandler, SetUsuarioAtivoHandler>();
+        services.AddScoped<IDeleteUsuarioHandler, DeleteUsuarioHandler>();
 
         return services;
     }
