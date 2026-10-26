@@ -10,5 +10,5 @@ public static class ClaimsPrincipalExtensions
             ?? throw new InvalidOperationException("UserId claim not found."));
 
     public static bool IsAdmin(this ClaimsPrincipal user) =>
-        user.IsInRole("admin");
+        user.IsInRole("Admin");
 }

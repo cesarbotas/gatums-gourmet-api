@@ -35,8 +35,8 @@ public static class AuthenticationExtensions
 
         services.AddAuthorization(opt =>
         {
-            opt.AddPolicy("AdminOnly", p => p.RequireRole("admin"));
-            opt.AddPolicy("ClienteOnly", p => p.RequireRole("cliente"));
+            opt.AddPolicy("AdminOnly", p => p.RequireRole("Admin"));
+            opt.AddPolicy("ClienteOnly", p => p.RequireRole("Cliente"));
         });
 
         return services;

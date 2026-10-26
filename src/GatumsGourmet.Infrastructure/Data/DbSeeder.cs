@@ -14,7 +14,7 @@ public static class DbSeeder
 
         if (!await db.Usuarios.AnyAsync())
         {
-            db.Usuarios.Add(new Usuario
+            var admin = new Usuario
             {
                 Id = Guid.NewGuid(),
                 Nome = "Admin",
@@ -22,7 +22,19 @@ public static class DbSeeder
                 SenhaHash = hasher.Hash("Admin@123"),
                 Ativo = true,
                 CriadoEm = DateTime.UtcNow
-            });
+            };
+            db.Usuarios.Add(admin);
+            await db.SaveChangesAsync();
+
+            // Vincula o Admin inicial à role Admin (semeada pela migration, que roda
+            // antes deste ponto via MigrateAsync acima).
+            var roleAdmin = await db.Roles.FirstOrDefaultAsync(r => r.Nome == "Admin");
+            if (roleAdmin is not null &&
+                !await db.UsuarioRoles.AnyAsync(ur => ur.UsuarioId == admin.Id && ur.RoleId == roleAdmin.Id))
+            {
+                db.UsuarioRoles.Add(new UsuarioRole { UsuarioId = admin.Id, RoleId = roleAdmin.Id });
+                await db.SaveChangesAsync();
+            }
         }
 
         if (!await db.Categorias.AnyAsync())
