@@ -10,6 +10,8 @@ using GatumsGourmet.Infrastructure.Data.Repositories.Pedidos;
 using GatumsGourmet.Infrastructure.Data.Repositories.Produtos;
 using GatumsGourmet.Infrastructure.Data.Repositories.Vendas;
 using GatumsGourmet.Infrastructure.Services;
+using GatumsGourmet.Infrastructure.Services.Auth;
+using GatumsGourmet.Infrastructure.Services.Pagamentos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +37,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IClock, SystemClock>();
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
         services.AddScoped<IPedidoWorkflowService, PedidoWorkflowService>();
 
         services.AddScoped<IPaymentGateway, MockPaymentGateway>();
