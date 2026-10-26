@@ -14,6 +14,7 @@ using GatumsGourmet.Application.UseCases.V1.Clientes.CreateCliente;
 using GatumsGourmet.Application.UseCases.V1.Clientes.DeleteCliente;
 using GatumsGourmet.Application.UseCases.V1.Clientes.ListClientes;
 using GatumsGourmet.Application.UseCases.V1.Clientes.UpdateCliente;
+using GatumsGourmet.Application.UseCases.V1.Manutencao.PurgeExpiredRefreshTokens;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ConfirmarPagamentoPix;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ConsultarStatusPagamento;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.IniciarPagamento;
@@ -69,6 +70,8 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IRefreshTokenHandler, RefreshTokenHandler>();
         services.AddScoped<ILogoutHandler, LogoutHandler>();
         services.AddScoped<ILogoutAllHandler, LogoutAllHandler>();
+
+        services.AddScoped<IPurgeExpiredRefreshTokensHandler, PurgeExpiredRefreshTokensHandler>();
 
         services.AddScoped<IListProdutosHandler, ListProdutosHandler>();
         services.AddScoped<IGetProdutoByIdHandler, GetProdutoByIdHandler>();

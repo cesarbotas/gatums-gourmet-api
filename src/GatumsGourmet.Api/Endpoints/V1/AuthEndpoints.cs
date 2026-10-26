@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using GatumsGourmet.Api.Authorization;
 using GatumsGourmet.Api.Extensions;
 using GatumsGourmet.Application.UseCases.V1.Auth.GetCurrentUser;
 using GatumsGourmet.Application.UseCases.V1.Auth.Login;
@@ -6,6 +7,7 @@ using GatumsGourmet.Application.UseCases.V1.Auth.Logout;
 using GatumsGourmet.Application.UseCases.V1.Auth.LogoutAll;
 using GatumsGourmet.Application.UseCases.V1.Auth.RefreshToken;
 using GatumsGourmet.Application.UseCases.V1.Auth.RegisterUser;
+using GatumsGourmet.Application.UseCases.V1.Manutencao.PurgeExpiredRefreshTokens;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GatumsGourmet.Api.Endpoints.V1;
@@ -38,5 +40,9 @@ public static class AuthEndpoints
         group.MapPost("/logout-all", async (ClaimsPrincipal user, ILogoutAllHandler handler, CancellationToken ct) =>
             (await handler.Handle(user.GetUserId(), ct)).ToHttpResult())
             .RequireAuthorization();
+
+        group.MapPost("/maintenance/purge-tokens", async (IPurgeExpiredRefreshTokensHandler handler, CancellationToken ct) =>
+            (await handler.Handle(ct)).ToHttpResult())
+            .RequirePermission("usuarios:gerenciar");
     }
 }
