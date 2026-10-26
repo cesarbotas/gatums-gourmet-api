@@ -21,17 +21,17 @@ public static class PedidosEndpoints
 
         group.MapGet("/", async (ClaimsPrincipal user, [FromQuery] int pagina, [FromQuery] int tamanho, IListPedidosHandler handler, CancellationToken ct) =>
         {
-            Guid? filtro = user.IsAdmin() ? null : user.GetUserId();
+            Guid? filtro = user.HasPermission("pedidos:ler") ? null : user.GetUserId();
             return (await handler.Handle(filtro, new ListPedidosRequest(pagina < 1 ? 1 : pagina, tamanho < 1 ? 10 : tamanho), ct)).ToHttpResult();
         }).RequireAuthorization();
 
         group.MapGet("/{id:guid}", async (Guid id, ClaimsPrincipal user, IGetPedidoByIdHandler handler, CancellationToken ct) =>
-            (await handler.Handle(id, user.GetUserId(), user.IsAdmin(), ct)).ToHttpResult())
+            (await handler.Handle(id, user.GetUserId(), user.HasPermission("pedidos:ler"), ct)).ToHttpResult())
             .RequireAuthorization();
 
         group.MapPost("/{id:guid}/etapas/avancar", async (Guid id, ClaimsPrincipal user, [FromBody] AvancarPedidoEtapaRequest request, IAvancarPedidoEtapaHandler handler, CancellationToken ct) =>
         {
-            var actor = user.IsAdmin() ? PedidoActor.Admin : PedidoActor.Cliente;
+            var actor = user.HasPermission("pedidos:ler") ? PedidoActor.Admin : PedidoActor.Cliente;
             return (await handler.Handle(id, request, actor, ct)).ToHttpResult();
         }).RequirePermission("pedidos:avancar");
 

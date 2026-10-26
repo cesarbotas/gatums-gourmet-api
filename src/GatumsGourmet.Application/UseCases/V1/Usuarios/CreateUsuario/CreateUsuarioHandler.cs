@@ -63,14 +63,16 @@ public sealed class CreateUsuarioHandler(
             CriadoEm = clock.UtcNow
         };
 
+        // Persistência atômica: adiciona o usuário e vincula as roles antes de
+        // um único SaveChanges, para que ambos sejam gravados na mesma transação.
+        // Evita o estado inconsistente de usuário criado sem roles caso o
+        // vínculo falhasse num segundo SaveChanges.
         await usuarios.AddAsync(usuario, ct);
-        await usuarios.SaveChangesAsync(ct);
 
         if (roleIds.Count > 0)
-        {
             await usuarios.SetRolesAsync(usuario.Id, roleIds, ct);
-            await usuarios.SaveChangesAsync(ct);
-        }
+
+        await usuarios.SaveChangesAsync(ct);
 
         return Result<CreateUsuarioResponse>.Ok(new CreateUsuarioResponse(usuario.Id));
     }
