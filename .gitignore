@@ -429,3 +429,7 @@ FodyWeavers.xsd
 *.msp
 
 .fake
+
+# Superpowers SDD scratch workspace (ledger, briefs, review packages).
+# NOTE: docs/superpowers/ (specs e plans) É versionado; só este scratch não.
+/.superpowers/

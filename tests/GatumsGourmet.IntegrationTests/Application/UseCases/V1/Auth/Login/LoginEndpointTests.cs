@@ -29,8 +29,10 @@ public class LoginEndpointTests
 
         login.IsSuccessStatusCode.Should().BeTrue();
         using var doc = JsonDocument.Parse(await login.Content.ReadAsStringAsync());
-        doc.RootElement.GetProperty("token").GetString().Should().NotBeNullOrEmpty();
-        doc.RootElement.GetProperty("user").GetProperty("role").GetString().Should().Be("cliente");
+        // Contrato atual (Task 5): accessToken + user.roles (array, PascalCase).
+        doc.RootElement.GetProperty("accessToken").GetString().Should().NotBeNullOrEmpty();
+        doc.RootElement.GetProperty("user").GetProperty("roles")
+            .EnumerateArray().Select(r => r.GetString()).Should().Contain("Cliente");
     }
 
     [Fact]

@@ -1,4 +1,5 @@
-﻿using GatumsGourmet.Api.Extensions;
+﻿using GatumsGourmet.Api.Authorization;
+using GatumsGourmet.Api.Extensions;
 using GatumsGourmet.Application.UseCases.V1.Categorias.CreateCategoria;
 using GatumsGourmet.Application.UseCases.V1.Categorias.DeleteCategoria;
 using GatumsGourmet.Application.UseCases.V1.Categorias.GetCategoriaById;
@@ -23,14 +24,14 @@ public static class CategoriasEndpoints
 
         group.MapPost("/", async ([FromBody] CreateCategoriaRequest request, ICreateCategoriaHandler handler, CancellationToken ct) =>
             (await handler.Handle(request, ct)).ToHttpResult(StatusCodes.Status201Created))
-            .RequireAuthorization("AdminOnly");
+            .RequirePermission("categorias:escrever");
 
         group.MapPut("/{id:long}", async (long id, [FromBody] UpdateCategoriaRequest request, IUpdateCategoriaHandler handler, CancellationToken ct) =>
             (await handler.Handle(request with { Id = id }, ct)).ToHttpResult())
-            .RequireAuthorization("AdminOnly");
+            .RequirePermission("categorias:escrever");
 
         group.MapDelete("/{id:long}", async (long id, IDeleteCategoriaHandler handler, CancellationToken ct) =>
             (await handler.Handle(id, ct)).ToHttpResult())
-            .RequireAuthorization("AdminOnly");
+            .RequirePermission("categorias:escrever");
     }
 }

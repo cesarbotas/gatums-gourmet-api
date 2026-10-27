@@ -10,6 +10,8 @@ using GatumsGourmet.Infrastructure.Data.Repositories.Pedidos;
 using GatumsGourmet.Infrastructure.Data.Repositories.Produtos;
 using GatumsGourmet.Infrastructure.Data.Repositories.Vendas;
 using GatumsGourmet.Infrastructure.Services;
+using GatumsGourmet.Infrastructure.Services.Auth;
+using GatumsGourmet.Infrastructure.Services.Pagamentos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +26,9 @@ public static class InfrastructureServiceCollectionExtensions
             opt.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
+        services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
         services.AddScoped<IProdutoRepository, ProdutoRepository>();
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<IClienteRepository, ClienteRepository>();
@@ -35,6 +40,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IClock, SystemClock>();
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
+        services.AddScoped<IPermissionResolver, PermissionResolver>();
         services.AddScoped<IPedidoWorkflowService, PedidoWorkflowService>();
 
         services.AddScoped<IPaymentGateway, MockPaymentGateway>();

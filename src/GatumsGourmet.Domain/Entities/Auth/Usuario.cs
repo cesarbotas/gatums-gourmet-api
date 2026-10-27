@@ -1,5 +1,3 @@
-using GatumsGourmet.Domain.Enums.Auth;
-
 namespace GatumsGourmet.Domain.Entities.Auth;
 
 public class Usuario
@@ -9,8 +7,9 @@ public class Usuario
     public string Email { get; set; } = default!;
     public string? Telefone { get; set; }
     public string SenhaHash { get; set; } = default!;
-    public UserRole Role { get; set; }
+    public bool Ativo { get; set; }
     public DateTime CriadoEm { get; set; }
+    public ICollection<UsuarioRole> UsuarioRoles { get; set; } = [];
 
     public Usuario() { }
 }

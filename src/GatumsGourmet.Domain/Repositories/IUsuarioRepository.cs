@@ -8,4 +8,9 @@ public interface IUsuarioRepository
     Task<Usuario?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task AddAsync(Usuario usuario, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<Usuario>> ListAsync(CancellationToken ct = default);
+    Task<Usuario?> GetByIdComRolesAsync(Guid id, CancellationToken ct = default);
+    Task SetRolesAsync(Guid usuarioId, IEnumerable<int> roleIds, CancellationToken ct = default);
+    Task SetAtivoAsync(Guid usuarioId, bool ativo, CancellationToken ct = default);
+    Task<int> CountAdminsAtivosAsync(CancellationToken ct = default);
 }

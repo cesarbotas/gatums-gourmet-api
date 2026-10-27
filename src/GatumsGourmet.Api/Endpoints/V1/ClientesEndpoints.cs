@@ -1,4 +1,5 @@
-﻿using GatumsGourmet.Api.Extensions;
+﻿using GatumsGourmet.Api.Authorization;
+using GatumsGourmet.Api.Extensions;
 using GatumsGourmet.Application.UseCases.V1.Clientes.CreateCliente;
 using GatumsGourmet.Application.UseCases.V1.Clientes.DeleteCliente;
 using GatumsGourmet.Application.UseCases.V1.Clientes.ListClientes;
@@ -13,18 +14,18 @@ public static class ClientesEndpoints
     {
         group.MapGet("/", async ([FromQuery] int pagina, [FromQuery] int tamanho, [FromQuery] string? search, IListClientesHandler handler, CancellationToken ct) =>
             (await handler.Handle(new ListClientesRequest(pagina < 1 ? 1 : pagina, tamanho < 1 ? 10 : tamanho, search), ct)).ToHttpResult())
-            .RequireAuthorization("AdminOnly");
+            .RequirePermission("clientes:ler");
 
         group.MapPost("/", async ([FromBody] CreateClienteRequest request, ICreateClienteHandler handler, CancellationToken ct) =>
             (await handler.Handle(request, ct)).ToHttpResult(StatusCodes.Status201Created))
-            .RequireAuthorization("AdminOnly");
+            .RequirePermission("clientes:escrever");
 
         group.MapPut("/{id:guid}", async (Guid id, [FromBody] UpdateClienteRequest request, IUpdateClienteHandler handler, CancellationToken ct) =>
             (await handler.Handle(request with { Id = id }, ct)).ToHttpResult())
-            .RequireAuthorization("AdminOnly");
+            .RequirePermission("clientes:escrever");
 
         group.MapDelete("/{id:guid}", async (Guid id, IDeleteClienteHandler handler, CancellationToken ct) =>
             (await handler.Handle(id, ct)).ToHttpResult())
-            .RequireAuthorization("AdminOnly");
+            .RequirePermission("clientes:escrever");
     }
 }

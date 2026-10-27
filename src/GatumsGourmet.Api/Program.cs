@@ -1,3 +1,4 @@
+using GatumsGourmet.Api.BackgroundServices;
 using GatumsGourmet.Api.Extensions;
 using GatumsGourmet.Api.Middleware;
 using GatumsGourmet.Application;
@@ -9,6 +10,8 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddGatumsAuthentication(builder.Configuration);
 builder.Services.AddGatumsOpenApi();
+
+builder.Services.AddHostedService<RefreshTokenCleanupService>();
 
 builder.Services.AddCors(opt =>
     opt.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
