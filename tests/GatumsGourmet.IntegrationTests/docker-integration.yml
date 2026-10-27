@@ -16,7 +16,7 @@ services:
     environment:
       POSTGRES_USER: gatums
       POSTGRES_PASSWORD: gatums_test
-      POSTGRES_DB: gatums
+      POSTGRES_DB: gatums_test
     ports:
       - "5433:5432"
     volumes:
