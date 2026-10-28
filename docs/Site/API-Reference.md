@@ -362,6 +362,30 @@ Entidade de catálogo das categorias de produto. `id` é um inteiro (number, lon
 
 ---
 
+## Endereços (CEP)
+
+Consulta pública de endereço por CEP (autopreenchimento de formulário). Read-only.
+Guia de consumo no front: [Busca-CEP.md](Busca-CEP.md).
+
+### GET /enderecos/cep/{cep}
+- **Auth**: público
+- **Route**: `cep` (8 dígitos, com ou sem máscara — `01001000` ou `01001-000`)
+- **200**: `EnderecoCepResponse`
+  ```json
+  {
+    "cep": "01001000",
+    "logradouro": "Praça da Sé",
+    "complemento": "lado ímpar",
+    "bairro": "Sé",
+    "cidade": "São Paulo",
+    "estado": "SP"
+  }
+  ```
+  > `complemento` pode ser `null`. `numero` não é retornado (o ViaCEP não fornece).
+- **400**: `"CEP inválido."` (formato), `"CEP não encontrado."`, ou `"Serviço de CEP indisponível."`
+
+---
+
 ## Carrinho
 
 > **Auth**: Bearer (autenticado) + **ownership**. O `userId` é extraído
