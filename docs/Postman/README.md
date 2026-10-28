@@ -1,94 +1,102 @@
 # Postman — Gatums Gourmet API
 
-Coleção e ambiente para testar todos os endpoints da API Gatums Gourmet (.NET 8).
+Coleção e ambiente para testar a API Gatums Gourmet (.NET 10) com **RBAC + refresh token**.
 
 ## Arquivos
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `GatumsGourmet.postman_collection.json` | Coleção completa (34 endpoints) com scripts de teste que capturam tokens e IDs automaticamente |
+| `GatumsGourmet.postman_collection.json` | Coleção completa com scripts que capturam tokens e IDs automaticamente |
 | `GatumsGourmet-Local.environment.json` | Ambiente local com variáveis de conexão e credenciais seed |
 
 ## Como importar
 
 1. Abra o Postman.
-2. **Import** → arraste os dois arquivos (ou clique em *Upload Files*).
+2. **Import** → arraste os dois arquivos (ou *Upload Files*).
 3. Selecione o ambiente **Gatums Gourmet - Local** no seletor no canto superior direito.
 
-## Variáveis da coleção
+## Grupos da coleção
+
+Auth · Produtos · Categorias · Endereços (CEP) · Clientes (CRM) · Carrinho · Pedidos ·
+Pagamentos · Relatórios · Roles (RBAC) · Permissions (RBAC) · Usuários (RBAC).
+
+## Variáveis
 
 | Variável | Descrição |
 |----------|-----------|
 | `baseUrl` | Base da API (`http://localhost:5166`) |
 | `adminEmail` / `adminPassword` | Credenciais seed do admin (`admin@gatums.com` / `Admin@123`) |
-| `adminToken` | Preenchido automaticamente ao rodar *Login (Admin)* |
-| `clienteEmail` / `clientePassword` | Credenciais do cliente de teste (ajuste conforme o cadastro) |
-| `clienteToken` | Preenchido automaticamente ao rodar *Login (Cliente)* |
-| `produtoId` | Preenchido ao rodar *Criar Produto* |
-| `clienteId` | Preenchido ao rodar *Criar Cliente* |
-| `pedidoId` | Preenchido ao rodar *Checkout* |
-| `transacaoId` | Preenchido ao rodar *Iniciar Pagamento* |
+| `adminToken` / `adminRefreshToken` | Preenchidos ao rodar *Login (Admin)* |
+| `clienteEmail` / `clientePassword` | Credenciais do cliente de teste |
+| `clienteToken` / `clienteRefreshToken` | Preenchidos ao rodar *Login (Cliente)* |
+| `clienteUserId` | Id do usuário cliente (do login) |
+| `produtoId` / `categoriaId` | Preenchidos ao listar/criar produto/categoria |
+| `clienteId` | Preenchido ao criar cliente (CRM) |
+| `pedidoId` / `transacaoId` | Preenchidos no checkout / iniciar pagamento |
+| `roleId` / `permissionId` / `usuarioId` | Preenchidos nos grupos de RBAC |
 
-## Fluxo recomendado de testes
+## Autenticação (RBAC + refresh token)
 
-Os scripts de teste encadeiam as variáveis automaticamente. Siga esta ordem:
+- **Login/refresh** devolvem `{ accessToken, refreshToken, expiresIn, user: { id, nome, email, roles: [] } }`.
+  Os scripts salvam `accessToken` e `refreshToken` automaticamente.
+- **Access token** é curto (default **15 min**). Renove com **Auth → Refresh Token** enviando
+  `{ refreshToken }` — o refresh é **rotativo** (o antigo é invalidado). Reapresentar um refresh já
+  rotacionado revoga a família inteira (detecção de reúso) e retorna 400.
+- **Logout** envia `{ refreshToken }` no body (revoga a sessão). **Logout-all** revoga todas.
+- Header: `Authorization: Bearer <accessToken>`. Cada pasta/requisição já aponta para
+  `{{adminToken}}` ou `{{clienteToken}}`.
+- Claims do access token: `sub`, `email`, uma claim `role` por role, uma claim `perm` por permissão, `jti`.
 
-### Fluxo cliente (compra)
+### Autorização por permissão (não mais por role nominal)
 
-1. **Auth → Registrar (Cliente)** — cria um usuário cliente (se ainda não existir)
-2. **Auth → Login (Cliente)** — captura `clienteToken`
-3. **Produtos → Listar Produtos** — copie um `id` de produto e cole na variável `produtoId`
-4. **Carrinho → Adicionar Item** — adiciona o produto ao carrinho
-5. **Carrinho → Ver Carrinho** — confere itens e total
-6. **Pedidos → Checkout** — cria o pedido (captura `pedidoId`)
-7. **Pagamentos → Iniciar Pagamento** — inicia a transação (captura `transacaoId`)
-8. **Pagamentos → Confirmar Pix** *ou* **Processar Cartão** — confirma o pagamento
-9. **Pagamentos → Consultar Status** — verifica `aprovado`
-10. **Pedidos → Concluir Pagamento** — vincula a transação ao pedido
+As rotas administrativas exigem **permissões** (ex.: `produtos:escrever`, `usuarios:gerenciar`),
+não a antiga policy `AdminOnly`/`ClienteOnly`. O **Admin** do seed tem todas as 12 permissões,
+então passa em qualquer rota. As roles de seed são **Admin**, **Cliente** e **Gerente** (PascalCase).
 
-### Fluxo admin (gestão)
+## Fluxo recomendado
 
-1. **Auth → Login (Admin)** — captura `adminToken`
-2. **Produtos → Criar Produto** — cadastra produto (captura `produtoId`)
-3. **Produtos → Listar / Atualizar / Excluir** — gerencia catálogo
-4. **Clientes → Criar / Listar / Atualizar / Excluir** — gerencia CRM
-5. **Pedidos → Listar Pedidos** — vê todos os pedidos
-6. **Pedidos → Avançar Etapa** — move o pedido na timeline (`proximaEtapa` como int)
-7. **Pagamentos → Validar Pagamento** — valida transação (antes de `PagamentoAprovado`)
-8. **Relatórios → Resumo de Vendas** — dashboard de vendas
+### Cliente (compra)
 
-## Autenticação
+1. **Auth → Registrar (Cliente)** → **Login (Cliente)** (captura tokens + `clienteUserId`)
+2. **Categorias → Listar** (captura `categoriaId`) · **Produtos → Listar** (captura `produtoId`)
+3. **Carrinho → Adicionar Item** → **Ver Carrinho**
+4. **Pedidos → Checkout** (captura `pedidoId`)
+5. **Pagamentos → Iniciar** (captura `transacaoId`) → **Confirmar Pix** *ou* **Processar Cartão** → **Consultar Status**
+6. **Pedidos → Concluir Pagamento**
 
-- JWT Bearer, header `Authorization: Bearer <token>`.
-- Token válido por **8 horas**.
-- Claims: `sub` (userId), `email`, `role` (`admin` ou `cliente`).
-- Os requests protegidos já têm o auth configurado por pasta: Admin usa `{{adminToken}}`, Cliente usa `{{clienteToken}}`.
+### Admin (gestão)
 
-## Atenção — enums no body JSON
+1. **Auth → Login (Admin)** (captura tokens)
+2. **Categorias → Criar** → **Produtos → Criar** (usa `categoriaId`)
+3. **Clientes (CRM)**, **Pedidos → Listar / Avançar Etapa**, **Pagamentos → Validar**, **Relatórios → Resumo**
+4. **RBAC**: **Roles → Listar/Criar/Definir Permissões**, **Permissions → Listar/Criar**, **Usuários → Criar/Definir Roles/Ativar/Excluir**
 
-O projeto **não** registra `JsonStringEnumConverter`. Portanto:
+### Endereço por CEP
 
-- **Corpo JSON**: enviar enums como **inteiros**.
-  - `MetodoPagamento`: `0` = CartaoDebito, `1` = CartaoCredito, `2` = Pix
-  - `TipoProduto`: `0` = Simples, `1` = Combo
-  - `PedidoEtapa`: `0` = Criado, `1` = Aprovado, `2` = Pagamento, `3` = PagamentoAprovado, `4` = EnvioPendente, `5` = Entregue, `6` = Finalizado
-  - `EntregaTipo`: `0` = Transporte, `1` = Retirada
-- **Query params**: aceitam o **nome** da string (case-insensitive), ex.: `?tipo=simples`.
+**Endereços (CEP) → Buscar Endereço por CEP** — público, retorna o endereço para autopreencher
+o formulário antes de **Clientes → Criar**.
 
-> Se o front-end (Lovable) envia enums como string no body, a integração vai falhar. Há duas opções: (a) registrar `JsonStringEnumConverter` na API, ou (b) enviar inteiros no front. Veja `docs/Site/Erros-e-Padroes.md`.
+## Enums no body JSON
 
-## Inconsistência de formato do `metodo` de pagamento
+O projeto **não** registra `JsonStringEnumConverter` — enviar enums como **inteiros** no corpo:
 
-| Onde | Formato | Exemplo |
-|------|---------|---------|
-| `GET /pagamentos/opcoes` (response) | string com underscore | `"cartao_credito"` |
-| `POST /pagamentos/iniciar` (request body) | inteiro (enum) | `2` |
-| `TransacaoResponse.metodo` (response) | string lowercase sem underscore | `"cartaocredito"` |
+- `MetodoPagamento`: `0` = CartaoDebito, `1` = CartaoCredito, `2` = Pix
+- `TipoProduto`: `0` = Simples, `1` = Combo
+- `PedidoEtapa`: `0` = Criado, `1` = Aprovado, `2` = Pagamento, `3` = PagamentoAprovado, `4` = EnvioPendente, `5` = Entregue, `6` = Finalizado
+- `EntregaTipo`: `0` = Transporte, `1` = Retirada
 
-O mapeamento no front precisa tratar essas três representações.
+Query params aceitam o **nome** da string (case-insensitive), ex.: `?tipo=simples`.
+
+## Paginação
+
+As listagens usam query `pagina` / `tamanho` e respondem com envelope:
+`{ itens: [], paginaAtual, tamanhoPagina, totalRegistros, totalPaginas, temPaginaAnterior, temProximaPagina }`.
 
 ## Pré-requisitos
 
 - API rodando em `http://localhost:5166` (`dotnet run --project src/GatumsGourmet.Api`).
-- PostgreSQL disponível (ver `docker/docker-compose.yml`). O `DbSeeder` cria o admin e produtos demo automaticamente.
-- Swagger UI em `http://localhost:5166/swagger` (apenas em Development).
+- PostgreSQL disponível (ver `docker/docker-compose.yml`). A migration cria as tabelas de RBAC e
+  semeia as roles/permissões; o `DbSeeder` cria o admin (`admin@gatums.com` / `Admin@123`) vinculado à role Admin.
+- OpenAPI/Scalar em Development.
+
+> Observação: ajuste `baseUrl` se a API subir em outra porta (ex.: `5080` no Docker local).
