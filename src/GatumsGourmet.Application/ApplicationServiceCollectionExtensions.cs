@@ -14,6 +14,7 @@ using GatumsGourmet.Application.UseCases.V1.Clientes.CreateCliente;
 using GatumsGourmet.Application.UseCases.V1.Clientes.DeleteCliente;
 using GatumsGourmet.Application.UseCases.V1.Clientes.ListClientes;
 using GatumsGourmet.Application.UseCases.V1.Clientes.UpdateCliente;
+using GatumsGourmet.Application.UseCases.V1.Enderecos.BuscarEnderecoPorCep;
 using GatumsGourmet.Application.UseCases.V1.Manutencao.PurgeExpiredRefreshTokens;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ConfirmarPagamentoPix;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ConsultarStatusPagamento;
@@ -110,6 +111,8 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IValidarPagamentoParaAprovacaoHandler, ValidarPagamentoParaAprovacaoHandler>();
 
         services.AddScoped<IGetVendasResumoHandler, GetVendasResumoHandler>();
+
+        services.AddScoped<IBuscarEnderecoPorCepHandler, BuscarEnderecoPorCepHandler>();
 
         services.AddScoped<IListRolesHandler, ListRolesHandler>();
         services.AddScoped<IGetRoleByIdHandler, GetRoleByIdHandler>();
