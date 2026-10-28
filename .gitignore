@@ -433,3 +433,9 @@ FodyWeavers.xsd
 # Superpowers SDD scratch workspace (ledger, briefs, review packages).
 # NOTE: docs/superpowers/ (specs e plans) É versionado; só este scratch não.
 /.superpowers/
+
+# Newman (execução da coleção Postman) — artefatos e deps locais
+docs/Postman/node_modules/
+docs/Postman/newman-report.html
+docs/Postman/newman-junit.xml
+docs/Postman/package-lock.json

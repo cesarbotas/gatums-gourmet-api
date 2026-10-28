@@ -1,102 +1,96 @@
 # Postman — Gatums Gourmet API
 
 Coleção e ambiente para testar a API Gatums Gourmet (.NET 10) com **RBAC + refresh token**.
+A coleção é **runner-ready**: um fluxo E2E ordenado (admin + cliente) que passa verde no
+**Collection Runner** (bom para o dev) e no **Newman** (CLI, para o QA / CI).
 
 ## Arquivos
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `GatumsGourmet.postman_collection.json` | Coleção completa com scripts que capturam tokens e IDs automaticamente |
-| `GatumsGourmet-Local.environment.json` | Ambiente local com variáveis de conexão e credenciais seed |
+| `GatumsGourmet.postman_collection.json` | Coleção completa, ordenada como fluxo E2E, com asserts em cada request |
+| `GatumsGourmet-Local.environment.json` | Ambiente local (credenciais seed, variáveis) |
+| `package.json` | Scripts Newman (relatório CLI / HTML / JUnit) |
 
-## Como importar
+## Importar no Postman
 
-1. Abra o Postman.
-2. **Import** → arraste os dois arquivos (ou *Upload Files*).
-3. Selecione o ambiente **Gatums Gourmet - Local** no seletor no canto superior direito.
+1. **Import** → arraste os dois arquivos JSON.
+2. Selecione o ambiente **Gatums Gourmet - Local**.
+3. Pré-requisito: API rodando em `{{baseUrl}}` (default `http://localhost:5166`) e banco disponível.
 
-## Grupos da coleção
+## Como os tokens são obtidos (você não precisa copiar nada)
 
-Auth · Produtos · Categorias · Endereços (CEP) · Clientes (CRM) · Carrinho · Pedidos ·
-Pagamentos · Relatórios · Roles (RBAC) · Permissions (RBAC) · Usuários (RBAC).
+- **No Collection Runner / Newman:** o grupo **0. Setup** roda primeiro e faz login do admin,
+  registra+loga o cliente, e salva `accessToken`/`refreshToken`/expiração de cada um. Todos os
+  requests seguintes já usam esses tokens (via `{{adminToken}}` / `{{clienteToken}}`).
+- **No uso manual (clicando num request avulso):** um **prerequest de coleção** garante o token
+  sob demanda — se você clicar direto em um request protegido (ex.: `Me`) sem ter logado, ele faz
+  login do admin automaticamente, e renova por refresh se o token estiver perto de expirar.
+  Para o cliente, rode o grupo **0. Setup** uma vez (o cliente precisa ser registrado).
 
-## Variáveis
+> Resumo: **rode o grupo 0. Setup uma vez** (ou a coleção inteira) e todos os endpoints
+> protegidos funcionam, sem copiar token manualmente.
 
-| Variável | Descrição |
-|----------|-----------|
-| `baseUrl` | Base da API (`http://localhost:5166`) |
-| `adminEmail` / `adminPassword` | Credenciais seed do admin (`admin@gatums.com` / `Admin@123`) |
-| `adminToken` / `adminRefreshToken` | Preenchidos ao rodar *Login (Admin)* |
-| `clienteEmail` / `clientePassword` | Credenciais do cliente de teste |
-| `clienteToken` / `clienteRefreshToken` | Preenchidos ao rodar *Login (Cliente)* |
-| `clienteUserId` | Id do usuário cliente (do login) |
-| `produtoId` / `categoriaId` | Preenchidos ao listar/criar produto/categoria |
-| `clienteId` | Preenchido ao criar cliente (CRM) |
-| `pedidoId` / `transacaoId` | Preenchidos no checkout / iniciar pagamento |
-| `roleId` / `permissionId` / `usuarioId` | Preenchidos nos grupos de RBAC |
+## Rodar no Collection Runner (dev)
 
-## Autenticação (RBAC + refresh token)
+1. Clique com o botão direito na coleção → **Run collection**.
+2. Deixe a ordem padrão (os grupos estão numerados 0→8). Marque "Keep variable values".
+3. **Run**. O Runner mostra verde/vermelho por request (status + asserts).
 
-- **Login/refresh** devolvem `{ accessToken, refreshToken, expiresIn, user: { id, nome, email, roles: [] } }`.
-  Os scripts salvam `accessToken` e `refreshToken` automaticamente.
-- **Access token** é curto (default **15 min**). Renove com **Auth → Refresh Token** enviando
-  `{ refreshToken }` — o refresh é **rotativo** (o antigo é invalidado). Reapresentar um refresh já
-  rotacionado revoga a família inteira (detecção de reúso) e retorna 400.
-- **Logout** envia `{ refreshToken }` no body (revoga a sessão). **Logout-all** revoga todas.
-- Header: `Authorization: Bearer <accessToken>`. Cada pasta/requisição já aponta para
-  `{{adminToken}}` ou `{{clienteToken}}`.
-- Claims do access token: `sub`, `email`, uma claim `role` por role, uma claim `perm` por permissão, `jti`.
+Fluxo coberto pela corrida (ordenado):
+`0. Setup (login admin + cliente)` → `1. Catálogo (admin)` → `2. Endereços (CEP)` →
+`3. Clientes CRM (admin)` → `4. Compra (cliente)` → `5. Pedidos (admin)` →
+`6. RBAC (admin)` → `7. Relatórios (admin)` → `8. Limpeza (admin)`.
 
-### Autorização por permissão (não mais por role nominal)
+A corrida é **repetível**: nomes/emails usam `{{$timestamp}}` e o fluxo de compra limpa o
+carrinho no início; a limpeza final remove o produto e a role de teste.
 
-As rotas administrativas exigem **permissões** (ex.: `produtos:escrever`, `usuarios:gerenciar`),
-não a antiga policy `AdminOnly`/`ClienteOnly`. O **Admin** do seed tem todas as 12 permissões,
-então passa em qualquer rota. As roles de seed são **Admin**, **Cliente** e **Gerente** (PascalCase).
+## Rodar via Newman (QA / performance / CI)
 
-## Fluxo recomendado
+Newman roda a mesma coleção pela linha de comando — mais rápido que a UI e com relatório.
 
-### Cliente (compra)
+**Pré-requisito:** Node.js. Instale o Newman (global ou via o `package.json` desta pasta):
 
-1. **Auth → Registrar (Cliente)** → **Login (Cliente)** (captura tokens + `clienteUserId`)
-2. **Categorias → Listar** (captura `categoriaId`) · **Produtos → Listar** (captura `produtoId`)
-3. **Carrinho → Adicionar Item** → **Ver Carrinho**
-4. **Pedidos → Checkout** (captura `pedidoId`)
-5. **Pagamentos → Iniciar** (captura `transacaoId`) → **Confirmar Pix** *ou* **Processar Cartão** → **Consultar Status**
-6. **Pedidos → Concluir Pagamento**
+```bash
+# opção A: usando o package.json desta pasta
+cd docs/Postman
+npm install
+npm test            # relatório no terminal
+npm run test:html   # gera newman-report.html (bom para enviar ao QA)
 
-### Admin (gestão)
+# opção B: Newman global
+npm install -g newman newman-reporter-htmlextra
+newman run GatumsGourmet.postman_collection.json \
+  -e GatumsGourmet-Local.environment.json \
+  -r cli,htmlextra --reporter-htmlextra-export newman-report.html
+```
 
-1. **Auth → Login (Admin)** (captura tokens)
-2. **Categorias → Criar** → **Produtos → Criar** (usa `categoriaId`)
-3. **Clientes (CRM)**, **Pedidos → Listar / Avançar Etapa**, **Pagamentos → Validar**, **Relatórios → Resumo**
-4. **RBAC**: **Roles → Listar/Criar/Definir Permissões**, **Permissions → Listar/Criar**, **Usuários → Criar/Definir Roles/Ativar/Excluir**
+Para enviar ao QA: mande os **dois JSON** (coleção + environment) e, se quiser, o
+`newman-report.html` gerado. O QA ajusta `baseUrl` no environment para o alvo dele
+(local/homologação) e roda `npm run test:html`.
 
-### Endereço por CEP
+> `npm run test:ci` gera um `newman-junit.xml` (para pipelines). Integração no GitHub Actions
+> pode ser adicionada depois, se quiser.
 
-**Endereços (CEP) → Buscar Endereço por CEP** — público, retorna o endereço para autopreencher
-o formulário antes de **Clientes → Criar**.
+## Autenticação (resumo)
+
+- Login/refresh devolvem `{ accessToken, refreshToken, expiresIn, user: { id, nome, email, roles[] } }`.
+- Access ~15 min; **refresh rotativo** (o antigo é invalidado; reúso revoga a família → 400).
+- Header `Authorization: Bearer <accessToken>`. Autorização por **permissão** (o Admin do seed tem todas).
+- Roles de seed: **Admin**, **Cliente**, **Gerente** (PascalCase).
 
 ## Enums no body JSON
 
-O projeto **não** registra `JsonStringEnumConverter` — enviar enums como **inteiros** no corpo:
-
-- `MetodoPagamento`: `0` = CartaoDebito, `1` = CartaoCredito, `2` = Pix
-- `TipoProduto`: `0` = Simples, `1` = Combo
-- `PedidoEtapa`: `0` = Criado, `1` = Aprovado, `2` = Pagamento, `3` = PagamentoAprovado, `4` = EnvioPendente, `5` = Entregue, `6` = Finalizado
-- `EntregaTipo`: `0` = Transporte, `1` = Retirada
-
-Query params aceitam o **nome** da string (case-insensitive), ex.: `?tipo=simples`.
+Enviar enums como **inteiros**: `MetodoPagamento` (0 Débito, 1 Crédito, 2 Pix);
+`TipoProduto` (0 Simples, 1 Combo); `PedidoEtapa` (0..6); `EntregaTipo` (0 Transporte, 1 Retirada).
+Query params aceitam o nome string (case-insensitive).
 
 ## Paginação
 
-As listagens usam query `pagina` / `tamanho` e respondem com envelope:
+Listagens usam `pagina`/`tamanho` e respondem com
 `{ itens: [], paginaAtual, tamanhoPagina, totalRegistros, totalPaginas, temPaginaAnterior, temProximaPagina }`.
 
-## Pré-requisitos
+## Observações
 
-- API rodando em `http://localhost:5166` (`dotnet run --project src/GatumsGourmet.Api`).
-- PostgreSQL disponível (ver `docker/docker-compose.yml`). A migration cria as tabelas de RBAC e
-  semeia as roles/permissões; o `DbSeeder` cria o admin (`admin@gatums.com` / `Admin@123`) vinculado à role Admin.
-- OpenAPI/Scalar em Development.
-
-> Observação: ajuste `baseUrl` se a API subir em outra porta (ex.: `5080` no Docker local).
+- Ajuste `baseUrl` se a API subir em outra porta (ex.: `5080` no Docker local).
+- O `newman-report.html` / `newman-junit.xml` são artefatos de execução — não precisam ir para o git.
