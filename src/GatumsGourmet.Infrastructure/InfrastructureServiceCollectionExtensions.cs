@@ -11,6 +11,7 @@ using GatumsGourmet.Infrastructure.Data.Repositories.Produtos;
 using GatumsGourmet.Infrastructure.Data.Repositories.Vendas;
 using GatumsGourmet.Infrastructure.Services;
 using GatumsGourmet.Infrastructure.Services.Auth;
+using GatumsGourmet.Infrastructure.Services.Enderecos;
 using GatumsGourmet.Infrastructure.Services.Pagamentos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -46,6 +47,14 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddScoped<IPaymentGateway, MockPaymentGateway>();
         services.AddScoped<IPixProvider, MockPixProvider>();
+
+        // Provedor de CEP (ViaCEP) — primeira integração HTTP de saída do projeto.
+        var viaCepBaseUrl = configuration["ViaCep:BaseUrl"] ?? "https://viacep.com.br/ws/";
+        services.AddHttpClient<ICepProvider, ViaCepProvider>(client =>
+        {
+            client.BaseAddress = new Uri(viaCepBaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(5);
+        });
 
         return services;
     }

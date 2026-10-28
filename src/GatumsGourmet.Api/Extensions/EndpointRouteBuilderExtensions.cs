@@ -26,6 +26,7 @@ public static class EndpointRouteBuilderExtensions
         ProdutosEndpoints.Map(v1.MapGroup("/produtos").WithTags("Produtos"));
         CategoriasEndpoints.Map(v1.MapGroup("/categorias").WithTags("Categorias"));
         ClientesEndpoints.Map(v1.MapGroup("/clientes").WithTags("Clientes"));
+        EnderecosEndpoints.Map(v1.MapGroup("/enderecos").WithTags("Enderecos"));
         CarrinhoEndpoints.Map(v1.MapGroup("/carrinho").WithTags("Carrinho"));
         PedidosEndpoints.Map(v1.MapGroup("/pedidos").WithTags("Pedidos"));
         PagamentosEndpoints.Map(v1.MapGroup("/pagamentos").WithTags("Pagamentos"));
