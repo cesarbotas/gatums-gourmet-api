@@ -285,6 +285,51 @@
           "response": []
         },
         {
+          "name": "Upload de Imagem",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Request de documentação/manual: no Postman, selecione um arquivo JPEG/PNG/WebP",
+                  "// no campo 'arquivo' e espere 201 { url }. Sem arquivo (ex.: execução headless",
+                  "// via Newman no CI, onde não há fixture de arquivo), a API responde 400 — por isso",
+                  "// a asserção aceita 201 OU 400 e NÃO quebra a suíte E2E automatizada.",
+                  "pm.test('Upload responde 201 (com arquivo) ou 400 (sem arquivo)', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.url) { pm.collectionVariables.set('fotoUrl', json.url); console.log('fotoUrl salva:', json.url); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "arquivo", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/imagens",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "imagens"]
+            },
+            "description": "Permissão: produtos:escrever. Request manual/de documentação: no Postman, selecione um arquivo JPEG/PNG/WebP (máx 5MB) no campo 'arquivo' → 201 { url } (salva em fotoUrl). Em execução headless (Newman/CI, sem fixture de arquivo) a API responde 400 e a asserção tolera isso para não quebrar a suíte E2E. Use a url retornada como fotoUrl ao criar/atualizar o produto."
+          },
+          "response": []
+        },
+        {
           "name": "Criar Produto",
           "event": [
             {

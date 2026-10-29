@@ -1,4 +1,6 @@
 using GatumsGourmet.Api.Endpoints.V1;
+using GatumsGourmet.Api.Endpoints.V1.Imagens;
+using GatumsGourmet.Api.Endpoints.V1.Produtos;
 
 namespace GatumsGourmet.Api.Extensions;
 
@@ -24,6 +26,7 @@ public static class EndpointRouteBuilderExtensions
 
         AuthEndpoints.Map(v1.MapGroup("/auth").WithTags("Auth"));
         ProdutosEndpoints.Map(v1.MapGroup("/produtos").WithTags("Produtos"));
+        ImagensEndpoints.Map(v1.MapGroup("/imagens").WithTags("Imagens"));
         CategoriasEndpoints.Map(v1.MapGroup("/categorias").WithTags("Categorias"));
         ClientesEndpoints.Map(v1.MapGroup("/clientes").WithTags("Clientes"));
         EnderecosEndpoints.Map(v1.MapGroup("/enderecos").WithTags("Enderecos"));

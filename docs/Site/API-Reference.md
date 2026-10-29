@@ -224,6 +224,31 @@ Tokens:
 
 ---
 
+## Imagens
+
+Upload de imagem de produto para storage S3-compatível. Endpoint separado do CRUD
+de produtos: o front faz o upload, recebe a URL pública e grava **só a string**
+em `fotoUrl` no produto. Guia de consumo no front: [Upload-Imagens.md](Upload-Imagens.md).
+
+### POST /imagens
+- **Auth**: `produtos:escrever`
+- **Content-Type**: `multipart/form-data`
+- **Body**: campo `arquivo` (um único arquivo)
+  > Tipos aceitos: **JPEG / PNG / WebP** — detectados por **magic bytes** (o
+  > `Content-Type` e o nome do arquivo não decidem o tipo). Tamanho máximo **5 MB**
+  > (`Storage:MaxFileSizeMB`).
+- **201**: `UploadImagemResponse`
+  ```json
+  { "url": "https://.../produtos/{guid}.jpg" }
+  ```
+  > O object key é gerado pela API como `produtos/{guid}.{ext}`. Use a `url` como
+  > `fotoUrl` ao criar/atualizar o produto.
+- **400**: `"Tipo de imagem não suportado. Use JPEG, PNG ou WebP."`, `"Arquivo vazio."`
+  ou `"Arquivo excede o tamanho máximo de 5 MB."` (ProblemDetails)
+- **500**: storage não configurado no ambiente (mensagem clara)
+
+---
+
 ## Categorias
 
 Entidade de catálogo das categorias de produto. `id` é um inteiro (number, long).
@@ -735,6 +760,7 @@ Guia de consumo no front: [Busca-CEP.md](Busca-CEP.md).
 | GET `/pedidos/{id}` | Bearer (dono **ou** role `Admin`) |
 | Pagamentos do próprio pedido (`/opcoes`, `/iniciar`, `/{id}/cartao`, `/{id}/status`, `/{id}/pix/confirmar`) | Bearer + ownership |
 | POST/PUT/DELETE `/produtos` | `produtos:escrever` |
+| POST `/imagens` | `produtos:escrever` |
 | POST/PUT/DELETE `/categorias` | `categorias:escrever` |
 | GET `/clientes` | `clientes:ler` |
 | POST/PUT/DELETE `/clientes` | `clientes:escrever` |
