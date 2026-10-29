@@ -29,3 +29,10 @@ Scan limpo. Nenhuma contradição que exija ruling antes da execução. A ordem 
 (aguardando execução)
 
 Task 1: dispatch (BASE c3875ef, implementer modelo econômico) — IImageStorage + ImageTypeDetector (magic bytes)
+
+--- Rastro agora versionado em docs/superpowers/execucao/upload-imagens/ (commit 821eac2). ---
+Task 1: re-dispatch (BASE 821eac2, implementer modelo econômico) — Task 1 anterior foi cancelada pelo usuário; nada implementado. Brief: task-1-brief.md.
+Task 1: minor (deferred): ImageTypeDetector valida só o contêiner RIFF/WEBP, não sub-formatos VP8/VP8L/VP8X — suficiente p/ o escopo. Não bloqueante.
+Task 1: complete (commits 821eac2..7546dd8, review clean). Build 0 erros; 5/5 testes do detector. Guardas de comprimento e cobertura WebP verificadas.
+
+Task 2: dispatch (BASE 7546dd8, implementer modelo standard) — use case UploadImagem (validação tamanho + tipo)
