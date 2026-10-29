@@ -34,11 +34,13 @@ public sealed class S3ImageStorage(IAmazonS3 s3, IOptions<StorageOptions> option
             InputStream = conteudo,
             ContentType = contentType,
             AutoCloseStream = false,
-            // Path-style (MinIO/R2) não lida bem com a assinatura de payload
-            // chunked da V4; desabilitá-la mantém o PUT compatível.
-            DisablePayloadSigning = _options.ForcePathStyle,
         };
 
+        // NOTA: NÃO usamos DisablePayloadSigning — na V4 ele exige HTTPS e quebra
+        // o MinIO local em http://. A compatibilidade com S3-compatíveis vem do
+        // RequestChecksumCalculation = WhenRequired no AmazonS3Config (ver DI),
+        // que desliga o checksum CRC + aws-chunked que o MinIO rejeita, mantendo
+        // a assinatura SigV4 normal (funciona sobre HTTP).
         await s3.PutObjectAsync(request, ct);
 
         // Monta a URL pública sem barra dupla entre a base e a object key.

@@ -75,6 +75,11 @@ public static class InfrastructureServiceCollectionExtensions
                     ServiceURL = storageOptions.ServiceUrl,
                     ForcePathStyle = storageOptions.ForcePathStyle,
                     AuthenticationRegion = storageOptions.Region,
+                    // A V4 do SDK liga checksums CRC + aws-chunked por padrão, o
+                    // que provedores S3-compatíveis (MinIO) rejeitam sobre HTTP.
+                    // WhenRequired volta ao comportamento clássico (sem checksum
+                    // extra), mantendo a assinatura SigV4 e funcionando em http://.
+                    RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,
                 };
 
                 return new AmazonS3Client(

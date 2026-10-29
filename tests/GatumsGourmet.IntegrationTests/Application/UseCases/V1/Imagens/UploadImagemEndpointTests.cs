@@ -4,18 +4,21 @@ using System.Net.Http.Json;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using Amazon.Runtime;
+using Amazon.S3;
 using FluentAssertions;
 using GatumsGourmet.Domain.Entities.Auth;
 using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Infrastructure.Data;
+using GatumsGourmet.Infrastructure.Services.Storage;
 using GatumsGourmet.IntegrationTests.Factory;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -224,53 +227,66 @@ public class UploadImagemEndpointTests
         }
     }
 
+    // Opções do MinIO local (docker/docker-compose.yml, Task 6). Usadas para
+    // montar o S3ImageStorage REAL no teste (B).
+    private static StorageOptions MinioOptions() => new()
+    {
+        ServiceUrl = "http://localhost:9000",
+        Region = "us-east-1",
+        Bucket = "gatums-imagens",
+        AccessKey = "minioadmin",
+        SecretKey = "minioadmin",
+        PublicBaseUrl = "http://localhost:9000/gatums-imagens",
+        ForcePathStyle = true,
+        MaxFileSizeMB = 5
+    };
+
     [Fact]
-    public async Task Admin_Jpeg_MinioReal_RetornaCreated_OuSkipSuave()
+    public async Task Admin_Jpeg_MinioReal_RetornaCreated()
     {
         if (!MinioDisponivel())
         {
-            _output.WriteLine("MinIO indisponível, teste (B) pulado");
+            // Único motivo legítimo de pular: o MinIO não está rodando (ex.: CI
+            // sem docker compose up). Quando ele responde, o teste tem de validar
+            // o caminho real de ponta a ponta — e FALHAR se algo estiver errado.
+            _output.WriteLine("MinIO indisponível (porta 9000 fechada), teste (B) pulado");
             return;
         }
 
-        // MinIO responde: sobe um host com a seção Storage apontando para ele e
-        // usa o S3ImageStorage REAL (não substitui IImageStorage).
+        // Registra o S3ImageStorage REAL contra o MinIO via ConfigureTestServices
+        // (RemoveAll + AddSingleton). Fazemos isso em vez de depender da seção
+        // Storage via AddInMemoryCollection porque o appsettings.json base (R2
+        // placeholder) vence a precedência no host de teste, e o IImageStorage é
+        // resolvido no registro (AddInfrastructure) — o override por serviço é o
+        // caminho robusto e determinístico.
+        var options = MinioOptions();
         var host = _factory.WithWebHostBuilder(b =>
-            b.ConfigureAppConfiguration(cfg => cfg.AddInMemoryCollection(new Dictionary<string, string?>
+            b.ConfigureTestServices(s =>
             {
-                ["Storage:ServiceUrl"] = "http://localhost:9000",
-                ["Storage:Region"] = "us-east-1",
-                ["Storage:Bucket"] = "gatums-imagens",
-                ["Storage:AccessKey"] = "minioadmin",
-                ["Storage:SecretKey"] = "minioadmin",
-                ["Storage:PublicBaseUrl"] = "http://localhost:9000/gatums-imagens",
-                ["Storage:ForcePathStyle"] = "true",
-                ["Storage:MaxFileSizeMB"] = "5"
-            })));
+                s.RemoveAll<IImageStorage>();
+                s.RemoveAll<IAmazonS3>();
+                s.AddSingleton<IAmazonS3>(_ => new AmazonS3Client(
+                    new BasicAWSCredentials(options.AccessKey, options.SecretKey),
+                    new AmazonS3Config
+                    {
+                        ServiceURL = options.ServiceUrl,
+                        ForcePathStyle = options.ForcePathStyle,
+                        AuthenticationRegion = options.Region,
+                        // Mesma config da produção (ver InfrastructureServiceCollectionExtensions):
+                        // WhenRequired evita o checksum CRC + aws-chunked que o MinIO rejeita em http://.
+                        RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED
+                    }));
+                s.AddSingleton(Options.Create(options));
+                s.AddScoped<IImageStorage, S3ImageStorage>();
+            }));
 
         var client = await ClientAutenticadoAsync(host, "Admin");
 
-        HttpResponseMessage resp;
-        try
-        {
-            resp = await client.PostAsync("/api/v1/imagens", Multipart(JpegBytes(), "image/jpeg", "foto.jpg"));
-        }
-        catch (Exception ex)
-        {
-            // Falha de infra (bucket/endpoint indisponível) → skip suave.
-            _output.WriteLine($"MinIO indisponível, teste (B) pulado (erro no PUT: {ex.Message})");
-            return;
-        }
+        var resp = await client.PostAsync("/api/v1/imagens", Multipart(JpegBytes(), "image/jpeg", "foto.jpg"));
 
-        if (resp.StatusCode != HttpStatusCode.Created)
-        {
-            // O host respondeu, mas o storage real não completou (ex.: bucket
-            // inexistente porque a Task 6 ainda não rodou). Skip suave.
-            _output.WriteLine(
-                $"MinIO indisponível, teste (B) pulado (status {(int)resp.StatusCode}: " +
-                $"{await resp.Content.ReadAsStringAsync()})");
-            return;
-        }
+        resp.StatusCode.Should().Be(HttpStatusCode.Created,
+            because: "com o MinIO up e o bucket gatums-imagens público, o PUT real deve completar; " +
+                     $"resposta: {await resp.Content.ReadAsStringAsync()}");
 
         var body = await resp.Content.ReadFromJsonAsync<UploadImagemDto>();
         body!.Url.Should().NotBeNullOrWhiteSpace();
