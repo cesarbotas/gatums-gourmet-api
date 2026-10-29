@@ -9,7 +9,7 @@ using GatumsGourmet.Application.UseCases.V1.Pedidos.ListPedidos;
 using GatumsGourmet.Domain.Enums.Pedidos;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GatumsGourmet.Api.Endpoints.V1;
+namespace GatumsGourmet.Api.Endpoints.V1.Pedidos;
 
 public static class PedidosEndpoints
 {
@@ -19,10 +19,15 @@ public static class PedidosEndpoints
             (await handler.Handle(user.GetUserId(), body.ClienteNome, ct)).ToHttpResult(StatusCodes.Status201Created))
             .RequireAuthorization();
 
-        group.MapGet("/", async (ClaimsPrincipal user, [FromQuery] int pagina, [FromQuery] int tamanho, IListPedidosHandler handler, CancellationToken ct) =>
+        group.MapGet("/", async (
+            ClaimsPrincipal user,
+            [AsParameters] PedidosRequest request,
+            IListPedidosHandler handler, CancellationToken ct) =>
         {
             Guid? filtro = user.HasPermission("pedidos:ler") ? null : user.GetUserId();
-            return (await handler.Handle(filtro, new ListPedidosRequest(pagina < 1 ? 1 : pagina, tamanho < 1 ? 10 : tamanho), ct)).ToHttpResult();
+            return (await handler.Handle(filtro, new ListPedidosRequest(
+                request.Pagina < 1 ? 1 : request.Pagina,
+                request.Tamanho < 1 ? 10 : request.Tamanho), ct)).ToHttpResult();
         }).RequireAuthorization();
 
         group.MapGet("/{id:guid}", async (Guid id, ClaimsPrincipal user, IGetPedidoByIdHandler handler, CancellationToken ct) =>

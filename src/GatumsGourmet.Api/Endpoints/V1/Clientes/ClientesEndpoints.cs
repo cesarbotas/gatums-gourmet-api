@@ -6,14 +6,19 @@ using GatumsGourmet.Application.UseCases.V1.Clientes.ListClientes;
 using GatumsGourmet.Application.UseCases.V1.Clientes.UpdateCliente;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GatumsGourmet.Api.Endpoints.V1;
+namespace GatumsGourmet.Api.Endpoints.V1.Clientes;
 
 public static class ClientesEndpoints
 {
     public static void Map(RouteGroupBuilder group)
     {
-        group.MapGet("/", async ([FromQuery] int pagina, [FromQuery] int tamanho, [FromQuery] string? search, IListClientesHandler handler, CancellationToken ct) =>
-            (await handler.Handle(new ListClientesRequest(pagina < 1 ? 1 : pagina, tamanho < 1 ? 10 : tamanho, search), ct)).ToHttpResult())
+        group.MapGet("/", async (
+            [AsParameters] ClientesRequest request,
+            IListClientesHandler handler, CancellationToken ct) =>
+            (await handler.Handle(new ListClientesRequest(
+                request.Pagina < 1 ? 1 : request.Pagina,
+                request.Tamanho < 1 ? 10 : request.Tamanho,
+                request.Search), ct)).ToHttpResult())
             .RequirePermission("clientes:ler");
 
         group.MapPost("/", async ([FromBody] CreateClienteRequest request, ICreateClienteHandler handler, CancellationToken ct) =>

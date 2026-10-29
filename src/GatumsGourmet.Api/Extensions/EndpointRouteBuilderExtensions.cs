@@ -1,5 +1,8 @@
 using GatumsGourmet.Api.Endpoints.V1;
+using GatumsGourmet.Api.Endpoints.V1.Categorias;
+using GatumsGourmet.Api.Endpoints.V1.Clientes;
 using GatumsGourmet.Api.Endpoints.V1.Imagens;
+using GatumsGourmet.Api.Endpoints.V1.Pedidos;
 using GatumsGourmet.Api.Endpoints.V1.Produtos;
 
 namespace GatumsGourmet.Api.Extensions;
