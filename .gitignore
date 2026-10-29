@@ -437,3 +437,9 @@ FodyWeavers.xsd
 /.superpowers/
 # Saída crua do reviewer (scratch); a versão curada vai em docs/superpowers/execucao/.
 /semantic-review/
+
+# Newman (execução da coleção Postman) — artefatos e deps locais
+docs/Postman/node_modules/
+docs/Postman/newman-report.html
+docs/Postman/newman-junit.xml
+docs/Postman/package-lock.json

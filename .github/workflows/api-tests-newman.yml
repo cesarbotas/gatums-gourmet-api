@@ -1,0 +1,119 @@
+name: API Tests (Newman)
+
+# ============================================================
+# Roda a coleção Postman (docs/Postman) contra a API real via Newman.
+# Sobe PostgreSQL como service container, executa a API .NET em background
+# (que cria o banco, aplica migrations e semeia o admin no startup), espera
+# a API responder e roda a coleção E2E. Publica o relatório HTML como artefato.
+#
+# Dispara em PR/push nas branches principais e manualmente.
+# ============================================================
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  newman:
+    name: Newman E2E
+    runs-on: ubuntu-latest
+
+    # PostgreSQL para a API usar. A API cria o banco 'gatums' no startup se não existir.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gatums
+          POSTGRES_PASSWORD: gatums_ci
+          POSTGRES_DB: gatums
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gatums -d gatums"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DOTNET_VERSION: '10.0.x'
+      # A API lê estas variáveis (precedência sobre appsettings). Banco local do runner.
+      ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=gatums;Username=gatums;Password=gatums_ci'
+      Jwt__Secret: 'ci-secret-min-32-chars-for-hs256-tests!!'
+      Jwt__Issuer: 'GatumsGourmet'
+      Jwt__Audience: 'GatumsGourmet.Web'
+      ASPNETCORE_URLS: 'http://localhost:5166'
+      ASPNETCORE_ENVIRONMENT: 'Development'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Newman + htmlextra reporter
+        run: npm install -g newman newman-reporter-htmlextra
+
+      - name: Build API
+        run: dotnet build src/GatumsGourmet.Api/GatumsGourmet.Api.csproj --configuration Release
+
+      - name: Start API (background)
+        run: |
+          nohup dotnet run --project src/GatumsGourmet.Api/GatumsGourmet.Api.csproj \
+            --configuration Release --no-build > api.log 2>&1 &
+          echo "API iniciada (PID $!)."
+
+      - name: Wait for API to be healthy
+        run: |
+          echo "Aguardando a API em ${ASPNETCORE_URLS}/api/v1/categorias ..."
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' "${ASPNETCORE_URLS}/api/v1/categorias" || echo "000")
+            echo "Tentativa $i — HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "API saudável."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::A API não respondeu 200 em 60s. Log da API:"
+          cat api.log
+          exit 1
+
+      - name: Run Newman (coleção E2E)
+        run: |
+          newman run docs/Postman/GatumsGourmet.postman_collection.json \
+            -e docs/Postman/GatumsGourmet-Local.environment.json \
+            --env-var "baseUrl=http://localhost:5166" \
+            -r cli,htmlextra,junit \
+            --reporter-htmlextra-export newman-report.html \
+            --reporter-junit-export newman-junit.xml
+
+      - name: Upload Newman report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: |
+            newman-report.html
+            newman-junit.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload API log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-log
+          path: api.log
+          if-no-files-found: ignore
+          retention-days: 7
