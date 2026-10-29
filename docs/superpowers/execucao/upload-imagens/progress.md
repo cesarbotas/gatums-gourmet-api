@@ -36,3 +36,7 @@ Task 1: minor (deferred): ImageTypeDetector valida só o contêiner RIFF/WEBP, n
 Task 1: complete (commits 821eac2..7546dd8, review clean). Build 0 erros; 5/5 testes do detector. Guardas de comprimento e cobertura WebP verificadas.
 
 Task 2: dispatch (BASE 7546dd8, implementer modelo standard) — use case UploadImagem (validação tamanho + tipo)
+Task 2: minor (deferred → Task 4): a validação de tamanho usa o parâmetro `tamanho` recebido, não o length real do stream. A Task 4 deve passar `IFormFile.Length` como fonte confiável. Não bloqueante no escopo do use case.
+Task 2: complete (commits 7546dd8..5b3ae01, review clean — Approved, zero Critical/Important). Build 0 erros; 4/4 testes do handler. Reviewer confirmou: magic bytes como única fonte de verdade, MemoryStream rebobinado antes do upload, nenhum caminho de falha chama o storage (Times.Never).
+
+Task 3: dispatch (BASE 5b3ae01, implementer modelo mais capaz — integração externa) — S3ImageStorage (AWSSDK.S3) + StorageOptions + UnconfiguredImageStorage + DI condicional + seção Storage nos 5 appsettings. REVIEW FOCUS: storage não configurado deve dar erro claro, não 500 opaco.
