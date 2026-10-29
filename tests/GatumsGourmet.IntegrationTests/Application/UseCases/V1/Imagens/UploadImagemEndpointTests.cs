@@ -65,6 +65,13 @@ public class UploadImagemEndpointTests
             var key = $"{prefixo}/fake.{extensao}";
             return Task.FromResult(new ImageUploadResult($"https://fake.local/{key}", key));
         }
+
+        // Não exercitados nos testes de upload; no-op para satisfazer a interface.
+        public Task<IReadOnlyList<StoredObject>> ListObjectsAsync(string prefixo, CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<StoredObject>>([]);
+
+        public Task DeleteAsync(string objectKey, CancellationToken ct = default)
+            => Task.CompletedTask;
     }
 
     private sealed record UploadImagemDto(string Url);

@@ -44,7 +44,44 @@ public sealed class S3ImageStorage(IAmazonS3 s3, IOptions<StorageOptions> option
         await s3.PutObjectAsync(request, ct);
 
         // Monta a URL pública sem barra dupla entre a base e a object key.
-        var url = $"{_options.PublicBaseUrl.TrimEnd('/')}/{objectKey}";
+        var url = UrlPublica(objectKey);
         return new ImageUploadResult(url, objectKey);
     }
+
+    public async Task<IReadOnlyList<StoredObject>> ListObjectsAsync(
+        string prefixo,
+        CancellationToken ct = default)
+    {
+        var resultado = new List<StoredObject>();
+        string? continuationToken = null;
+
+        // ListObjectsV2 retorna no máx. 1000 por página; pagina com o token.
+        do
+        {
+            var resp = await s3.ListObjectsV2Async(new ListObjectsV2Request
+            {
+                BucketName = _options.Bucket,
+                Prefix = $"{prefixo}/",
+                ContinuationToken = continuationToken,
+            }, ct);
+
+            foreach (var o in resp.S3Objects ?? [])
+                resultado.Add(new StoredObject(o.Key, UrlPublica(o.Key), o.LastModified?.ToUniversalTime() ?? DateTime.UtcNow));
+
+            continuationToken = resp.IsTruncated == true ? resp.NextContinuationToken : null;
+        }
+        while (continuationToken is not null);
+
+        return resultado;
+    }
+
+    public Task DeleteAsync(string objectKey, CancellationToken ct = default) =>
+        s3.DeleteObjectAsync(new DeleteObjectRequest
+        {
+            BucketName = _options.Bucket,
+            Key = objectKey,
+        }, ct);
+
+    private string UrlPublica(string objectKey) =>
+        $"{_options.PublicBaseUrl.TrimEnd('/')}/{objectKey}";
 }
