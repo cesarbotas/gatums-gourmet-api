@@ -64,3 +64,8 @@ Task 7: complete (working tree sobre f88a26b). Docs: Upload-Imagens.md (novo, es
 Task 7: verificação final — build 0 erros; unit 160 passed; integração COMPLETA 104/104 passed (zero regressão); UploadImagemEndpointTests 5/5. Postman JSON válido. Links do README conferidos (existem).
 
 === TODAS AS 7 TASKS CONCLUÍDAS. Falta: review final da branch inteira + finishing-a-development-branch (usuário decide merge/PR; ele disse que faz PR manual). ===
+
+=== REVIEW FINAL DA BRANCH: APPROVED (zero Critical/Important). 3 Minor. ===
+Fix pós-review (Minor #1): endpoint ganhou teto de corpo ~6 MB (RequestSizeLimitAttribute + RequestFormLimitsAttribute.MultipartBodyLengthLimit), logo acima do limite de negócio de 5 MB — antes o teto efetivo era o default do Kestrel (~30 MB). Build 0 erros; UploadImagemEndpointTests 5/5 mantidos; doc Upload-Imagens.md atualizada. Minors #2 (sem Production.json — deliberado) e #3 (WebP só contêiner — diferido) mantidos.
+Review final: docs/superpowers/execucao/upload-imagens/final-review.md.
+Próximo passo (parada obrigatória): finishing-a-development-branch — o usuário decide merge/PR. Ele já disse que faz o PR manualmente.
