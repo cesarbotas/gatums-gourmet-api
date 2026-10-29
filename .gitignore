@@ -430,6 +430,8 @@ FodyWeavers.xsd
 
 .fake
 
-# Superpowers SDD scratch workspace (ledger, briefs, review packages).
-# NOTE: docs/superpowers/ (specs e plans) É versionado; só este scratch não.
+# Superpowers: o rastro de execução (ledger + relatórios) é VERSIONADO em
+# docs/superpowers/execucao/. Só os review packages (dumps de git diff, enormes
+# e reconstituíveis a partir dos commits) ficam fora do Git.
+**/*-review-package.txt
 /.superpowers/
