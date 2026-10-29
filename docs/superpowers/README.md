@@ -31,7 +31,9 @@ uma conversa.
 | Autenticação RBAC + refresh token | `specs/2026-10-21-auth-rbac-refresh-token-design.md` | `plans/2026-10-21-auth-rbac-refresh-token.md` | `execucao/auth-rbac/` | Concluída (16 tasks + fix-wave; branch `feature/AjusteLoginToken`) |
 | Busca de CEP (ViaCEP) | — (bounded) | — | — | Concluída (branch `feature/BuscaCep`) |
 | Upload de imagens (S3: MinIO/Supabase/R2) | `specs/2026-10-26-upload-imagens-s3-design.md` | `plans/2026-10-26-upload-imagens-s3.md` | `execucao/upload-imagens/` | Concluída (7 tasks + review final; PR #35 no `develop`) |
-| Padronização endpoints (`[AsParameters]`) | — (mecânica) | — | `execucao/padronizar-endpoints/` | Concluída (branch `feature/padronizar-endpoints-asparameters`) |
+| Padronização endpoints (`[AsParameters]`) | — (mecânica) | — | `execucao/padronizar-endpoints/` | Concluída (PR #36 no `develop`) |
+| Fix paginação (`int?` nos GET) | — (fix) | — | `execucao/fix-paginacao-asparameters/` | Concluída (PR #37 no `develop`) |
+| CORS por origem (restrição por ambiente) | — (bounded) | — | `execucao/cors-origins/` | Concluída (branch `feature/cors-origins`) |
 
 ## Como o rastro é gravado
 
