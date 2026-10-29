@@ -143,9 +143,11 @@ export function useUploadImagem() {
 - **Leitura pública:** as URLs retornadas são de leitura pública (os buckets
   ficam em modo leitura-pública), então o front pode usar a `url` direto em
   `<img src=...>` sem token.
-- **Tipos e tamanho configuráveis:** o limite de 5 MB está em
-  `Storage:MaxFileSizeMB`. Os tipos aceitos são JPEG/PNG/WebP (validados por
-  magic bytes).
+- **Tipos e tamanho configuráveis:** o limite de negócio de 5 MB está em
+  `Storage:MaxFileSizeMB` (retorna `400` com mensagem clara acima dele). Além
+  disso, o endpoint tem um teto de corpo de ~6 MB no nível do framework —
+  requisições grosseiramente grandes são barradas antes de chegar ao handler
+  (`413`). Os tipos aceitos são JPEG/PNG/WebP (validados por magic bytes).
 - **Subir o MinIO local:** `docker compose -f docker/docker-compose.yml up -d`
   sobe também o MinIO com o bucket `gatums-imagens` já público. Dá para conferir
   os uploads visualmente no console em `http://localhost:9001`.

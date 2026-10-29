@@ -1,11 +1,19 @@
 using GatumsGourmet.Api.Authorization;
 using GatumsGourmet.Api.Extensions;
 using GatumsGourmet.Application.UseCases.V1.Imagens.UploadImagem;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GatumsGourmet.Api.Endpoints.V1.Imagens;
 
 public static class ImagensEndpoints
 {
+    // Teto de corpo da requisição ~6 MB: pouco acima do limite de negócio de
+    // 5 MB (Storage:MaxFileSizeMB) para dar folga ao overhead do multipart.
+    // Arquivos até ~6 MB chegam ao handler e, se passarem de 5 MB, recebem um
+    // 400 com mensagem clara; corpos grosseiramente grandes são barrados aqui
+    // pelo framework, em vez de contar com o teto default do Kestrel (~30 MB).
+    private const long LimiteCorpoBytes = 6L * 1024 * 1024;
+
     public static void Map(RouteGroupBuilder group)
     {
         group.MapPost("/", async (
@@ -37,6 +45,10 @@ public static class ImagensEndpoints
             return result.ToHttpResult(StatusCodes.Status201Created);
         })
             .RequirePermission("produtos:escrever")
-            .DisableAntiforgery();
+            .DisableAntiforgery()
+            // Limita o tamanho do corpo e do multipart no limite do framework.
+            .WithMetadata(
+                new RequestSizeLimitAttribute(LimiteCorpoBytes),
+                new RequestFormLimitsAttribute { MultipartBodyLengthLimit = LimiteCorpoBytes });
     }
 }
