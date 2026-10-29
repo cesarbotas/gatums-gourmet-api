@@ -1,4 +1,5 @@
 using GatumsGourmet.Api.Endpoints.V1;
+using GatumsGourmet.Api.Endpoints.V1.Produtos;
 
 namespace GatumsGourmet.Api.Extensions;
 
