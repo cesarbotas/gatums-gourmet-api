@@ -17,6 +17,7 @@
     { "key": "clienteRefreshToken", "value": "", "type": "string" },
     { "key": "clienteUserId", "value": "", "type": "string" },
     { "key": "produtoId", "value": "", "type": "string" },
+    { "key": "fotoUrl", "value": "", "type": "string" },
     { "key": "categoriaId", "value": "", "type": "string" },
     { "key": "clienteId", "value": "", "type": "string" },
     { "key": "pedidoId", "value": "", "type": "string" },
@@ -367,6 +368,49 @@
               "path": ["api", "v1", "produtos", "{{produtoId}}"]
             },
             "description": "Permissão: produtos:escrever."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Imagens",
+      "description": "Upload de imagem de produto para storage S3-compatível (MinIO local / Supabase hml / R2 prd). Endpoint separado do CRUD de produtos: suba a imagem, pegue a url retornada e use como fotoUrl no POST/PUT de produto.",
+      "item": [
+        {
+          "name": "Upload de Imagem",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Upload OK', () => pm.response.to.have.status(201));",
+                  "var json = pm.response.json();",
+                  "if (json.url) { pm.collectionVariables.set('fotoUrl', json.url); console.log('fotoUrl salva:', json.url); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "arquivo", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/imagens",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "imagens"]
+            },
+            "description": "Permissão: produtos:escrever. Selecione um arquivo JPEG/PNG/WebP (máx 5MB) no campo 'arquivo'. Resposta 201: { url }. Use a url retornada como fotoUrl ao criar/atualizar o produto."
           },
           "response": []
         }
