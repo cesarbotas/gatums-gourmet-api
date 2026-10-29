@@ -2,19 +2,90 @@
   "info": {
     "_postman_id": "gatums-gourmet-api-collection",
     "name": "Gatums Gourmet API",
-    "description": "Coleção completa da API Gatums Gourmet (.NET 10).\n\nBase URL: {{baseUrl}}/api/v1\n\nAUTENTICAÇÃO (RBAC + refresh token):\n- Login/refresh devolvem { accessToken, refreshToken, expiresIn, user: { id, nome, email, roles: [] } }.\n- Access token curto (default 15 min). Renove com POST /auth/refresh enviando { refreshToken } — o refresh é rotativo (o antigo é invalidado).\n- Logout envia { refreshToken } no body (revoga a sessão). Logout-all revoga todas.\n- Claims do access token: sub, email, uma claim 'role' por role, uma claim 'perm' por permissão, jti.\n- Autorização por PERMISSÃO (ex.: produtos:escrever, usuarios:gerenciar), não mais por role nominal. O Admin do seed tem todas as permissões.\n\nCredenciais seed (admin): admin@gatums.com / Admin@123\n\nEnums no body JSON: o projeto NÃO registra JsonStringEnumConverter — enviar INTEIROS nos corpos (ex.: metodo=2 para Pix). Query params aceitam o nome string (case-insensitive).",
+    "description": "Coleção completa da API Gatums Gourmet (.NET 10) — RBAC + refresh token.\n\nRUNNER-READY: os requests estão ordenados como um fluxo E2E (Setup → Catálogo → RBAC → Cliente → Limpeza). Rode a coleção inteira no Collection Runner ou via Newman — cada request tem asserts (verde/vermelho) e encadeia variáveis (tokens e ids) automaticamente.\n\nUSO MANUAL: um prerequest de coleção garante os tokens sob demanda — se você clicar direto num request protegido sem ter logado, ele faz login/refresh automaticamente (admin e cliente).\n\nBase URL: {{baseUrl}}/api/v1\nAuth: { accessToken, refreshToken, expiresIn, user{ id, nome, email, roles[] } }. Access ~15 min; refresh rotativo. Autorização por PERMISSÃO (Admin do seed tem todas).\n\nNewman: newman run GatumsGourmet.postman_collection.json -e GatumsGourmet-Local.environment.json -r cli,html",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Prerequest de COLEÇÃO — garante tokens para uso manual interativo.",
+          "// No Collection Runner/Newman os logins rodam primeiro (Setup), então aqui",
+          "// normalmente não há o que fazer; este guard só cobre o clique avulso num",
+          "// request protegido sem ter logado antes.",
+          "const base = pm.collectionVariables.get('baseUrl');",
+          "",
+          "function expiraEm(minsVarKey) {",
+          "  const v = pm.collectionVariables.get(minsVarKey);",
+          "  return v ? Number(v) : 0;",
+          "}",
+          "",
+          "function precisaToken(tokenKey, expKey) {",
+          "  const tok = pm.collectionVariables.get(tokenKey);",
+          "  if (!tok) return true;",
+          "  const exp = expiraEm(expKey);",
+          "  // renova se faltar menos de 60s para expirar",
+          "  return exp > 0 && (exp - Date.now()) < 60000;",
+          "}",
+          "",
+          "function salvarTokens(json, prefixo) {",
+          "  if (json.accessToken) pm.collectionVariables.set(prefixo + 'Token', json.accessToken);",
+          "  if (json.refreshToken) pm.collectionVariables.set(prefixo + 'RefreshToken', json.refreshToken);",
+          "  const mins = json.expiresIn ? Number(json.expiresIn) : 900;",
+          "  pm.collectionVariables.set(prefixo + 'TokenExpiraEm', Date.now() + mins * 1000);",
+          "  if (prefixo === 'cliente' && json.user && json.user.id) pm.collectionVariables.set('clienteUserId', json.user.id);",
+          "}",
+          "",
+          "function loginSync(email, senha, prefixo, done) {",
+          "  pm.sendRequest({",
+          "    url: base + '/api/v1/auth/login',",
+          "    method: 'POST',",
+          "    header: { 'Content-Type': 'application/json' },",
+          "    body: { mode: 'raw', raw: JSON.stringify({ email, senha }) }",
+          "  }, (err, res) => {",
+          "    if (!err && res && res.code === 200) { salvarTokens(res.json(), prefixo); }",
+          "    done();",
+          "  });",
+          "}",
+          "",
+          "const tarefas = [];",
+          "if (precisaToken('adminToken', 'adminTokenExpiraEm')) {",
+          "  tarefas.push((cb) => loginSync(pm.collectionVariables.get('adminEmail'), pm.collectionVariables.get('adminPassword'), 'admin', cb));",
+          "}",
+          "// cliente: só tenta logar se já existir token salvo perto de expirar (não força registro aqui;",
+          "// o registro/login do cliente faz parte do fluxo de Setup da corrida).",
+          "if (pm.collectionVariables.get('clienteToken') && precisaToken('clienteToken', 'clienteTokenExpiraEm')) {",
+          "  const rt = pm.collectionVariables.get('clienteRefreshToken');",
+          "  if (rt) {",
+          "    tarefas.push((cb) => pm.sendRequest({",
+          "      url: base + '/api/v1/auth/refresh', method: 'POST',",
+          "      header: { 'Content-Type': 'application/json' },",
+          "      body: { mode: 'raw', raw: JSON.stringify({ refreshToken: rt }) }",
+          "    }, (err, res) => { if (!err && res && res.code === 200) salvarTokens(res.json(), 'cliente'); cb(); }));",
+          "  }",
+          "}",
+          "",
+          "// executa as tarefas em sequência",
+          "(function run(i) { if (i >= tarefas.length) return; tarefas[i](() => run(i + 1)); })(0);"
+        ]
+      }
+    }
+  ],
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:5166", "type": "string" },
     { "key": "adminEmail", "value": "admin@gatums.com", "type": "string" },
     { "key": "adminPassword", "value": "Admin@123", "type": "string" },
     { "key": "adminToken", "value": "", "type": "string" },
     { "key": "adminRefreshToken", "value": "", "type": "string" },
-    { "key": "clienteEmail", "value": "cliente@exemplo.com", "type": "string" },
+    { "key": "adminTokenExpiraEm", "value": "", "type": "string" },
+    { "key": "clienteNome", "value": "Cliente Runner", "type": "string" },
+    { "key": "clienteEmail", "value": "cliente.runner@exemplo.com", "type": "string" },
     { "key": "clientePassword", "value": "Cliente@123", "type": "string" },
     { "key": "clienteToken", "value": "", "type": "string" },
     { "key": "clienteRefreshToken", "value": "", "type": "string" },
+    { "key": "clienteTokenExpiraEm", "value": "", "type": "string" },
     { "key": "clienteUserId", "value": "", "type": "string" },
     { "key": "produtoId", "value": "", "type": "string" },
     { "key": "categoriaId", "value": "", "type": "string" },
@@ -27,8 +98,8 @@
   ],
   "item": [
     {
-      "name": "Auth",
-      "description": "Autenticação JWT com access + refresh token. Login/register/refresh são públicos; me/logout/logout-all exigem Bearer.",
+      "name": "0. Setup (login admin + cliente)",
+      "description": "Roda primeiro na corrida: autentica admin e registra/loga o cliente. Salva tokens, refresh tokens e expiração.",
       "item": [
         {
           "name": "Login (Admin)",
@@ -38,11 +109,13 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Login admin OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Login admin OK (200)', () => pm.response.to.have.status(200));",
                   "var json = pm.response.json();",
-                  "if (json.accessToken) { pm.collectionVariables.set('adminToken', json.accessToken); }",
-                  "if (json.refreshToken) { pm.collectionVariables.set('adminRefreshToken', json.refreshToken); }",
-                  "console.log('adminToken e adminRefreshToken salvos.');"
+                  "pm.test('Tem accessToken e refreshToken', () => { pm.expect(json.accessToken).to.be.a('string').and.not.empty; pm.expect(json.refreshToken).to.be.a('string').and.not.empty; });",
+                  "pm.test('user.roles contém Admin', () => pm.expect(json.user.roles).to.include('Admin'));",
+                  "pm.collectionVariables.set('adminToken', json.accessToken);",
+                  "pm.collectionVariables.set('adminRefreshToken', json.refreshToken);",
+                  "pm.collectionVariables.set('adminTokenExpiraEm', Date.now() + (json.expiresIn || 900) * 1000);"
                 ]
               }
             }
@@ -50,51 +123,8 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminPassword}}\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
-            },
-            "description": "Response: { accessToken, refreshToken, expiresIn, user: { id, nome, email, roles: [] } }."
-          },
-          "response": []
-        },
-        {
-          "name": "Login (Cliente)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Login cliente OK', () => pm.response.to.have.status(200));",
-                  "var json = pm.response.json();",
-                  "if (json.accessToken) { pm.collectionVariables.set('clienteToken', json.accessToken); }",
-                  "if (json.refreshToken) { pm.collectionVariables.set('clienteRefreshToken', json.refreshToken); }",
-                  "if (json.user && json.user.id) { pm.collectionVariables.set('clienteUserId', json.user.id); }",
-                  "console.log('clienteToken e clienteRefreshToken salvos.');"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{clienteEmail}}\",\n  \"senha\": \"{{clientePassword}}\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
-            }
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminPassword}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] }
           },
           "response": []
         },
@@ -106,7 +136,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Registro criado', () => pm.response.to.have.status(201));"
+                  "// Idempotente para a corrida: 201 (criado) ou 400 (já existe) são aceitáveis.",
+                  "pm.test('Registro criado ou já existente', () => pm.expect([201, 400]).to.include(pm.response.code));"
                 ]
               }
             }
@@ -114,17 +145,61 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Cliente Exemplo\",\n  \"email\": \"{{clienteEmail}}\",\n  \"senha\": \"{{clientePassword}}\",\n  \"telefone\": \"11999999999\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register"]
-            },
-            "description": "Público. Cria um usuário com a role Cliente. Response inclui roles: [\"Cliente\"]."
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"{{clienteNome}}\",\n  \"email\": \"{{clienteEmail}}\",\n  \"senha\": \"{{clientePassword}}\",\n  \"telefone\": \"11999999999\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "register"] },
+            "description": "Público. Cria um usuário Cliente. Na corrida, se já existir (400) seguimos para o login."
+          },
+          "response": []
+        },
+        {
+          "name": "Login (Cliente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login cliente OK (200)', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Tem accessToken e refreshToken', () => { pm.expect(json.accessToken).to.be.a('string').and.not.empty; pm.expect(json.refreshToken).to.be.a('string').and.not.empty; });",
+                  "pm.collectionVariables.set('clienteToken', json.accessToken);",
+                  "pm.collectionVariables.set('clienteRefreshToken', json.refreshToken);",
+                  "pm.collectionVariables.set('clienteTokenExpiraEm', Date.now() + (json.expiresIn || 900) * 1000);",
+                  "if (json.user && json.user.id) pm.collectionVariables.set('clienteUserId', json.user.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{clienteEmail}}\",\n  \"senha\": \"{{clientePassword}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Me (cliente autenticado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Me OK (200)', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Retorna o email do cliente', () => pm.expect(json.email).to.eql(pm.collectionVariables.get('clienteEmail')));",
+                  "pm.test('roles é um array', () => pm.expect(json.roles).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "me"] },
+            "description": "Usa o clienteToken salvo no Login (Cliente) acima."
           },
           "response": []
         },
@@ -136,11 +211,12 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Refresh OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Refresh OK (200)', () => pm.response.to.have.status(200));",
                   "var json = pm.response.json();",
-                  "if (json.accessToken) { pm.collectionVariables.set('clienteToken', json.accessToken); }",
-                  "if (json.refreshToken) { pm.collectionVariables.set('clienteRefreshToken', json.refreshToken); }",
-                  "console.log('Tokens do cliente rotacionados.');"
+                  "pm.test('Novo refresh token difere do anterior (rotação)', () => pm.expect(json.refreshToken).to.not.eql(pm.collectionVariables.get('clienteRefreshToken')));",
+                  "pm.collectionVariables.set('clienteToken', json.accessToken);",
+                  "pm.collectionVariables.set('clienteRefreshToken', json.refreshToken);",
+                  "pm.collectionVariables.set('clienteTokenExpiraEm', Date.now() + (json.expiresIn || 900) * 1000);"
                 ]
               }
             }
@@ -148,114 +224,55 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{clienteRefreshToken}}\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "refresh"]
-            },
-            "description": "Público. Rotaciona o refresh token: o antigo é invalidado e um novo par é emitido. Reapresentar um refresh já rotacionado revoga a família inteira (detecção de reúso) e retorna 400."
-          },
-          "response": []
-        },
-        {
-          "name": "Me (usuário atual)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "me"]
-            },
-            "description": "Response: { id, nome, email, roles: [] }."
-          },
-          "response": []
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{clienteRefreshToken}}\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "logout"]
-            },
-            "description": "Revoga a família do refresh token informado. Idempotente (sempre 200)."
-          },
-          "response": []
-        },
-        {
-          "name": "Logout (todas as sessões)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/logout-all",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "logout-all"]
-            },
-            "description": "Revoga todos os refresh tokens do usuário autenticado. Útil após troca de senha."
-          },
-          "response": []
-        },
-        {
-          "name": "Limpeza de Refresh Tokens (manutenção)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/maintenance/purge-tokens",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "maintenance", "purge-tokens"]
-            },
-            "description": "Permissão: usuarios:gerenciar. Remove refresh tokens expirados/revogados fora da retenção. Também roda automaticamente em background."
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{clienteRefreshToken}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "refresh"] },
+            "description": "Público. Rotaciona o par de tokens. Reapresentar um refresh já usado revoga a família (detecção de reúso) → 400."
           },
           "response": []
         }
       ]
     },
     {
-      "name": "Produtos",
-      "description": "Catálogo público (GET). Escrita exige a permissão produtos:escrever (Admin tem).",
+      "name": "1. Catálogo (admin)",
+      "description": "Admin cria categoria e produto. Ordem importa: categoria antes do produto (produto referencia categoriaId).",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
       "item": [
         {
-          "name": "Listar Produtos (paginado + filtros)",
+          "name": "Criar Categoria",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Listagem OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Categoria criada (201)', () => pm.response.to.have.status(201));",
                   "var json = pm.response.json();",
-                  "if (json.itens && json.itens.length > 0) { pm.collectionVariables.set('produtoId', json.itens[0].id); }"
+                  "pm.test('Retorna id', () => pm.expect(json.id).to.exist);",
+                  "pm.collectionVariables.set('categoriaId', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Hambúrgueres {{$timestamp}}\",\n  \"descricao\": \"Lanches artesanais\",\n  \"ativo\": true\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/categorias", "host": ["{{baseUrl}}"], "path": ["api", "v1", "categorias"] },
+            "description": "Permissão: categorias:escrever. Nome com timestamp para a corrida ser repetível (nome único)."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Categorias (público)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Listagem OK (200)', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Envelope paginado', () => { pm.expect(json).to.have.property('itens'); pm.expect(json).to.have.property('totalRegistros'); });"
                 ]
               }
             }
@@ -263,33 +280,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/produtos?pagina=1&tamanho=10&search=&categoriaId=&tipo=&disponivel=",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "produtos"],
-              "query": [
-                { "key": "pagina", "value": "1", "description": "Página (default 1)" },
-                { "key": "tamanho", "value": "10", "description": "Itens por página (default 10)" },
-                { "key": "search", "value": "", "description": "Busca textual no nome/descrição" },
-                { "key": "categoriaId", "value": "", "description": "Filtro por id da categoria (long)" },
-                { "key": "tipo", "value": "", "description": "simples | combo (string, case-insensitive)" },
-                { "key": "disponivel", "value": "", "description": "true | false" }
-              ]
-            },
-            "description": "Público. Response paginado: { itens: [], paginaAtual, tamanhoPagina, totalRegistros, totalPaginas, temPaginaAnterior, temProximaPagina }."
-          },
-          "response": []
-        },
-        {
-          "name": "Obter Produto por Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "produtos", "{{produtoId}}"]
-            }
+            "url": { "raw": "{{baseUrl}}/api/v1/categorias?pagina=1&tamanho=10", "host": ["{{baseUrl}}"], "path": ["api", "v1", "categorias"], "query": [{ "key": "pagina", "value": "1" }, { "key": "tamanho", "value": "10" }, { "key": "apenasAtivas", "value": "", "disabled": true }] }
           },
           "response": []
         },
@@ -301,9 +292,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Produto criado', () => pm.response.to.have.status(201));",
+                  "pm.test('Produto criado (201)', () => pm.response.to.have.status(201));",
                   "var json = pm.response.json();",
-                  "if (json.id) { pm.collectionVariables.set('produtoId', json.id); }"
+                  "pm.test('Retorna id', () => pm.expect(json.id).to.exist);",
+                  "pm.collectionVariables.set('produtoId', json.id);"
                 ]
               }
             }
@@ -311,242 +303,102 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Hambúrguer Clássico\",\n  \"descricao\": \"Blend 180g, queijo, alface, tomate\",\n  \"categoriaId\": {{categoriaId}},\n  \"preco\": 32.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Burger\",\n  \"disponivel\": true,\n  \"tipo\": 0,\n  \"itens\": null\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Permissão: produtos:escrever. categoriaId (long) deve referenciar uma categoria existente (ver grupo Categorias). tipo: 0=Simples, 1=Combo. Combo exige itens[] não vazio com { produtoId, quantidade }.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/produtos",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "produtos"]
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Hambúrguer Clássico\",\n  \"descricao\": \"Blend 180g, queijo, alface, tomate\",\n  \"categoriaId\": {{categoriaId}},\n  \"preco\": 32.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Burger\",\n  \"disponivel\": true,\n  \"tipo\": 0,\n  \"itens\": null\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/produtos", "host": ["{{baseUrl}}"], "path": ["api", "v1", "produtos"] },
+            "description": "Permissão: produtos:escrever. tipo: 0=Simples, 1=Combo (combo exige itens[])."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Produtos (público)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Listagem OK (200)', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Envelope paginado com itens', () => pm.expect(json.itens).to.be.an('array'));"
+                ]
+              }
             }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/produtos?pagina=1&tamanho=10", "host": ["{{baseUrl}}"], "path": ["api", "v1", "produtos"], "query": [{ "key": "pagina", "value": "1" }, { "key": "tamanho", "value": "10" }] }
+          },
+          "response": []
+        },
+        {
+          "name": "Obter Produto por Id (público)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "pm.test('Id confere', () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('produtoId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "produtos", "{{produtoId}}"] }
           },
           "response": []
         },
         {
           "name": "Atualizar Produto",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Atualizado (200)', () => pm.response.to.have.status(200));"] } }
+          ],
           "request": {
             "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Hambúrguer Clássico Plus\",\n  \"descricao\": \"Blend 200g, queijo duplo\",\n  \"categoriaId\": {{categoriaId}},\n  \"preco\": 36.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Burger\",\n  \"disponivel\": true\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Permissão: produtos:escrever. O id vem da rota.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "produtos", "{{produtoId}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Excluir Produto",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "produtos", "{{produtoId}}"]
-            },
-            "description": "Permissão: produtos:escrever."
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Hambúrguer Clássico Plus\",\n  \"descricao\": \"Blend 200g, queijo duplo\",\n  \"categoriaId\": {{categoriaId}},\n  \"preco\": 36.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Burger\",\n  \"disponivel\": true\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "produtos", "{{produtoId}}"] }
           },
           "response": []
         }
       ]
     },
     {
-      "name": "Categorias",
-      "description": "Catálogo de categorias. GET público; escrita exige categorias:escrever. id é um long.",
-      "item": [
-        {
-          "name": "Listar Categorias (paginado)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Listagem OK', () => pm.response.to.have.status(200));",
-                  "var json = pm.response.json();",
-                  "if (json.itens && json.itens.length > 0) { pm.collectionVariables.set('categoriaId', json.itens[0].id); }"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/categorias?pagina=1&tamanho=10&apenasAtivas=",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "categorias"],
-              "query": [
-                { "key": "pagina", "value": "1" },
-                { "key": "tamanho", "value": "10" },
-                { "key": "apenasAtivas", "value": "", "description": "true para trazer só as ativas" }
-              ]
-            },
-            "description": "Público. Response paginado (itens/paginaAtual/...)."
-          },
-          "response": []
-        },
-        {
-          "name": "Obter Categoria por Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/categorias/{{categoriaId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "categorias", "{{categoriaId}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Criar Categoria",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Categoria criada', () => pm.response.to.have.status(201));",
-                  "var json = pm.response.json();",
-                  "if (json.id) { pm.collectionVariables.set('categoriaId', json.id); }"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Hambúrgueres\",\n  \"descricao\": \"Lanches artesanais\",\n  \"ativo\": true\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Permissão: categorias:escrever.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/categorias",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "categorias"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Atualizar Categoria",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Hambúrgueres Artesanais\",\n  \"descricao\": \"Lanches premium\",\n  \"ativo\": true\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Permissão: categorias:escrever. O id vem da rota.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/categorias/{{categoriaId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "categorias", "{{categoriaId}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Excluir Categoria",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/categorias/{{categoriaId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "categorias", "{{categoriaId}}"]
-            },
-            "description": "Permissão: categorias:escrever. Bloqueado se houver produtos vinculados."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Endereços (CEP)",
-      "description": "Consulta pública de endereço por CEP (ViaCEP). Read-only — autopreenchimento de formulário.",
+      "name": "2. Endereços (CEP, público)",
       "item": [
         {
           "name": "Buscar Endereço por CEP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('CEP OK (200)', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Retorna cidade e estado', () => { pm.expect(json.cidade).to.be.a('string'); pm.expect(json.estado).to.be.a('string'); });"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/enderecos/cep/01001000",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "enderecos", "cep", "01001000"]
-            },
-            "description": "Público. CEP com 8 dígitos (com ou sem máscara). Response: { cep, logradouro, complemento, bairro, cidade, estado }. numero não é retornado. Erros (400): 'CEP inválido.', 'CEP não encontrado.', 'Serviço de CEP indisponível.'"
+            "url": { "raw": "{{baseUrl}}/api/v1/enderecos/cep/01001000", "host": ["{{baseUrl}}"], "path": ["api", "v1", "enderecos", "cep", "01001000"] },
+            "description": "Público. CEP 8 dígitos (com/sem máscara). Erros → 400."
           },
           "response": []
         }
       ]
     },
     {
-      "name": "Clientes (CRM)",
-      "description": "CRUD de clientes (CRM). GET/escrita exigem clientes:ler / clientes:escrever. Cliente CRM é distinto do Usuario/Auth.",
-      "auth": {
-        "type": "bearer",
-        "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
-      },
+      "name": "3. Clientes CRM (admin)",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
       "item": [
-        {
-          "name": "Listar Clientes (paginado)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/clientes?pagina=1&tamanho=10&search=",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "clientes"],
-              "query": [
-                { "key": "pagina", "value": "1" },
-                { "key": "tamanho", "value": "10" },
-                { "key": "search", "value": "", "description": "Busca por nome/email" }
-              ]
-            },
-            "description": "Permissão: clientes:ler."
-          },
-          "response": []
-        },
         {
           "name": "Criar Cliente",
           "event": [
@@ -555,9 +407,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Cliente criado', () => pm.response.to.have.status(201));",
+                  "pm.test('Cliente criado (201)', () => pm.response.to.have.status(201));",
                   "var json = pm.response.json();",
-                  "if (json.id) { pm.collectionVariables.set('clienteId', json.id); }"
+                  "pm.collectionVariables.set('clienteId', json.id);"
                 ]
               }
             }
@@ -565,156 +417,94 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"João da Silva\",\n  \"email\": \"joao@exemplo.com\",\n  \"telefone\": \"11988887777\",\n  \"endereco\": {\n    \"logradouro\": \"Rua das Flores\",\n    \"numero\": \"123\",\n    \"complemento\": \"Apto 45\",\n    \"bairro\": \"Centro\",\n    \"cidade\": \"São Paulo\",\n    \"estado\": \"SP\",\n    \"cep\": \"01000000\"\n  }\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Permissão: clientes:escrever. estado com 2 caracteres, cep com 8. Dica: use o endpoint de CEP para preencher o endereço.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/clientes",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "clientes"]
-            }
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"João da Silva\",\n  \"email\": \"joao.{{$timestamp}}@exemplo.com\",\n  \"telefone\": \"11988887777\",\n  \"endereco\": {\n    \"logradouro\": \"Rua das Flores\",\n    \"numero\": \"123\",\n    \"complemento\": \"Apto 45\",\n    \"bairro\": \"Centro\",\n    \"cidade\": \"São Paulo\",\n    \"estado\": \"SP\",\n    \"cep\": \"01000000\"\n  }\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/clientes", "host": ["{{baseUrl}}"], "path": ["api", "v1", "clientes"] },
+            "description": "Permissão: clientes:escrever. Email com timestamp para a corrida ser repetível."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Clientes",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));", "pm.test('Envelope paginado', () => pm.expect(pm.response.json()).to.have.property('itens'));"] } }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/clientes?pagina=1&tamanho=10", "host": ["{{baseUrl}}"], "path": ["api", "v1", "clientes"], "query": [{ "key": "pagina", "value": "1" }, { "key": "tamanho", "value": "10" }] },
+            "description": "Permissão: clientes:ler."
           },
           "response": []
         },
         {
           "name": "Atualizar Cliente",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Atualizado (200)', () => pm.response.to.have.status(200));"] } }
+          ],
           "request": {
             "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"João da Silva Souza\",\n  \"email\": \"joao.souza@exemplo.com\",\n  \"telefone\": \"11988887777\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Permissão: clientes:escrever. O id vem da rota. UpdateClienteRequest não inclui endereco.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "clientes", "{{clienteId}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Excluir Cliente",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "clientes", "{{clienteId}}"]
-            },
-            "description": "Permissão: clientes:escrever."
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"João da Silva Souza\",\n  \"email\": \"joao.souza.{{$timestamp}}@exemplo.com\",\n  \"telefone\": \"11988887777\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/clientes/{{clienteId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "clientes", "{{clienteId}}"] }
           },
           "response": []
         }
       ]
     },
     {
-      "name": "Carrinho",
-      "description": "Carrinho por usuário (Bearer + ownership). O userId é extraído do token; cada um mexe só no próprio carrinho.",
-      "auth": {
-        "type": "bearer",
-        "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
-      },
+      "name": "4. Compra (cliente)",
+      "description": "Fluxo do cliente: carrinho → checkout → pagamento Pix → concluir. Usa clienteToken e produtoId do Setup/Catálogo.",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }] },
       "item": [
+        {
+          "name": "Limpar Carrinho (garantir estado)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
+          ],
+          "request": {
+            "method": "DELETE", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/carrinho", "host": ["{{baseUrl}}"], "path": ["api", "v1", "carrinho"] },
+            "description": "Começa o fluxo com o carrinho vazio, para a corrida ser repetível."
+          },
+          "response": []
+        },
+        {
+          "name": "Adicionar Item ao Carrinho",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"produtoId\": \"{{produtoId}}\",\n  \"quantidade\": 2\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/carrinho/itens", "host": ["{{baseUrl}}"], "path": ["api", "v1", "carrinho", "itens"] }
+          },
+          "response": []
+        },
         {
           "name": "Ver Carrinho",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));", "pm.test('Tem itens', () => pm.expect(pm.response.json().itens.length).to.be.above(0));"] } }
+          ],
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/carrinho",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "carrinho"]
-            }
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/carrinho", "host": ["{{baseUrl}}"], "path": ["api", "v1", "carrinho"] }
           },
           "response": []
         },
         {
-          "name": "Adicionar Item",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"produtoId\": \"{{produtoId}}\",\n  \"quantidade\": 2\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/carrinho/itens",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "carrinho", "itens"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Atualizar Quantidade do Item",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"quantidade\": 3\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/carrinho/itens/{{produtoId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "carrinho", "itens", "{{produtoId}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Remover Item",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/carrinho/itens/{{produtoId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "carrinho", "itens", "{{produtoId}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Limpar Carrinho",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/carrinho",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "carrinho"]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Pedidos",
-      "description": "Checkout (ownership), listagem/consulta (Bearer), avanço de etapa (pedidos:avancar), conclusão de pagamento (ownership).",
-      "item": [
-        {
-          "name": "Checkout (carrinho → pedido)",
+          "name": "Checkout",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Checkout OK', () => pm.response.to.have.status(201));",
+                  "pm.test('Checkout OK (201)', () => pm.response.to.have.status(201));",
                   "var json = pm.response.json();",
-                  "if (json.pedidoId) { pm.collectionVariables.set('pedidoId', json.pedidoId); }",
-                  "else if (json.id) { pm.collectionVariables.set('pedidoId', json.id); }"
+                  "var id = json.pedidoId || json.id;",
+                  "pm.test('Retorna pedidoId', () => pm.expect(id).to.exist);",
+                  "pm.collectionVariables.set('pedidoId', id);"
                 ]
               }
             }
@@ -722,246 +512,107 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"clienteNome\": \"Cliente Exemplo\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Bearer + ownership. Cria o pedido a partir do carrinho do usuário. Etapa inicial: criado.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pedidos/checkout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pedidos", "checkout"]
-            }
+            "body": { "mode": "raw", "raw": "{\n  \"clienteNome\": \"{{clienteNome}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/pedidos/checkout", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pedidos", "checkout"] }
           },
           "response": []
         },
         {
-          "name": "Listar Pedidos",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pedidos?pagina=1&tamanho=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pedidos"],
-              "query": [
-                { "key": "pagina", "value": "1" },
-                { "key": "tamanho", "value": "10" }
-              ]
-            },
-            "description": "Bearer. Quem tem pedidos:ler (Admin) vê todos; os demais veem só os próprios."
-          },
-          "response": []
-        },
-        {
-          "name": "Obter Pedido por Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pedidos", "{{pedidoId}}"]
-            },
-            "description": "Bearer. Quem tem pedidos:ler vê qualquer pedido; os demais só o próprio (senão 400)."
-          },
-          "response": []
-        },
-        {
-          "name": "Avançar Etapa do Pedido",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"proximaEtapa\": 1,\n  \"observacao\": \"Pedido confirmado\",\n  \"entregaTipo\": null\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Permissão: pedidos:avancar. proximaEtapa (int): 0=Criado, 1=Aprovado, 2=Pagamento, 3=PagamentoAprovado, 4=EnvioPendente, 5=Entregue, 6=Finalizado. entregaTipo (int): 0=Transporte, 1=Retirada (obrigatório ao ir para Entregue).",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/etapas/avancar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pedidos", "{{pedidoId}}", "etapas", "avancar"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Concluir Pagamento do Pedido",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"transacaoId\": \"{{transacaoId}}\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Bearer + ownership. Vincula uma transação aprovada ao pedido. Use após /pagamentos/{id}/pix/confirmar ou /cartao.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/pagamento/concluir",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pedidos", "{{pedidoId}}", "pagamento", "concluir"]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Pagamentos",
-      "description": "Fluxo de pagamento. Operações do próprio pedido = Bearer + ownership; /validar = permissão pagamentos:validar.",
-      "item": [
-        {
-          "name": "Listar Opções de Pagamento",
-          "auth": {
-            "type": "bearer",
-            "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
-          },
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pagamentos/opcoes",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pagamentos", "opcoes"]
-            },
-            "description": "Bearer. Retorna [{metodo:'cartao_credito',label,disponivel}, ...]. O campo 'metodo' usa underscore aqui, mas o body de /iniciar espera o enum como INTEIRO."
-          },
-          "response": []
-        },
-        {
-          "name": "Iniciar Pagamento",
+          "name": "Iniciar Pagamento (Pix)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Pagamento iniciado', () => pm.response.to.have.status(201));",
+                  "pm.test('Iniciado (201)', () => pm.response.to.have.status(201));",
                   "var json = pm.response.json();",
-                  "if (json.id) { pm.collectionVariables.set('transacaoId', json.id); }"
+                  "pm.collectionVariables.set('transacaoId', json.id);"
                 ]
               }
             }
           ],
-          "auth": {
-            "type": "bearer",
-            "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
-          },
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Idempotency-Key", "value": "{{$guid}}", "description": "Opcional (não enforceado no mock atual)" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"pedidoId\": \"{{pedidoId}}\",\n  \"metodo\": 2,\n  \"valor\": 89.90\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Bearer + ownership. metodo (int): 0=CartaoDebito, 1=CartaoCredito, 2=Pix. Se já há transação pendente para o pedido, retorna a existente. Para Pix, a resposta inclui pixCopiaCola e pixExpiraEm.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pagamentos/iniciar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pagamentos", "iniciar"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Processar Cartão",
-          "auth": {
-            "type": "bearer",
-            "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
-          },
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"numero\": \"4111111111111111\",\n  \"nome\": \"CLIENTE EXEMPLO\",\n  \"validade\": \"12/28\",\n  \"cvv\": \"123\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Bearer + ownership. Use quando metodo=0 ou 1. Em produção, o front tokeniza o cartão no PSP.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/cartao",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "cartao"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Consultar Status",
-          "auth": {
-            "type": "bearer",
-            "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
-          },
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "status"]
-            },
-            "description": "Bearer + ownership. status (string): pendente | aprovado | recusado | expirado."
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Idempotency-Key", "value": "{{$guid}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"pedidoId\": \"{{pedidoId}}\",\n  \"metodo\": 2,\n  \"valor\": 65.80\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/pagamentos/iniciar", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pagamentos", "iniciar"] },
+            "description": "metodo 2 = Pix. valor = 2 × 32.90."
           },
           "response": []
         },
         {
           "name": "Confirmar Pix",
-          "auth": {
-            "type": "bearer",
-            "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }]
-          },
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
+          ],
           "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/pix/confirmar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "pix", "confirmar"]
-            },
-            "description": "Bearer + ownership. Sem body. Confirma Pix (mock aprova automaticamente)."
+            "method": "POST", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/pix/confirmar", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "pix", "confirmar"] }
           },
           "response": []
         },
         {
-          "name": "Validar Pagamento (admin)",
-          "auth": {
-            "type": "bearer",
-            "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+          "name": "Consultar Status (aprovado)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));", "pm.test('Status aprovado', () => pm.expect(pm.response.json().status).to.eql('aprovado'));"] } }
+          ],
+          "request": {
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "status"] }
           },
+          "response": []
+        },
+        {
+          "name": "Concluir Pagamento do Pedido",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
+          ],
           "request": {
             "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/validar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "validar"]
-            },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"transacaoId\": \"{{transacaoId}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/pagamento/concluir", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pedidos", "{{pedidoId}}", "pagamento", "concluir"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Pedidos (admin)",
+      "description": "Admin lista pedidos, consulta por id e valida/avança o pagamento do pedido criado no fluxo do cliente.",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "Listar Pedidos (admin vê todos)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));", "pm.test('Envelope paginado', () => pm.expect(pm.response.json()).to.have.property('itens'));"] } }
+          ],
+          "request": {
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/pedidos?pagina=1&tamanho=10", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pedidos"], "query": [{ "key": "pagina", "value": "1" }, { "key": "tamanho", "value": "10" }] }
+          },
+          "response": []
+        },
+        {
+          "name": "Obter Pedido por Id",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
+          ],
+          "request": {
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pedidos", "{{pedidoId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Validar Pagamento",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
+          ],
+          "request": {
+            "method": "POST", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/validar", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "validar"] },
             "description": "Permissão: pagamentos:validar. Sem body."
           },
           "response": []
@@ -969,37 +620,32 @@
       ]
     },
     {
-      "name": "Relatórios",
-      "description": "Permissão: relatorios:ler. Resumo de vendas dos últimos 30 dias.",
-      "auth": {
-        "type": "bearer",
-        "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
-      },
+      "name": "6. RBAC (admin)",
+      "description": "Gestão de permissões, roles e usuários. Permissões: permissoes:gerenciar, roles:gerenciar, usuarios:gerenciar.",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
       "item": [
         {
-          "name": "Resumo de Vendas",
+          "name": "Listar Permissões",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "var arr = pm.response.json();",
+                  "pm.test('Tem 12+ permissões', () => pm.expect(arr.length).to.be.at.least(12));",
+                  "if (arr.length > 0) pm.collectionVariables.set('permissionId', arr[0].id);"
+                ]
+              }
+            }
+          ],
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/relatorios/vendas/resumo",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "relatorios", "vendas", "resumo"]
-            },
-            "description": "Retorna faturamento, totalPedidos, ticketMedio, topProdutos[] e serieDiaria[]."
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/permissions", "host": ["{{baseUrl}}"], "path": ["api", "v1", "permissions"] }
           },
           "response": []
-        }
-      ]
-    },
-    {
-      "name": "Roles (RBAC)",
-      "description": "Gestão de roles. Permissão: roles:gerenciar. Roles de sistema (Admin, Cliente) não podem ser alteradas/removidas.",
-      "auth": {
-        "type": "bearer",
-        "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
-      },
-      "item": [
+        },
         {
           "name": "Listar Roles",
           "event": [
@@ -1008,36 +654,18 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Listagem OK', () => pm.response.to.have.status(200));",
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
                   "var arr = pm.response.json();",
-                  "var gerente = Array.isArray(arr) ? arr.find(r => r.nome === 'Gerente') : null;",
-                  "if (gerente) { pm.collectionVariables.set('roleId', gerente.id); }"
+                  "var gerente = arr.find(r => r.nome === 'Gerente');",
+                  "pm.test('Role Gerente existe', () => pm.expect(gerente).to.exist);",
+                  "if (gerente) pm.collectionVariables.set('roleId', gerente.id);"
                 ]
               }
             }
           ],
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/roles",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "roles"]
-            },
-            "description": "Array de RoleResponse: { id, nome, descricao, sistema, permissoes: [] }."
-          },
-          "response": []
-        },
-        {
-          "name": "Obter Role por Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "roles", "{{roleId}}"]
-            }
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/roles", "host": ["{{baseUrl}}"], "path": ["api", "v1", "roles"] }
           },
           "response": []
         },
@@ -1049,9 +677,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Role criada', () => pm.response.to.have.status(201));",
-                  "var json = pm.response.json();",
-                  "if (json.id) { pm.collectionVariables.set('roleId', json.id); }"
+                  "pm.test('Role criada (201)', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('roleId', pm.response.json().id);"
                 ]
               }
             }
@@ -1059,132 +686,35 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Atendente\",\n  \"descricao\": \"Atende pedidos no balcão\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/roles",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "roles"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Atualizar Role",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Atendente Sênior\",\n  \"descricao\": \"Atende e supervisiona\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "O id vem da rota. Role de sistema → 400.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "roles", "{{roleId}}"]
-            }
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Atendente {{$timestamp}}\",\n  \"descricao\": \"Atende pedidos no balcão\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/roles", "host": ["{{baseUrl}}"], "path": ["api", "v1", "roles"] },
+            "description": "Nome com timestamp para a corrida ser repetível."
           },
           "response": []
         },
         {
           "name": "Definir Permissões da Role",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
+          ],
           "request": {
             "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"permissionIds\": [{{permissionId}}]\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Substitui o conjunto de permissões da role (array de ids inteiros). Role de sistema → 400. Pegue ids em GET /permissions.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}/permissions",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "roles", "{{roleId}}", "permissions"]
-            }
+            "body": { "mode": "raw", "raw": "{\n  \"permissionIds\": [{{permissionId}}]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}/permissions", "host": ["{{baseUrl}}"], "path": ["api", "v1", "roles", "{{roleId}}", "permissions"] }
           },
           "response": []
         },
         {
-          "name": "Excluir Role",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "roles", "{{roleId}}"]
-            },
-            "description": "Role de sistema ou com usuários vinculados → 400."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Permissions (RBAC)",
-      "description": "CRUD do catálogo de permissões. Permissão: permissoes:gerenciar.",
-      "auth": {
-        "type": "bearer",
-        "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
-      },
-      "item": [
-        {
-          "name": "Listar Permissões",
+          "name": "Criar Usuário (com role)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Listagem OK', () => pm.response.to.have.status(200));",
-                  "var arr = pm.response.json();",
-                  "if (Array.isArray(arr) && arr.length > 0) { pm.collectionVariables.set('permissionId', arr[0].id); }"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/permissions",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "permissions"]
-            },
-            "description": "Array de PermissionResponse: { id, codigo, descricao, recurso, acao }."
-          },
-          "response": []
-        },
-        {
-          "name": "Obter Permissão por Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/permissions/{{permissionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "permissions", "{{permissionId}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Criar Permissão",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Permissão criada', () => pm.response.to.have.status(201));",
-                  "var json = pm.response.json();",
-                  "if (json.id) { pm.collectionVariables.set('permissionId', json.id); }"
+                  "pm.test('Usuário criado (201)', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('usuarioId', pm.response.json().id);"
                 ]
               }
             }
@@ -1192,170 +722,79 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"codigo\": \"relatorios:exportar\",\n  \"descricao\": \"Exportar relatórios\",\n  \"recurso\": \"relatorios\",\n  \"acao\": \"exportar\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "codigo no formato recurso:acao. Uma permissão sem rota que a verifique é inerte até existir um RequirePermission usando ela.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/permissions",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "permissions"]
-            }
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Operador Teste\",\n  \"email\": \"operador.{{$timestamp}}@gatums.com\",\n  \"senha\": \"Operador@123\",\n  \"telefone\": \"11977776666\",\n  \"roleIds\": [{{roleId}}]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/usuarios", "host": ["{{baseUrl}}"], "path": ["api", "v1", "usuarios"] }
           },
           "response": []
         },
-        {
-          "name": "Atualizar Permissão",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"descricao\": \"Exportar relatórios em CSV/PDF\",\n  \"recurso\": \"relatorios\",\n  \"acao\": \"exportar\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "O codigo (chave lógica) não muda; só descricao/recurso/acao. O id vem da rota.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/permissions/{{permissionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "permissions", "{{permissionId}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Excluir Permissão",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/permissions/{{permissionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "permissions", "{{permissionId}}"]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Usuários (RBAC)",
-      "description": "Gestão de usuários administrativos. Permissão: usuarios:gerenciar. DELETE é soft-delete. O sistema nunca fica sem admin ativo.",
-      "auth": {
-        "type": "bearer",
-        "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
-      },
-      "item": [
         {
           "name": "Listar Usuários",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/usuarios",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "usuarios"]
-            },
-            "description": "Array de UsuarioResponse: { id, nome, email, telefone, ativo, roles: [], criadoEm }."
-          },
-          "response": []
-        },
-        {
-          "name": "Obter Usuário por Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "usuarios", "{{usuarioId}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Criar Usuário (com roles)",
           "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Usuário criado', () => pm.response.to.have.status(201));",
-                  "var json = pm.response.json();",
-                  "if (json.id) { pm.collectionVariables.set('usuarioId', json.id); }"
-                ]
-              }
-            }
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
           ],
           "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Gerente Teste\",\n  \"email\": \"gerente@gatums.com\",\n  \"senha\": \"Gerente@123\",\n  \"telefone\": \"11977776666\",\n  \"roleIds\": [{{roleId}}]\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "roleIds: array de ids (int) de roles existentes (ver GET /roles).",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/usuarios",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "usuarios"]
-            }
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/usuarios", "host": ["{{baseUrl}}"], "path": ["api", "v1", "usuarios"] }
           },
           "response": []
         },
         {
-          "name": "Definir Roles do Usuário",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"roleIds\": [{{roleId}}]\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Substitui as roles do usuário. Remover a role Admin do último admin ativo → 400.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/roles",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "usuarios", "{{usuarioId}}", "roles"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Ativar/Desativar Usuário",
+          "name": "Desativar Usuário (soft)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
+          ],
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"ativo\": false\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "description": "Desativar o último admin ativo → 400. Usuário inativo não loga nem faz refresh.",
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/ativo",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "usuarios", "{{usuarioId}}", "ativo"]
-            }
+            "body": { "mode": "raw", "raw": "{\n  \"ativo\": false\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/ativo", "host": ["{{baseUrl}}"], "path": ["api", "v1", "usuarios", "{{usuarioId}}", "ativo"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Relatórios (admin)",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "Resumo de Vendas",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
+          ],
+          "request": {
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/relatorios/vendas/resumo", "host": ["{{baseUrl}}"], "path": ["api", "v1", "relatorios", "vendas", "resumo"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. Limpeza (admin)",
+      "description": "Remove os recursos criados na corrida, para repetibilidade. Produto e role de teste.",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "Excluir Produto",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
+          ],
+          "request": {
+            "method": "DELETE", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "produtos", "{{produtoId}}"] }
           },
           "response": []
         },
         {
-          "name": "Excluir Usuário (soft-delete)",
+          "name": "Excluir Role de Teste",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Removida ou bloqueada', () => pm.expect([200, 400]).to.include(pm.response.code));"] } }
+          ],
           "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "usuarios", "{{usuarioId}}"]
-            },
-            "description": "Soft-delete (ativo=false), preserva histórico. Excluir o último admin ativo → 400."
+            "method": "DELETE", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "roles", "{{roleId}}"] },
+            "description": "Se a role tiver usuário vinculado (o usuário criado no RBAC), retorna 400 — aceitável na corrida."
           },
           "response": []
         }
