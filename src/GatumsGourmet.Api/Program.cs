@@ -12,6 +12,7 @@ builder.Services.AddGatumsAuthentication(builder.Configuration);
 builder.Services.AddGatumsOpenApi();
 
 builder.Services.AddHostedService<RefreshTokenCleanupService>();
+builder.Services.AddHostedService<OrphanImageCleanupService>();
 
 // CORS por ambiente: Development/LocalDocker liberam tudo; Release/PRD restringem
 // às origens/padrões configurados (ver CorsExtensions). Valida no startup.

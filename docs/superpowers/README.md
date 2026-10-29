@@ -33,7 +33,8 @@ uma conversa.
 | Upload de imagens (S3: MinIO/Supabase/R2) | `specs/2026-10-26-upload-imagens-s3-design.md` | `plans/2026-10-26-upload-imagens-s3.md` | `execucao/upload-imagens/` | Concluída (7 tasks + review final; PR #35 no `develop`) |
 | Padronização endpoints (`[AsParameters]`) | — (mecânica) | — | `execucao/padronizar-endpoints/` | Concluída (PR #36 no `develop`) |
 | Fix paginação (`int?` nos GET) | — (fix) | — | `execucao/fix-paginacao-asparameters/` | Concluída (PR #37 no `develop`) |
-| CORS por origem (restrição por ambiente) | — (bounded) | — | `execucao/cors-origins/` | Concluída (branch `feature/cors-origins`) |
+| CORS por origem (restrição por ambiente) | — (bounded) | — | `execucao/cors-origins/` | Concluída (PR #38 no `develop`) |
+| Limpeza de imagens órfãs (background service) | — (bounded) | — | `execucao/limpeza-imagens-orfas/` | Concluída (branch `feature/limpeza-imagens-orfas`) |
 
 ## Como o rastro é gravado
 

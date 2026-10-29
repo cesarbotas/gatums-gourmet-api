@@ -122,7 +122,8 @@ export function useUploadImagem() {
 ```
 
 > Trocar a foto de um produto = novo upload + atualizar o `fotoUrl`. A imagem
-> antiga permanece no bucket (limpeza de órfãs está fora de escopo por ora).
+> antiga vira órfã no bucket, mas um serviço de background a remove
+> automaticamente (ver [Limpeza de imagens órfãs](#limpeza-de-imagens-orfas)).
 
 ---
 
@@ -155,3 +156,20 @@ export function useUploadImagem() {
   `RequestChecksumCalculation = WHEN_REQUIRED` para funcionar com o MinIO em
   `http://` local (detalhe de implementação; transparente para o front).
 - **Referência da API:** ver também [`API-Reference.md`](API-Reference.md#imagens).
+
+<a id="limpeza-de-imagens-orfas"></a>
+## Limpeza de imagens órfãs
+
+Um serviço de background (`OrphanImageCleanupService`) roda periodicamente e
+remove do bucket as imagens **órfãs** — objetos sob `produtos/` cuja URL não
+está em nenhum `FotoUrl` de produto. Assim, trocar a foto de um produto não
+deixa lixo acumulando no storage.
+
+- **Fonte de verdade:** o `FotoUrl` dos **produtos**. Snapshots de imagem em
+  pedidos/carrinho não seguram o objeto (um pedido antigo pode manter a URL).
+- **Carência:** só remove objetos modificados **antes do início do dia de hoje**
+  (00:00 UTC). Tudo que foi enviado hoje fica protegido — cobre o caso de subir a
+  imagem e ainda não ter salvo o produto.
+- **Intervalo:** configurável em `Storage:OrphanCleanupIntervalHours` (default 24h).
+- **Sem storage configurado:** a limpeza vira um no-op silencioso (não falha).
+- Para o front, isso é transparente: nenhuma ação necessária.
