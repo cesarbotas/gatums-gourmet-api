@@ -60,3 +60,7 @@ Task 6: correção do teste (B) da Task 5 — o teste antes mascarava erro de co
 Task 6: verificação — build 0 erros; unit 160 passed; integração UploadImagemEndpointTests 5/5 passed (inclui B real contra MinIO); objeto produtos/{guid}.jpg confirmado no bucket.
 
 Task 7: dispatch (BASE = commit da Task 6, implementer modelo standard) — docs: README (evolução), docs/Site/Upload-Imagens.md (estilo Busca-CEP.md), API-Reference, Postman; build final + suíte completa.
+Task 7: complete (working tree sobre f88a26b). Docs: Upload-Imagens.md (novo, estilo Busca-CEP), seção Imagens na API-Reference + matriz, README atualizado (.NET 10, RBAC+refresh, storage S3, tabela de endpoints, seção Evolução, nota MinIO), Postman (pasta Imagens + request multipart `arquivo` + var fotoUrl). JSON Postman válido. Relatório: task-7-report.md.
+Task 7: verificação final — build 0 erros; unit 160 passed; integração COMPLETA 104/104 passed (zero regressão); UploadImagemEndpointTests 5/5. Postman JSON válido. Links do README conferidos (existem).
+
+=== TODAS AS 7 TASKS CONCLUÍDAS. Falta: review final da branch inteira + finishing-a-development-branch (usuário decide merge/PR; ele disse que faz PR manual). ===
