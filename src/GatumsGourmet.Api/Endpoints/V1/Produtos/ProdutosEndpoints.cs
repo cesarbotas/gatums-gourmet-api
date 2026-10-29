@@ -18,8 +18,9 @@ public static class ProdutosEndpoints
             IListProdutosHandler handler,
             CancellationToken ct) =>
             (
-                await handler.Handle(new ListProdutosRequest(request.Pagina,
-                    request.Tamanho,
+                await handler.Handle(new ListProdutosRequest(
+                    request.Pagina is null or < 1 ? 1 : request.Pagina.Value,
+                    request.Tamanho is null or < 1 ? 10 : request.Tamanho.Value,
                     request.Search,
                     request.CategoriaId,
                     request.Tipo,

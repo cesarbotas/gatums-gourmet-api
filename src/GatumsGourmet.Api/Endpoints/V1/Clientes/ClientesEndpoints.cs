@@ -16,8 +16,8 @@ public static class ClientesEndpoints
             [AsParameters] ClientesRequest request,
             IListClientesHandler handler, CancellationToken ct) =>
             (await handler.Handle(new ListClientesRequest(
-                request.Pagina < 1 ? 1 : request.Pagina,
-                request.Tamanho < 1 ? 10 : request.Tamanho,
+                request.Pagina is null or < 1 ? 1 : request.Pagina.Value,
+                request.Tamanho is null or < 1 ? 10 : request.Tamanho.Value,
                 request.Search), ct)).ToHttpResult())
             .RequirePermission("clientes:ler");
 

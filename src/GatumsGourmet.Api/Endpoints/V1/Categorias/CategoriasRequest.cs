@@ -9,11 +9,14 @@ namespace GatumsGourmet.Api.Endpoints.V1.Categorias;
 /// </summary>
 public class CategoriasRequest
 {
+    // int? de propósito: com [AsParameters], um int não-anulável vira query param
+    // OBRIGATÓRIO no Minimal API (400 se o cliente chamar sem ?pagina=). Null cai
+    // no default aplicado no endpoint.
     [FromQuery(Name = "pagina")]
-    public int Pagina { get; set; } = 1;
+    public int? Pagina { get; set; }
 
     [FromQuery(Name = "tamanho")]
-    public int Tamanho { get; set; } = 10;
+    public int? Tamanho { get; set; }
 
     /// <summary><c>true</c> traz só as categorias ativas (catálogo).</summary>
     [FromQuery(Name = "apenasAtivas")]
