@@ -435,3 +435,5 @@ FodyWeavers.xsd
 # e reconstituíveis a partir dos commits) ficam fora do Git.
 **/*-review-package.txt
 /.superpowers/
+# Saída crua do reviewer (scratch); a versão curada vai em docs/superpowers/execucao/.
+/semantic-review/
