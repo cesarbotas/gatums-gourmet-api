@@ -18,8 +18,8 @@ public static class CategoriasEndpoints
             [AsParameters] CategoriasRequest request,
             IListCategoriasHandler handler, CancellationToken ct) =>
             (await handler.Handle(new ListCategoriasRequest(
-                request.Pagina < 1 ? 1 : request.Pagina,
-                request.Tamanho < 1 ? 10 : request.Tamanho,
+                request.Pagina is null or < 1 ? 1 : request.Pagina.Value,
+                request.Tamanho is null or < 1 ? 10 : request.Tamanho.Value,
                 request.ApenasAtivas), ct)).ToHttpResult());
 
         group.MapGet("/{id:long}", async (long id, IGetCategoriaByIdHandler handler, CancellationToken ct) =>

@@ -26,8 +26,8 @@ public static class PedidosEndpoints
         {
             Guid? filtro = user.HasPermission("pedidos:ler") ? null : user.GetUserId();
             return (await handler.Handle(filtro, new ListPedidosRequest(
-                request.Pagina < 1 ? 1 : request.Pagina,
-                request.Tamanho < 1 ? 10 : request.Tamanho), ct)).ToHttpResult();
+                request.Pagina is null or < 1 ? 1 : request.Pagina.Value,
+                request.Tamanho is null or < 1 ? 10 : request.Tamanho.Value), ct)).ToHttpResult();
         }).RequireAuthorization();
 
         group.MapGet("/{id:guid}", async (Guid id, ClaimsPrincipal user, IGetPedidoByIdHandler handler, CancellationToken ct) =>
