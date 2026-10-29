@@ -7,7 +7,7 @@ using GatumsGourmet.Application.UseCases.V1.Categorias.ListCategorias;
 using GatumsGourmet.Application.UseCases.V1.Categorias.UpdateCategoria;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GatumsGourmet.Api.Endpoints.V1;
+namespace GatumsGourmet.Api.Endpoints.V1.Categorias;
 
 public static class CategoriasEndpoints
 {
@@ -15,9 +15,12 @@ public static class CategoriasEndpoints
     {
         // Listagem pública paginada. ?apenasAtivas=true para trazer só as ativas (catálogo).
         group.MapGet("/", async (
-            [FromQuery] int pagina, [FromQuery] int tamanho, [FromQuery] bool? apenasAtivas,
+            [AsParameters] CategoriasRequest request,
             IListCategoriasHandler handler, CancellationToken ct) =>
-            (await handler.Handle(new ListCategoriasRequest(pagina < 1 ? 1 : pagina, tamanho < 1 ? 10 : tamanho, apenasAtivas), ct)).ToHttpResult());
+            (await handler.Handle(new ListCategoriasRequest(
+                request.Pagina < 1 ? 1 : request.Pagina,
+                request.Tamanho < 1 ? 10 : request.Tamanho,
+                request.ApenasAtivas), ct)).ToHttpResult());
 
         group.MapGet("/{id:long}", async (long id, IGetCategoriaByIdHandler handler, CancellationToken ct) =>
             (await handler.Handle(id, ct)).ToHttpResult());
