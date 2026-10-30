@@ -28,3 +28,33 @@ services:
       interval: 3s
       timeout: 3s
       retries: 10
+
+  # MinIO: storage S3-compatível local para os testes de integração do upload
+  # de imagens (S3ImageStorageListDeleteTests e o caso real do upload). Os testes
+  # sondam a porta 9000 e fazem skip suave se ela não responder — subir este
+  # serviço habilita os testes reais. Mesma imagem/config do docker/docker-compose.yml.
+  #
+  # NOTA sobre a imagem: a MinIO removeu as imagens da comunidade do Docker Hub
+  # (set/2026) e as do quay.io passaram a exigir login. Usamos a imagem da Bitnami
+  # (namespace bitnamilegacy), pinada por digest. O bucket é criado no startup e
+  # já fica com leitura pública via MINIO_DEFAULT_BUCKETS (sufixo ":public").
+  minio:
+    image: bitnamilegacy/minio@sha256:451fe6858cb770cc9d0e77ba811ce287420f781c7c1b806a386f6896471a349c
+    container_name: gatums-gourmet-minio-test-integration
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_DEFAULT_BUCKETS: gatums-imagens:public
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/bitnami/minio/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  miniodata:
