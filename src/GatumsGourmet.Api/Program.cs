@@ -1,3 +1,4 @@
+using GatumsGourmet.Api.BackgroundServices;
 using GatumsGourmet.Api.Extensions;
 using GatumsGourmet.Api.Middleware;
 using GatumsGourmet.Application;
@@ -10,18 +11,18 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddGatumsAuthentication(builder.Configuration);
 builder.Services.AddGatumsOpenApi();
 
-builder.Services.AddCors(opt =>
-    opt.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+builder.Services.AddHostedService<RefreshTokenCleanupService>();
+builder.Services.AddHostedService<OrphanImageCleanupService>();
+
+// CORS por ambiente: Development/LocalDocker liberam tudo; Release/PRD restringem
+// às origens/padrões configurados (ver CorsExtensions). Valida no startup.
+builder.Services.AddGatumsCors();
 
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
 
-app.UseCors(policy => policy
-    .AllowAnyOrigin()
-    .AllowAnyMethod()
-    .AllowAnyHeader()
-);
+app.UseGatumsCors();
 
 app.UseAuthentication();
 app.UseAuthorization();

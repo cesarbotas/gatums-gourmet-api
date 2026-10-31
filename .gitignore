@@ -429,3 +429,17 @@ FodyWeavers.xsd
 *.msp
 
 .fake
+
+# Superpowers: o rastro de execução (ledger + relatórios) é VERSIONADO em
+# docs/superpowers/execucao/. Só os review packages (dumps de git diff, enormes
+# e reconstituíveis a partir dos commits) ficam fora do Git.
+**/*-review-package.txt
+/.superpowers/
+# Saída crua do reviewer (scratch); a versão curada vai em docs/superpowers/execucao/.
+/semantic-review/
+
+# Newman (execução da coleção Postman) — artefatos e deps locais
+docs/Postman/node_modules/
+docs/Postman/newman-report.html
+docs/Postman/newman-junit.xml
+docs/Postman/package-lock.json

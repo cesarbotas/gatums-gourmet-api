@@ -25,13 +25,28 @@ public class ListOpcoesPagamentoEndpointTests
         doc.RootElement.GetArrayLength().Should().Be(3);
     }
 
+    // Após a Task 11 a rota deixou de ser "ClienteOnly" e passou a exigir apenas
+    // autenticação (RequireAuthorization). Portanto um admin autenticado agora
+    // recebe 200, não mais 403 por não ter a role Cliente.
     [Fact]
-    public async Task Opcoes_ComoAdmin_RetornaForbidden()
+    public async Task Opcoes_ComoAdmin_RetornaOk()
     {
         var (admin, _) = await _factory.CreateAdminClientAsync();
 
         var resp = await admin.GetAsync("/api/v1/pagamentos/opcoes");
 
-        resp.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        resp.IsSuccessStatusCode.Should().BeTrue();
+        using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+        doc.RootElement.GetArrayLength().Should().Be(3);
+    }
+
+    [Fact]
+    public async Task Opcoes_SemAutenticacao_RetornaUnauthorized()
+    {
+        var client = _factory.CreateClient();
+
+        var resp = await client.GetAsync("/api/v1/pagamentos/opcoes");
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }

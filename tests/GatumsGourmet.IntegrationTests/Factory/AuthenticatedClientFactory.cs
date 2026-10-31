@@ -2,9 +2,9 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GatumsGourmet.Domain.Entities.Auth;
-using GatumsGourmet.Domain.Enums.Auth;
 using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GatumsGourmet.IntegrationTests.Factory;
@@ -22,31 +22,39 @@ public sealed record AuthenticatedUser(Guid Id, string Email, string Role, strin
 public static class AuthenticatedClientFactory
 {
     public static Task<(HttpClient Client, AuthenticatedUser User)> CreateAdminClientAsync(this CustomWebApplicationFactory factory)
-        => factory.CreateAuthenticatedClientAsync(UserRole.Admin);
+        => factory.CreateAuthenticatedClientAsync("Admin");
 
     public static Task<(HttpClient Client, AuthenticatedUser User)> CreateClienteClientAsync(this CustomWebApplicationFactory factory)
-        => factory.CreateAuthenticatedClientAsync(UserRole.Cliente);
+        => factory.CreateAuthenticatedClientAsync("Cliente");
 
     public static async Task<(HttpClient Client, AuthenticatedUser User)> CreateAuthenticatedClientAsync(
-        this CustomWebApplicationFactory factory, UserRole role)
+        this CustomWebApplicationFactory factory, string roleNome)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<GatumsDbContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         var clock = scope.ServiceProvider.GetRequiredService<IClock>();
 
-        var roleLower = role.ToString().ToLower();
+        var roleLower = roleNome.ToLowerInvariant();
         var usuario = new Usuario
         {
             Id = Guid.NewGuid(),
             Nome = $"Usuário {roleLower}",
             Email = $"{roleLower}-{Guid.NewGuid():N}@gatums.com",
             SenhaHash = hasher.Hash("senha123"),
-            Role = role,
+            Ativo = true,
             CriadoEm = clock.UtcNow
         };
 
         db.Usuarios.Add(usuario);
+
+        // Vincula a role ao usuário via tabela UsuarioRoles (novo esquema RBAC),
+        // criando a Role caso ainda não exista no banco de teste.
+        var roleEntity = await db.Roles.FirstOrDefaultAsync(r => r.Nome == roleNome)
+            ?? db.Roles.Add(new Role { Nome = roleNome }).Entity;
+        await db.SaveChangesAsync();
+
+        db.UsuarioRoles.Add(new UsuarioRole { UsuarioId = usuario.Id, RoleId = roleEntity.Id });
         await db.SaveChangesAsync();
 
         // Obtém o token pela própria API (login real), garantindo que o token é
@@ -60,7 +68,7 @@ public static class AuthenticatedClientFactory
                 $"Login de teste falhou ({(int)loginResp.StatusCode}) para {usuario.Email}: {await loginResp.Content.ReadAsStringAsync()}");
 
         using var doc = JsonDocument.Parse(await loginResp.Content.ReadAsStringAsync());
-        var token = doc.RootElement.GetProperty("token").GetString()
+        var token = doc.RootElement.GetProperty("accessToken").GetString()
             ?? throw new InvalidOperationException("Token ausente na resposta de login.");
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
