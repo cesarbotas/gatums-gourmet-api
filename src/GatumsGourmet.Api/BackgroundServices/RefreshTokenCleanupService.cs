@@ -1,3 +1,4 @@
+using GatumsGourmet.Api.Extensions;
 using GatumsGourmet.Application.UseCases.V1.Manutencao.PurgeExpiredRefreshTokens;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,16 +26,22 @@ public sealed class RefreshTokenCleanupService(
         {
             try
             {
+                logger.LogInformation("Iniciando limpeza de refresh tokens expirados...");
                 using var scope = scopeFactory.CreateScope();
                 var handler = scope.ServiceProvider.GetRequiredService<IPurgeExpiredRefreshTokensHandler>();
                 var result = await handler.Handle(stoppingToken);
+
                 if (result.IsSuccess)
-                    logger.LogInformation("Limpeza de refresh tokens: {Qtd} removidos.", result.Data);
+                    logger.LogInformation("Limpeza de refresh tokens concluída: {Qtd} removidos.", result.Data);
+                else
+                    logger.LogWarning("Limpeza de refresh tokens falhou sem exceção: {Error}", result.Error);
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Falha na limpeza periódica de refresh tokens.");
+                // Deep exception logging: percorre InnerException e AggregateException.
+                logger.LogDeep(ex, "Falha na limpeza periódica de refresh tokens. ExceptionType={ExceptionType}",
+                    ex.GetType().Name);
             }
         }
         while (await SafeWaitAsync(timer, stoppingToken));

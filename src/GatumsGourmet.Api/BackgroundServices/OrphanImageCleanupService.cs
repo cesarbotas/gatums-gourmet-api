@@ -1,4 +1,5 @@
 using GatumsGourmet.Application.UseCases.V1.Imagens.PurgeOrphanImagens;
+using GatumsGourmet.Api.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -20,6 +21,13 @@ public sealed class OrphanImageCleanupService(
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var cleanupEnabled = config.GetValue<bool?>("Storage:OrphanCleanupEnabled") ?? true;
+        if (!cleanupEnabled)
+        {
+            logger.LogInformation("Limpeza de imagens órfãs desabilitada (Storage:OrphanCleanupEnabled=false).");
+            return;
+        }
+
         var horas = config.GetValue<int?>("Storage:OrphanCleanupIntervalHours") ?? 24;
         using var timer = new PeriodicTimer(TimeSpan.FromHours(horas <= 0 ? 24 : horas));
         // roda uma vez no start e depois a cada intervalo
@@ -27,16 +35,22 @@ public sealed class OrphanImageCleanupService(
         {
             try
             {
+                logger.LogInformation("Iniciando limpeza de imagens órfãs...");
                 using var scope = scopeFactory.CreateScope();
                 var handler = scope.ServiceProvider.GetRequiredService<IPurgeOrphanImagensHandler>();
                 var result = await handler.Handle(stoppingToken);
+
                 if (result.IsSuccess)
-                    logger.LogInformation("Limpeza de imagens órfãs: {Qtd} removidas.", result.Data);
+                    logger.LogInformation("Limpeza de imagens órfãs concluída: {Qtd} removidas.", result.Data);
+                else
+                    logger.LogWarning("Limpeza de imagens órfãs falhou sem exceção: {Error}", result.Error);
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Falha na limpeza periódica de imagens órfãs.");
+                // Deep exception logging: percorre InnerException e AggregateException.
+                logger.LogDeep(ex, "Falha na limpeza periódica de imagens órfãs. ExceptionType={ExceptionType}",
+                    ex.GetType().Name);
             }
         }
         while (await SafeWaitAsync(timer, stoppingToken));

@@ -1,0 +1,39 @@
+# Render Blueprint — Gatums Gourmet API (Homologação)
+# Deploy automático via Dockerfile. As variáveis sensíveis (com sync: false)
+# são preenchidas no dashboard do Render.
+# Guia completo: docs/Deploy-Render-HML.md
+
+services:
+  - type: web
+    name: gatums-gourmet-api
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile
+    plan: starter
+    region: oregon
+    healthCheckPath: /api/v1/produtos/categorias
+    autoDeploy: true
+    envVars:
+      # Ambiente: carrega appsettings.Release.json (Supabase Storage + CORS Vercel)
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Release
+      # ── PostgreSQL ── (Supabase gerenciado ou Render Postgres)
+      # Formato: Host=<host>;Port=5432;Database=<db>;Username=<user>;Password=<pass>
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      # ── JWT ──
+      - key: Jwt__Secret
+        sync: false
+      - key: Jwt__Issuer
+        value: GatumsGourmet
+      - key: Jwt__Audience
+        value: GatumsGourmet.Web
+      # ── Supabase Storage (S3-compatível) ──
+      # AccessKey/SecretKey virão do Supabase Dashboard → Settings → Storage → S3 Connection
+      - key: Storage__AccessKey
+        sync: false
+      - key: Storage__SecretKey
+        sync: false
+      # ── CORS (opcional, override do appsettings.Release.json) ──
+      # Descomente para liberar uma origem adicional:
+      # - key: Cors__AllowedOriginPatterns__0
+      #   value: https://seu-dominio.com

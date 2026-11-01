@@ -36,4 +36,11 @@ public sealed class StorageOptions
 
     /// <summary>Tamanho máximo do arquivo em MB (o use case também lê este valor).</summary>
     public int MaxFileSizeMB { get; set; } = 5;
+
+    /// <summary>
+    /// Habilita/desabilita a limpeza periódica de imagens órfãs. Desabilitar em
+    /// provedores que não suportam ListObjectsV2 (ex.: Supabase S3 API).
+    /// Default: true (compatível com MinIO e R2 que suportam listagem).
+    /// </summary>
+    public bool OrphanCleanupEnabled { get; set; } = true;
 }

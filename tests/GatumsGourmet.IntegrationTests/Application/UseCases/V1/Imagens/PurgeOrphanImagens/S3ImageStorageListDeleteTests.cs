@@ -5,6 +5,8 @@ using Amazon.S3;
 using FluentAssertions;
 using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Infrastructure.Services.Storage;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
 using Xunit.Abstractions;
@@ -52,9 +54,8 @@ public class S3ImageStorageListDeleteTests
                 ServiceURL = options.ServiceUrl,
                 ForcePathStyle = options.ForcePathStyle,
                 AuthenticationRegion = options.Region,
-                RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED
             });
-        return new S3ImageStorage(s3, Options.Create(options));
+        return new S3ImageStorage(s3, Options.Create(options), NullLogger<S3ImageStorage>.Instance);
     }
 
     private static MemoryStream Jpeg() =>
