@@ -26,7 +26,7 @@ docker compose -f docker/docker-compose.yml up -d postgres
 # 2. Configurar variáveis de ambiente do Supabase
 export SUPABASE_S3_SERVICE_URL=https://dmodnijwbzlemxlxqzvz.storage.supabase.co/storage/v1/s3
 export SUPABASE_S3_ACCESS_KEY=5ebc6179cf5ac36fe7b8ad254db1a42b
-export SUPABASE_S3_SECRET_KEY=sb_secret_T-mIRgFwohiEHWL7CzVE9g_n4-WK3T-
+export SUPABASE_S3_SECRET_KEY=ADICIONAR_SECRET_KEY
 export SUPABASE_S3_BUCKET=gatums-imagens
 export SUPABASE_S3_REGION=us-west-2
 export SUPABASE_S3_PUBLIC_BASE_URL=https://dmodnijwbzlemxlxqzvz.supabase.co/storage/v1/object/public/gatums-imagens
