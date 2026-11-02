@@ -1,6 +1,7 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using GatumsGourmet.Domain.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace GatumsGourmet.Infrastructure.Services.Storage;
@@ -12,7 +13,10 @@ namespace GatumsGourmet.Infrastructure.Services.Storage;
 /// testabilidade; esta classe só monta a object key, envia o conteúdo e devolve
 /// a URL pública.
 /// </summary>
-public sealed class S3ImageStorage(IAmazonS3 s3, IOptions<StorageOptions> options) : IImageStorage
+public sealed class S3ImageStorage(
+    IAmazonS3 s3,
+    IOptions<StorageOptions> options,
+    ILogger<S3ImageStorage> logger) : IImageStorage
 {
     private readonly StorageOptions _options = options.Value;
 
@@ -53,24 +57,74 @@ public sealed class S3ImageStorage(IAmazonS3 s3, IOptions<StorageOptions> option
         CancellationToken ct = default)
     {
         var resultado = new List<StoredObject>();
-        string? continuationToken = null;
 
-        // ListObjectsV2 retorna no máx. 1000 por página; pagina com o token.
-        do
+        // ── 1ª tentativa: ListObjectsV2 ──────────────────────
+        // V2 é o padrão moderno da AWS, mas alguns provedores S3-compatíveis
+        // (ex.: Supabase) podem não suportá-lo. Se falhar com Forbidden, cai
+        // no fallback para ListObjects v1, que é mais amplamente suportado.
+        try
         {
-            var resp = await s3.ListObjectsV2Async(new ListObjectsV2Request
+            string? continuationToken = null;
+            do
             {
-                BucketName = _options.Bucket,
-                Prefix = $"{prefixo}/",
-                ContinuationToken = continuationToken,
-            }, ct);
+                var resp = await s3.ListObjectsV2Async(new ListObjectsV2Request
+                {
+                    BucketName = _options.Bucket,
+                    Prefix = prefixo,
+                    ContinuationToken = continuationToken,
+                }, ct);
 
-            foreach (var o in resp.S3Objects ?? [])
-                resultado.Add(new StoredObject(o.Key, UrlPublica(o.Key), o.LastModified?.ToUniversalTime() ?? DateTime.UtcNow));
+                foreach (var o in resp.S3Objects ?? [])
+                    resultado.Add(new StoredObject(o.Key, UrlPublica(o.Key), o.LastModified.ToUniversalTime()));
 
-            continuationToken = resp.IsTruncated == true ? resp.NextContinuationToken : null;
+                continuationToken = resp.IsTruncated == true ? resp.NextContinuationToken : null;
+            }
+            while (continuationToken is not null);
+
+            logger.LogInformation("ListObjectsV2: {Count} objetos no prefixo '{Prefixo}' (bucket {Bucket}).",
+                resultado.Count, prefixo, _options.Bucket);
+            return resultado;
         }
-        while (continuationToken is not null);
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            logger.LogError(ex, "ListObjectsV2 falhou (Forbidden) no bucket {Bucket}. " +
+                "ServiceUrl={ServiceUrl}, Region={Region}, ErrorCode={ErrorCode}. " +
+                "Tentando ListObjects v1 como fallback...",
+                _options.Bucket, _options.ServiceUrl, _options.Region, ex.ErrorCode);
+        }
+
+        // ── 2ª tentativa: ListObjects v1 (fallback) ─────────
+        // V1 usa Marker/NextMarker em vez de ContinuationToken. É o método
+        // mais compatível com provedores S3 que não implementaram V2.
+        try
+        {
+            string? marker = null;
+            do
+            {
+                var resp = await s3.ListObjectsAsync(new ListObjectsRequest
+                {
+                    BucketName = _options.Bucket,
+                    Prefix = prefixo,
+                    Marker = marker,
+                }, ct);
+
+                foreach (var o in resp.S3Objects ?? [])
+                    resultado.Add(new StoredObject(o.Key, UrlPublica(o.Key), o.LastModified.ToUniversalTime()));
+
+                marker = resp.IsTruncated == true ? resp.NextMarker : null;
+            }
+            while (marker is not null);
+
+            logger.LogInformation("ListObjects v1 (fallback): {Count} objetos no prefixo '{Prefixo}' (bucket {Bucket}).",
+                resultado.Count, prefixo, _options.Bucket);
+        }
+        catch (AmazonS3Exception ex)
+        {
+            logger.LogError(ex, "ListObjects v1 também falhou no bucket {Bucket}. " +
+                "ErrorCode={ErrorCode}, StatusCode={StatusCode}, Message={Message}. " +
+                "A limpeza de imagens órfãs não terá efeito neste ambiente.",
+                _options.Bucket, ex.ErrorCode, ex.StatusCode, ex.Message);
+        }
 
         return resultado;
     }
