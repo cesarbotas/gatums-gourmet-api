@@ -74,11 +74,13 @@ public static class InfrastructureServiceCollectionExtensions
                 {
                     ServiceURL = storageOptions.ServiceUrl,
                     ForcePathStyle = storageOptions.ForcePathStyle,
-                    RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(storageOptions.Region),
+                    //RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(storageOptions.Region),
+                    AuthenticationRegion = storageOptions.Region,
                     // HTTP apenas quando o endpoint for http:// (MinIO local).
                     // Supabase/R2 usam HTTPS — UseHttp=true quebraria a conexão
                     // (Forbidden/connection refused sobre HTTPS forçado em HTTP).
                     UseHttp = storageOptions.ServiceUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase),
+                    SignatureVersion = "4"
                 };
 
                 return new AmazonS3Client(
