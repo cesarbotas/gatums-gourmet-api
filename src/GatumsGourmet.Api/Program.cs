@@ -21,6 +21,7 @@ builder.Services.AddGatumsCors();
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 app.UseGatumsCors();
 
