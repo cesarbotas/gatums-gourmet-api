@@ -54,6 +54,16 @@ services:
       Jwt__Secret: "${JWT_SECRET}"
       Jwt__Issuer: "${JWT_ISSUER}"
       Jwt__Audience: "${JWT_AUDIENCE}"
+      # Storage de imagens — Cloudflare R2 (PRD). Sensíveis vêm do .env (GitHub Secrets);
+      # não-sensíveis ficam fixos aqui. Ver docs/Deploy-Cloudflare-R2-PRD.md.
+      Storage__ServiceUrl: "${STORAGE_SERVICE_URL}"
+      Storage__AccessKey: "${STORAGE_ACCESS_KEY}"
+      Storage__SecretKey: "${STORAGE_SECRET_KEY}"
+      Storage__PublicBaseUrl: "${STORAGE_PUBLIC_BASE_URL}"
+      Storage__Bucket: "gatums-imagens"
+      Storage__Region: "auto"
+      Storage__ForcePathStyle: "true"
+      Storage__MaxFileSizeMB: "5"
     depends_on:
       postgres:
         condition: service_healthy
