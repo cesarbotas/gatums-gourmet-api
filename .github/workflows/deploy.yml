@@ -23,6 +23,12 @@ name: CI/CD — Build, Test & Deploy
 #   JWT_ISSUER       — Emissor do JWT (default: GatumsGourmet)
 #   JWT_AUDIENCE     — Audiência do JWT (default: GatumsGourmet.Web)
 #
+# Secrets do storage de imagens (Cloudflare R2 em PRD — ver docs/Deploy-Cloudflare-R2-PRD.md):
+#   STORAGE_SERVICE_URL      — Endpoint S3 do R2 (https://<accountid>.r2.cloudflarestorage.com)
+#   STORAGE_ACCESS_KEY       — Access Key ID do R2 API Token
+#   STORAGE_SECRET_KEY       — Secret Access Key do R2 API Token
+#   STORAGE_PUBLIC_BASE_URL  — URL pública do bucket (pub-<hash>.r2.dev/gatums-imagens ou domínio custom)
+#
 # Guia completo: docs/Deploy-Locaweb.md
 # ============================================================
 
@@ -94,6 +100,12 @@ jobs:
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       JWT_ISSUER: ${{ secrets.JWT_ISSUER || 'GatumsGourmet' }}
       JWT_AUDIENCE: ${{ secrets.JWT_AUDIENCE || 'GatumsGourmet.Web' }}
+      # Storage de imagens (Cloudflare R2 em PRD). Valores sensíveis via Secrets;
+      # os não-sensíveis (Bucket/Region/etc.) ficam fixos no docker-compose.
+      STORAGE_SERVICE_URL: ${{ secrets.STORAGE_SERVICE_URL }}
+      STORAGE_ACCESS_KEY: ${{ secrets.STORAGE_ACCESS_KEY }}
+      STORAGE_SECRET_KEY: ${{ secrets.STORAGE_SECRET_KEY }}
+      STORAGE_PUBLIC_BASE_URL: ${{ secrets.STORAGE_PUBLIC_BASE_URL }}
 
     steps:
       - name: Checkout
@@ -148,6 +160,10 @@ jobs:
           printf 'JWT_SECRET=%s\n' "$JWT_SECRET" >> /tmp/.env
           printf 'JWT_ISSUER=%s\n' "$JWT_ISSUER" >> /tmp/.env
           printf 'JWT_AUDIENCE=%s\n' "$JWT_AUDIENCE" >> /tmp/.env
+          printf 'STORAGE_SERVICE_URL=%s\n' "$STORAGE_SERVICE_URL" >> /tmp/.env
+          printf 'STORAGE_ACCESS_KEY=%s\n' "$STORAGE_ACCESS_KEY" >> /tmp/.env
+          printf 'STORAGE_SECRET_KEY=%s\n' "$STORAGE_SECRET_KEY" >> /tmp/.env
+          printf 'STORAGE_PUBLIC_BASE_URL=%s\n' "$STORAGE_PUBLIC_BASE_URL" >> /tmp/.env
           scp /tmp/.env $VPS_USER@$VPS_HOST:$VPS_DEPLOY_PATH/.env
           ssh $VPS_USER@$VPS_HOST "chmod 600 $VPS_DEPLOY_PATH/.env"
           rm /tmp/.env
