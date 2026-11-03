@@ -66,7 +66,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.Configure<StorageOptions>(configuration.GetSection("Storage"));
         var storageOptions = configuration.GetSection("Storage").Get<StorageOptions>();
 
-        if (!string.IsNullOrWhiteSpace(storageOptions?.ServiceUrl))
+        var storageConfigurado = !string.IsNullOrWhiteSpace(storageOptions?.ServiceUrl);
+
+        if (storageConfigurado)
         {
             services.AddSingleton<IAmazonS3>(_ =>
             {

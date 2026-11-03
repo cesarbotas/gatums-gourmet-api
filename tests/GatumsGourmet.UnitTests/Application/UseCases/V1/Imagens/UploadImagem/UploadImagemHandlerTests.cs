@@ -2,6 +2,7 @@ using FluentAssertions;
 using GatumsGourmet.Application.UseCases.V1.Imagens.UploadImagem;
 using GatumsGourmet.Domain.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -10,14 +11,18 @@ namespace GatumsGourmet.UnitTests.Application.UseCases.V1.Imagens.UploadImagem;
 public class UploadImagemHandlerTests
 {
     private readonly Mock<IImageStorage> _storage = new();
+
+    // Config "feliz": storage configurado (ServiceUrl preenchida) + limite 5 MB.
     private readonly IConfiguration _config = new ConfigurationBuilder()
         .AddInMemoryCollection(new Dictionary<string, string?>
         {
+            ["Storage:ServiceUrl"] = "http://localhost:9000",
             ["Storage:MaxFileSizeMB"] = "5"
         })
         .Build();
 
-    private UploadImagemHandler CriarHandler() => new(_storage.Object, _config);
+    private UploadImagemHandler CriarHandler(IConfiguration? config = null) =>
+        new(_storage.Object, config ?? _config, NullLogger<UploadImagemHandler>.Instance);
 
     private static MemoryStream StreamComBytes(params byte[] bytes) => new(bytes);
 
@@ -49,6 +54,35 @@ public class UploadImagemHandlerTests
             "jpg",
             "produtos",
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_StorageNaoConfigurado_Falha_SemAcionarStorage()
+    {
+        // ServiceUrl vazia (ex.: env var Storage__ServiceUrl ausente em Release).
+        // O handler deve falhar com mensagem clara (→ 400), ANTES de tocar o storage,
+        // em vez de deixar o UnconfiguredImageStorage lançar (→ 500 opaco).
+        var configSemStorage = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Storage:ServiceUrl"] = "",
+                ["Storage:MaxFileSizeMB"] = "5"
+            })
+            .Build();
+
+        var bytes = new byte[] { 0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46 };
+        var handler = CriarHandler(configSemStorage);
+
+        var result = await handler.Handle(StreamComBytes(bytes), "image/jpeg", "foto.jpg", bytes.Length);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Contain("storage");
+        _storage.Verify(s => s.UploadAsync(
+            It.IsAny<Stream>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
