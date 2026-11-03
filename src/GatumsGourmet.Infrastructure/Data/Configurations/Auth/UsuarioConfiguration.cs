@@ -13,6 +13,6 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
         b.Property(x => x.Email).HasMaxLength(200).IsRequired();
         b.HasIndex(x => x.Email).IsUnique();
         b.Property(x => x.SenhaHash).IsRequired();
-        b.Property(x => x.Role).HasConversion<string>();
+        b.Property(x => x.Ativo).HasDefaultValue(true);
     }
 }

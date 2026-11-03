@@ -1,9 +1,7 @@
 ﻿using FluentAssertions;
-using GatumsGourmet.Domain.Repositories;
-using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.V1.Auth.GetCurrentUser;
 using GatumsGourmet.Domain.Entities.Auth;
-using GatumsGourmet.Domain.Enums.Auth;
+using GatumsGourmet.Domain.Repositories;
 using Moq;
 using Xunit;
 
@@ -16,25 +14,39 @@ public class GetCurrentUserHandlerTests
 
     public GetCurrentUserHandlerTests() => _handler = new GetCurrentUserHandler(_usuarios.Object);
 
+    private static Usuario CreateUsuarioComRoles(Guid id, string nome, string email, params string[] roles)
+    {
+        var usuario = new Usuario { Id = id, Nome = nome, Email = email };
+        usuario.UsuarioRoles = roles
+            .Select(nomeRole => new UsuarioRole
+            {
+                UsuarioId = id,
+                Usuario = usuario,
+                Role = new Role { Nome = nomeRole }
+            })
+            .ToList();
+        return usuario;
+    }
+
     [Fact]
     public async Task Handle_UsuarioExistente_RetornaDados()
     {
         var id = Guid.NewGuid();
-        var usuario = new Usuario { Id = id, Nome = "Teste", Email = "t@x.com", Role = UserRole.Cliente };
-        _usuarios.Setup(r => r.GetByIdAsync(id, default)).ReturnsAsync(usuario);
+        var usuario = CreateUsuarioComRoles(id, "Teste", "t@x.com", "Cliente");
+        _usuarios.Setup(r => r.GetByIdComRolesAsync(id, default)).ReturnsAsync(usuario);
 
         var result = await _handler.Handle(id);
 
         result.IsSuccess.Should().BeTrue();
         result.Data!.Id.Should().Be(id);
         result.Data.Nome.Should().Be("Teste");
-        result.Data.Role.Should().Be("cliente");
+        result.Data.Roles.Should().Contain("Cliente");
     }
 
     [Fact]
     public async Task Handle_UsuarioInexistente_RetornaErro()
     {
-        _usuarios.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), default)).ReturnsAsync((Usuario?)null);
+        _usuarios.Setup(r => r.GetByIdComRolesAsync(It.IsAny<Guid>(), default)).ReturnsAsync((Usuario?)null);
 
         var result = await _handler.Handle(Guid.NewGuid());
 
@@ -46,13 +58,12 @@ public class GetCurrentUserHandlerTests
     public async Task Handle_RoleAdmin_RetornaRoleAdmin()
     {
         var id = Guid.NewGuid();
-        var usuario = new Usuario { Id = id, Nome = "Admin", Email = "a@x.com", Role = UserRole.Admin };
-        _usuarios.Setup(r => r.GetByIdAsync(id, default)).ReturnsAsync(usuario);
+        var usuario = CreateUsuarioComRoles(id, "Admin", "a@x.com", "Admin");
+        _usuarios.Setup(r => r.GetByIdComRolesAsync(id, default)).ReturnsAsync(usuario);
 
         var result = await _handler.Handle(id);
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Role.Should().Be("admin");
+        result.Data!.Roles.Should().Contain("Admin");
     }
 }
-

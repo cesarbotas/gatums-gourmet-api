@@ -3,10 +3,10 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: gatums
-      POSTGRES_PASSWORD: gatums_dev
-      POSTGRES_DB: gatums
+      POSTGRES_PASSWORD: gatums_test
+      POSTGRES_DB: gatums_test
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -14,6 +14,35 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  # MinIO: storage S3-compatível local para o upload de imagens.
+  # API S3 na 9000; console web (UI) na 9001 (http://localhost:9001,
+  # login minioadmin/minioadmin). Espelha a seção Storage do appsettings
+  # (Development/LocalDocker).
+  #
+  # NOTA sobre a imagem: a MinIO removeu as imagens da comunidade do Docker Hub
+  # (set/2026) e as do quay.io passaram a exigir login (401 em pull anônimo).
+  # Usamos a imagem da Bitnami, que seguiu publicamente disponível no namespace
+  # bitnamilegacy, pinada por digest para reprodutibilidade. A Bitnami cria o
+  # bucket declarativamente via MINIO_DEFAULT_BUCKETS (sufixo ":public" = leitura
+  # pública), então não é preciso um container separado com o mc.
+  minio:
+    image: bitnamilegacy/minio@sha256:451fe6858cb770cc9d0e77ba811ce287420f781c7c1b806a386f6896471a349c
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      # Cria o bucket no startup e já o deixa com leitura pública (download).
+      MINIO_DEFAULT_BUCKETS: gatums-imagens:public
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/bitnami/minio/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   # api:
   #   build:
@@ -33,3 +62,4 @@ services:
 
 volumes:
   pgdata:
+  miniodata:

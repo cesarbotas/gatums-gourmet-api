@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using System.Text;
+using GatumsGourmet.Api.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 
 namespace GatumsGourmet.Api.Extensions;
@@ -33,11 +35,13 @@ public static class AuthenticationExtensions
                 };
             });
 
-        services.AddAuthorization(opt =>
-        {
-            opt.AddPolicy("AdminOnly", p => p.RequireRole("admin"));
-            opt.AddPolicy("ClienteOnly", p => p.RequireRole("cliente"));
-        });
+        // Autorização baseada em permissão: as rotas usam RequirePermission("...") /
+        // RequireAuthorization(). As policies legadas por papel foram removidas na Task 11.
+        services.AddAuthorization();
+
+        // Autorização dinâmica por permissão (policies "perm:{codigo}" criadas sob demanda).
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
         return services;
     }

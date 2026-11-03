@@ -6,24 +6,33 @@ Documentação de referência para integrar o site (desenvolvido parcialmente no
 
 | Item | Valor |
 |------|-------|
-| **Base URL** | `http://localhost:5166/api/v1` (dev) · `http://<vps-ip>/api/v1` (prod) |
-| **Autenticação** | JWT Bearer (`Authorization: Bearer <token>`) |
-| **Roles** | `admin` · `cliente` |
-| **Token lifetime** | 8 horas |
-| **CORS** | Liberado para qualquer origem (`AllowAnyOrigin`) |
+| **Base URL** | `http://localhost:5166/api/v1` (dev) · HML/PRD conforme deploy |
+| **Autenticação** | JWT Bearer — **access token (15 min) + refresh token (7 dias)** |
+| **Autorização** | Por **permissão** (RBAC); `user.roles` é um **array** (PascalCase) |
+| **Token lifetime** | access 15 min · refresh 7 dias (renovar via `POST /auth/refresh`) |
+| **CORS** | Restrito por ambiente (dev libera tudo; HML/PRD restringem) |
 | **JSON casing** | camelCase (`{ "nome": "...", "preco": 12.90 }`) |
-| **Swagger** | `http://localhost:5166/swagger` (apenas Development) |
-| **Content-Type** | `application/json` |
+| **Swagger/Scalar** | `http://localhost:5166/scalar` (Development/Release) |
+| **Content-Type** | `application/json` (exceto upload de imagem, que é `multipart/form-data`) |
+
+> **Começando a integração ou atualizando o front?** Leia primeiro o
+> **[Guia-Integracao-Front.md](Guia-Integracao-Front.md)** — consolida tudo o que
+> mudou (auth RBAC+refresh, versionamento, paginação, CEP, upload de imagens, CORS)
+> e traz um checklist de migração.
 
 ## Documentos
 
 | Documento | Descrição |
 |-----------|-----------|
-| [Autenticacao.md](Autenticacao.md) | Login, registro, token JWT, roles, claims |
+| [Guia-Integracao-Front.md](Guia-Integracao-Front.md) | **Comece aqui.** O que mudou na API + checklist de migração |
+| [Migracao-Front-Auth-RBAC.md](Migracao-Front-Auth-RBAC.md) | Auth nova (access+refresh, RBAC) com código pronto |
 | [API-Reference.md](API-Reference.md) | Todos os endpoints com método, rota, body e auth |
+| [Busca-CEP.md](Busca-CEP.md) | Autopreenchimento de endereço por CEP |
+| [Upload-Imagens.md](Upload-Imagens.md) | Upload de imagem de produto |
 | [Fluxos-Integracao.md](Fluxos-Integracao.md) | Fluxos completos: catálogo, carrinho, checkout, pagamento, pedidos, admin |
 | [Modelos-de-Dados.md](Modelos-de-Dados.md) | Todos os DTOs com propriedades, tipos e exemplos |
 | [Erros-e-Padroes.md](Erros-e-Padroes.md) | Tratamento de erros, ProblemDetails, enums, convenções |
+| [Autenticacao.md](Autenticacao.md) | ⚠️ Desatualizado (descreve o JWT único antigo) — use o Guia e o de Migração |
 
 ## Variável de ambiente do site
 

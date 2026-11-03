@@ -20,6 +20,11 @@ namespace GatumsGourmet.Infrastructure.Data;
 public class GatumsDbContext(DbContextOptions<GatumsDbContext> options) : DbContext(options)
 {
     public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<UsuarioRole> UsuarioRoles => Set<UsuarioRole>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Produto> Produtos => Set<Produto>();
     public DbSet<Categoria> Categorias => Set<Categoria>();
     public DbSet<ProdutoComboItem> ProdutoComboItens => Set<ProdutoComboItem>();
@@ -35,6 +40,11 @@ public class GatumsDbContext(DbContextOptions<GatumsDbContext> options) : DbCont
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new UsuarioConfiguration());
+        modelBuilder.ApplyConfiguration(new RoleConfiguration());
+        modelBuilder.ApplyConfiguration(new PermissionConfiguration());
+        modelBuilder.ApplyConfiguration(new RolePermissionConfiguration());
+        modelBuilder.ApplyConfiguration(new UsuarioRoleConfiguration());
+        modelBuilder.ApplyConfiguration(new RefreshTokenConfiguration());
         modelBuilder.ApplyConfiguration(new CategoriaConfiguration());
         modelBuilder.ApplyConfiguration(new ProdutoConfiguration());
         modelBuilder.ApplyConfiguration(new ProdutoComboItemConfiguration());

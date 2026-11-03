@@ -25,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\GatumsGourmet.Application\GatumsGourmet.Application.csproj" />
     <ProjectReference Include="..\..\src\GatumsGourmet.Domain\GatumsGourmet.Domain.csproj" />
+    <ProjectReference Include="..\..\src\GatumsGourmet.Infrastructure\GatumsGourmet.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

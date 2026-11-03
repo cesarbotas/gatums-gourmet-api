@@ -1,6 +1,7 @@
 ﻿using GatumsGourmet.Application.UseCases.V1.Auth.GetCurrentUser;
 using GatumsGourmet.Domain.Entities;
 using GatumsGourmet.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using GatumsGourmet.IntegrationTests.Factory;
@@ -8,7 +9,6 @@ using GatumsGourmet.Domain.Common.V1;
 using GatumsGourmet.Domain.Repositories;
 using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Entities.Auth;
-using GatumsGourmet.Domain.Enums.Auth;
 
 namespace GatumsGourmet.IntegrationTests.Application.UseCases.V1.Auth.GetCurrentUser;
 
@@ -40,11 +40,17 @@ public class GetCurrentUserHandlerIntegrationTests
             Nome = "César Botas",
             Email = email,
             SenhaHash = "hash_fake_para_teste",
-            Role = UserRole.Admin,
+            Ativo = true,
             CriadoEm = DateTime.UtcNow
         };
 
         dbContext.Usuarios.Add(usuario);
+
+        var adminRole = await dbContext.Roles.FirstOrDefaultAsync(r => r.Nome == "Admin")
+            ?? dbContext.Roles.Add(new Role { Nome = "Admin" }).Entity;
+        await dbContext.SaveChangesAsync();
+
+        dbContext.UsuarioRoles.Add(new UsuarioRole { UsuarioId = userId, RoleId = adminRole.Id });
         await dbContext.SaveChangesAsync();
 
         var handler = scope.ServiceProvider.GetRequiredService<IGetCurrentUserHandler>();
@@ -58,7 +64,7 @@ public class GetCurrentUserHandlerIntegrationTests
         Assert.Equal(userId, result.Data.Id);
         Assert.Equal("César Botas", result.Data.Nome);
         Assert.Equal(email, result.Data.Email);
-        Assert.Equal("admin", result.Data.Role);
+        Assert.Contains("Admin", result.Data.Roles);
     }
 
     [Fact]
