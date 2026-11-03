@@ -39,6 +39,9 @@ if (app.Environment.IsDevelopment()
 
 app.MapGatumsEndpoints();
 
+// Diagnóstico de storage no startup (log no host, ex.: Render) — sem expor segredos.
+app.LogStorageDiagnostics();
+
 await app.InitializeDatabaseAsync();
 
 app.Run();
