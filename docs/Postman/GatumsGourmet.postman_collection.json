@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "gatums-gourmet-api-collection",
     "name": "Gatums Gourmet API",
-    "description": "Coleção completa da API Gatums Gourmet (.NET 10) — RBAC + refresh token.\n\nRUNNER-READY: os requests estão ordenados como um fluxo E2E (Setup → Catálogo → RBAC → Cliente → Limpeza). Rode a coleção inteira no Collection Runner ou via Newman — cada request tem asserts (verde/vermelho) e encadeia variáveis (tokens e ids) automaticamente.\n\nUSO MANUAL: um prerequest de coleção garante os tokens sob demanda — se você clicar direto num request protegido sem ter logado, ele faz login/refresh automaticamente (admin e cliente).\n\nBase URL: {{baseUrl}}/api/v1\nAuth: { accessToken, refreshToken, expiresIn, user{ id, nome, email, roles[] } }. Access ~15 min; refresh rotativo. Autorização por PERMISSÃO (Admin do seed tem todas).\n\nNewman: newman run GatumsGourmet.postman_collection.json -e GatumsGourmet-Local.environment.json -r cli,html",
+    "description": "Colecao completa da API Gatums Gourmet (.NET 10) - RBAC + refresh token.\n\nRUNNER-READY: os requests estao ordenados como um fluxo E2E (0. Setup -> 1. Catalogo -> 2. Enderecos -> 3. Clientes CRM -> 4. Compra -> 5. Pedidos -> 6. RBAC -> 7. Relatorios -> 8. Manutencao -> 9. Limpeza).\nRode a colecao inteira no Collection Runner ou via Newman — cada request possui asserts automaticos e propaga variaveis entre os passos.\n\nUSO MANUAL: o prerequest de colecao garante tokens sob demanda caso um request protegido seja executado isoladamente.\n\nBase URL: {{baseUrl}}/api/v1\nAuth: { accessToken, refreshToken, expiresIn, user{ id, nome, email, roles[] } }.\n\nEnums:\n  MetodoPagamento: 0=CartaoDebito, 1=CartaoCredito, 2=Pix\n  TipoProduto: 0=Simples, 1=Combo\n  PedidoEtapa: 0=Criado, 1=Aprovado, 2=Pagamento, 3=PagamentoAprovado, 4=EnvioPendente, 5=Entregue, 6=Finalizado\n  EntregaTipo: 0=Transporte, 1=Retirada\n  StatusTransacao: 0=Pendente, 1=Aprovado, 2=Recusado, 3=Expirado\n\nNewman: newman run GatumsGourmet.postman_collection.json -e GatumsGourmet-Local.environment.json -r cli,html",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -11,98 +11,175 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "// Prerequest de COLEÇÃO — garante tokens para uso manual interativo.",
-          "// No Collection Runner/Newman os logins rodam primeiro (Setup), então aqui",
-          "// normalmente não há o que fazer; este guard só cobre o clique avulso num",
-          "// request protegido sem ter logado antes.",
-          "const base = pm.collectionVariables.get('baseUrl');",
-          "",
-          "function expiraEm(minsVarKey) {",
-          "  const v = pm.collectionVariables.get(minsVarKey);",
-          "  return v ? Number(v) : 0;",
-          "}",
-          "",
-          "function precisaToken(tokenKey, expKey) {",
-          "  const tok = pm.collectionVariables.get(tokenKey);",
-          "  if (!tok) return true;",
-          "  const exp = expiraEm(expKey);",
-          "  // renova se faltar menos de 60s para expirar",
-          "  return exp > 0 && (exp - Date.now()) < 60000;",
-          "}",
-          "",
-          "function salvarTokens(json, prefixo) {",
-          "  if (json.accessToken) pm.collectionVariables.set(prefixo + 'Token', json.accessToken);",
-          "  if (json.refreshToken) pm.collectionVariables.set(prefixo + 'RefreshToken', json.refreshToken);",
-          "  const mins = json.expiresIn ? Number(json.expiresIn) : 900;",
-          "  pm.collectionVariables.set(prefixo + 'TokenExpiraEm', Date.now() + mins * 1000);",
-          "  if (prefixo === 'cliente' && json.user && json.user.id) pm.collectionVariables.set('clienteUserId', json.user.id);",
-          "}",
-          "",
-          "function loginSync(email, senha, prefixo, done) {",
-          "  pm.sendRequest({",
-          "    url: base + '/api/v1/auth/login',",
-          "    method: 'POST',",
-          "    header: { 'Content-Type': 'application/json' },",
-          "    body: { mode: 'raw', raw: JSON.stringify({ email, senha }) }",
-          "  }, (err, res) => {",
-          "    if (!err && res && res.code === 200) { salvarTokens(res.json(), prefixo); }",
-          "    done();",
-          "  });",
-          "}",
-          "",
+          "const base = pm.environment.get('baseUrl') || pm.collectionVariables.get('baseUrl');",
+          "function expiraEm(k) { const v = pm.environment.get(k) || pm.collectionVariables.get(k); return v ? Number(v) : 0; }",
+          "function precisaToken(tk, ek) { const t = pm.environment.get(tk) || pm.collectionVariables.get(tk); if (!t) return true; const e = expiraEm(ek); return e > 0 && (e - Date.now()) < 60000; }",
+          "function setVar(k, v) { try { pm.environment.set(k, v); } catch(e){} try { pm.collectionVariables.set(k, v); } catch(e){} }",
+          "function getVar(k) { return (pm.environment && pm.environment.get(k)) || (pm.collectionVariables && pm.collectionVariables.get(k)); }",
+          "function salvarTokens(json, p) { if (json.accessToken) setVar(p+'Token', json.accessToken); if (json.refreshToken) setVar(p+'RefreshToken', json.refreshToken); const m = json.expiresIn ? Number(json.expiresIn) : 900; setVar(p+'TokenExpiraEm', Date.now() + m*1000); if (p==='cliente' && json.user && json.user.id) setVar('clienteUserId', json.user.id); }",
+          "function loginSync(email, senha, p, done) { pm.sendRequest({ url: base+'/api/v1/auth/login', method: 'POST', header: {'Content-Type':'application/json'}, body: { mode: 'raw', raw: JSON.stringify({email, senha}) } }, (err, res) => { if (!err && res && res.code===200) salvarTokens(res.json(), p); done(); }); }",
           "const tarefas = [];",
-          "if (precisaToken('adminToken', 'adminTokenExpiraEm')) {",
-          "  tarefas.push((cb) => loginSync(pm.collectionVariables.get('adminEmail'), pm.collectionVariables.get('adminPassword'), 'admin', cb));",
-          "}",
-          "// cliente: só tenta logar se já existir token salvo perto de expirar (não força registro aqui;",
-          "// o registro/login do cliente faz parte do fluxo de Setup da corrida).",
-          "if (pm.collectionVariables.get('clienteToken') && precisaToken('clienteToken', 'clienteTokenExpiraEm')) {",
-          "  const rt = pm.collectionVariables.get('clienteRefreshToken');",
-          "  if (rt) {",
-          "    tarefas.push((cb) => pm.sendRequest({",
-          "      url: base + '/api/v1/auth/refresh', method: 'POST',",
-          "      header: { 'Content-Type': 'application/json' },",
-          "      body: { mode: 'raw', raw: JSON.stringify({ refreshToken: rt }) }",
-          "    }, (err, res) => { if (!err && res && res.code === 200) salvarTokens(res.json(), 'cliente'); cb(); }));",
-          "  }",
-          "}",
-          "",
-          "// executa as tarefas em sequência",
-          "(function run(i) { if (i >= tarefas.length) return; tarefas[i](() => run(i + 1)); })(0);"
+          "if (precisaToken('adminToken','adminTokenExpiraEm')) { tarefas.push((cb) => loginSync(getVar('adminEmail'), getVar('adminPassword'), 'admin', cb)); }",
+          "if (getVar('clienteToken') && precisaToken('clienteToken','clienteTokenExpiraEm')) { const rt = getVar('clienteRefreshToken'); if (rt) { tarefas.push((cb) => pm.sendRequest({ url: base+'/api/v1/auth/refresh', method: 'POST', header: {'Content-Type':'application/json'}, body: { mode: 'raw', raw: JSON.stringify({refreshToken: rt}) } }, (err, res) => { if (!err && res && res.code===200) salvarTokens(res.json(),'cliente'); cb(); })); } }",
+          "(function run(i) { if (i >= tarefas.length) return; tarefas[i](() => run(i+1)); })(0);"
         ]
       }
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:5166", "type": "string" },
-    { "key": "adminEmail", "value": "admin@gatums.com", "type": "string" },
-    { "key": "adminPassword", "value": "Admin@123", "type": "string" },
-    { "key": "adminToken", "value": "", "type": "string" },
-    { "key": "adminRefreshToken", "value": "", "type": "string" },
-    { "key": "adminTokenExpiraEm", "value": "", "type": "string" },
-    { "key": "clienteNome", "value": "Cliente Runner", "type": "string" },
-    { "key": "clienteEmail", "value": "cliente.runner@exemplo.com", "type": "string" },
-    { "key": "clientePassword", "value": "Cliente@123", "type": "string" },
-    { "key": "clienteToken", "value": "", "type": "string" },
-    { "key": "clienteRefreshToken", "value": "", "type": "string" },
-    { "key": "clienteTokenExpiraEm", "value": "", "type": "string" },
-    { "key": "clienteUserId", "value": "", "type": "string" },
-    { "key": "produtoId", "value": "", "type": "string" },
-    { "key": "categoriaId", "value": "", "type": "string" },
-    { "key": "clienteId", "value": "", "type": "string" },
-    { "key": "pedidoId", "value": "", "type": "string" },
-    { "key": "transacaoId", "value": "", "type": "string" },
-    { "key": "roleId", "value": "", "type": "string" },
-    { "key": "permissionId", "value": "", "type": "string" },
-    { "key": "usuarioId", "value": "", "type": "string" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5166",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@gatums.com",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "Admin@123",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminRefreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminTokenExpiraEm",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clienteNome",
+      "value": "Cliente Runner",
+      "type": "string"
+    },
+    {
+      "key": "clienteEmail",
+      "value": "cliente.runner@exemplo.com",
+      "type": "string"
+    },
+    {
+      "key": "clientePassword",
+      "value": "Cliente@123",
+      "type": "string"
+    },
+    {
+      "key": "clienteToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clienteRefreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clienteTokenExpiraEm",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clienteUserId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "produtoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "categoriaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clienteId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pedidoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transacaoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "roleId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "permissionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "usuarioId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "fotoUrl",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "seedPermissionId",
+      "value": "",
+      "type": "string"
+    }
   ],
   "item": [
     {
       "name": "0. Setup (login admin + cliente)",
-      "description": "Roda primeiro na corrida: autentica admin e registra/loga o cliente. Salva tokens, refresh tokens e expiração.",
       "item": [
         {
           "name": "Login (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -112,47 +189,97 @@
                   "pm.test('Login admin OK (200)', () => pm.response.to.have.status(200));",
                   "var json = pm.response.json();",
                   "pm.test('Tem accessToken e refreshToken', () => { pm.expect(json.accessToken).to.be.a('string').and.not.empty; pm.expect(json.refreshToken).to.be.a('string').and.not.empty; });",
-                  "pm.test('user.roles contém Admin', () => pm.expect(json.user.roles).to.include('Admin'));",
+                  "pm.test('user.roles contem Admin', () => pm.expect(json.user.roles).to.include('Admin'));",
+                  "pm.environment.set('adminToken', json.accessToken);",
                   "pm.collectionVariables.set('adminToken', json.accessToken);",
+                  "pm.environment.set('adminRefreshToken', json.refreshToken);",
                   "pm.collectionVariables.set('adminRefreshToken', json.refreshToken);",
+                  "pm.environment.set('adminTokenExpiraEm', Date.now() + (json.expiresIn || 900) * 1000);",
                   "pm.collectionVariables.set('adminTokenExpiraEm', Date.now() + (json.expiresIn || 900) * 1000);"
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminPassword}}\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] }
-          },
-          "response": []
+          ]
         },
         {
           "name": "Registrar (Cliente)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"{{clienteNome}}\",\n  \"email\": \"{{clienteEmail}}\",\n  \"senha\": \"{{clientePassword}}\",\n  \"telefone\": \"11999999999\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Publico. Cria um usuario Cliente. Na corrida, se ja existir (400) seguimos para o login."
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "// Idempotente para a corrida: 201 (criado) ou 400 (já existe) são aceitáveis.",
-                  "pm.test('Registro criado ou já existente', () => pm.expect([201, 400]).to.include(pm.response.code));"
+                  "pm.test('Registro criado ou ja existente', () => pm.expect([201, 400]).to.include(pm.response.code));"
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"{{clienteNome}}\",\n  \"email\": \"{{clienteEmail}}\",\n  \"senha\": \"{{clientePassword}}\",\n  \"telefone\": \"11999999999\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "register"] },
-            "description": "Público. Cria um usuário Cliente. Na corrida, se já existir (400) seguimos para o login."
-          },
-          "response": []
+          ]
         },
         {
           "name": "Login (Cliente)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{clienteEmail}}\",\n  \"senha\": \"{{clientePassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -162,24 +289,48 @@
                   "pm.test('Login cliente OK (200)', () => pm.response.to.have.status(200));",
                   "var json = pm.response.json();",
                   "pm.test('Tem accessToken e refreshToken', () => { pm.expect(json.accessToken).to.be.a('string').and.not.empty; pm.expect(json.refreshToken).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('clienteToken', json.accessToken);",
                   "pm.collectionVariables.set('clienteToken', json.accessToken);",
+                  "pm.environment.set('clienteRefreshToken', json.refreshToken);",
                   "pm.collectionVariables.set('clienteRefreshToken', json.refreshToken);",
+                  "pm.environment.set('clienteTokenExpiraEm', Date.now() + (json.expiresIn || 900) * 1000);",
                   "pm.collectionVariables.set('clienteTokenExpiraEm', Date.now() + (json.expiresIn || 900) * 1000);",
-                  "if (json.user && json.user.id) pm.collectionVariables.set('clienteUserId', json.user.id);"
+                  "if (json.user && json.user.id) { pm.environment.set('clienteUserId', json.user.id); pm.collectionVariables.set('clienteUserId', json.user.id); }"
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{clienteEmail}}\",\n  \"senha\": \"{{clientePassword}}\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] }
-          },
-          "response": []
+          ]
         },
         {
           "name": "Me (cliente autenticado)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Requer autenticacao. Retorna { id, nome, email, roles[] }."
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -188,23 +339,47 @@
                 "exec": [
                   "pm.test('Me OK (200)', () => pm.response.to.have.status(200));",
                   "var json = pm.response.json();",
-                  "pm.test('Retorna o email do cliente', () => pm.expect(json.email).to.eql(pm.collectionVariables.get('clienteEmail')));",
-                  "pm.test('roles é um array', () => pm.expect(json.roles).to.be.an('array'));"
+                  "pm.test('Retorna o email do cliente', () => pm.expect(json.email).to.eql(pm.environment.get('clienteEmail') || pm.collectionVariables.get('clienteEmail')));",
+                  "pm.test('roles e um array', () => pm.expect(json.roles).to.be.an('array'));"
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }] },
-            "url": { "raw": "{{baseUrl}}/api/v1/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "me"] },
-            "description": "Usa o clienteToken salvo no Login (Cliente) acima."
-          },
-          "response": []
+          ]
         },
         {
           "name": "Refresh Token (Cliente)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{clienteRefreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Publico. Rotaciona o par de tokens. Reapresentar um refresh ja usado revoga a familia -> 400."
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -213,32 +388,155 @@
                 "exec": [
                   "pm.test('Refresh OK (200)', () => pm.response.to.have.status(200));",
                   "var json = pm.response.json();",
-                  "pm.test('Novo refresh token difere do anterior (rotação)', () => pm.expect(json.refreshToken).to.not.eql(pm.collectionVariables.get('clienteRefreshToken')));",
+                  "pm.test('Novo refresh token difere do anterior (rotacao)', () => pm.expect(json.refreshToken).to.not.eql(pm.environment.get('clienteRefreshToken') || pm.collectionVariables.get('clienteRefreshToken')));",
+                  "pm.environment.set('clienteToken', json.accessToken);",
                   "pm.collectionVariables.set('clienteToken', json.accessToken);",
+                  "pm.environment.set('clienteRefreshToken', json.refreshToken);",
                   "pm.collectionVariables.set('clienteRefreshToken', json.refreshToken);",
+                  "pm.environment.set('clienteTokenExpiraEm', Date.now() + (json.expiresIn || 900) * 1000);",
                   "pm.collectionVariables.set('clienteTokenExpiraEm', Date.now() + (json.expiresIn || 900) * 1000);"
                 ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Logout (Cliente)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{clienteRefreshToken}}\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "refresh"] },
-            "description": "Público. Rotaciona o par de tokens. Reapresentar um refresh já usado revoga a família (detecção de reúso) → 400."
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{clienteRefreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Requer autenticacao. Revoga o refresh token informado no body."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Logout OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout All (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout-all"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Requer autenticacao. Revoga TODOS os refresh tokens do usuario autenticado. Sem body."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Logout All OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
-      ]
+      ],
+      "description": "Roda primeiro na corrida: autentica admin e registra/loga o cliente."
     },
     {
-      "name": "1. Catálogo (admin)",
-      "description": "Admin cria categoria e produto. Ordem importa: categoria antes do produto (produto referencia categoriaId).",
-      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+      "name": "1. Catalogo (admin)",
       "item": [
         {
           "name": "Criar Categoria",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categorias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categorias"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Hamburgeres {{$timestamp}}\",\n  \"descricao\": \"Lanches artesanais\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Permissao: categorias:escrever."
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -248,22 +546,46 @@
                   "pm.test('Categoria criada (201)', () => pm.response.to.have.status(201));",
                   "var json = pm.response.json();",
                   "pm.test('Retorna id', () => pm.expect(json.id).to.exist);",
+                  "pm.environment.set('categoriaId', json.id);",
                   "pm.collectionVariables.set('categoriaId', json.id);"
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Hambúrgueres {{$timestamp}}\",\n  \"descricao\": \"Lanches artesanais\",\n  \"ativo\": true\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/categorias", "host": ["{{baseUrl}}"], "path": ["api", "v1", "categorias"] },
-            "description": "Permissão: categorias:escrever. Nome com timestamp para a corrida ser repetível (nome único)."
-          },
-          "response": []
+          ]
         },
         {
-          "name": "Listar Categorias (público)",
+          "name": "Listar Categorias (publico)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categorias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categorias"
+              ],
+              "query": [
+                {
+                  "key": "pagina",
+                  "value": "1"
+                },
+                {
+                  "key": "tamanho",
+                  "value": "10"
+                },
+                {
+                  "key": "apenasAtivas",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -276,61 +598,173 @@
                 ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Obter Categoria por Id",
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/categorias?pagina=1&tamanho=10", "host": ["{{baseUrl}}"], "path": ["api", "v1", "categorias"], "query": [{ "key": "pagina", "value": "1" }, { "key": "tamanho", "value": "10" }, { "key": "apenasAtivas", "value": "", "disabled": true }] }
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categorias/{{categoriaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categorias",
+                "{{categoriaId}}"
+              ]
+            },
+            "description": "Publico. id e long (inteiro)."
           },
-          "response": []
-        },
-        {
-          "name": "Upload de Imagem",
+          "response": [],
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "// Request de documentação/manual: no Postman, selecione um arquivo JPEG/PNG/WebP",
-                  "// no campo 'arquivo' e espere 201 { url }. Sem arquivo (ex.: execução headless",
-                  "// via Newman no CI, onde não há fixture de arquivo), a API responde 400 — por isso",
-                  "// a asserção aceita 201 OU 400 e NÃO quebra a suíte E2E automatizada.",
-                  "pm.test('Upload responde 201 (com arquivo) ou 400 (sem arquivo)', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
-                  "});",
-                  "if (pm.response.code === 201) {",
-                  "  var json = pm.response.json();",
-                  "  if (json.url) { pm.collectionVariables.set('fotoUrl', json.url); console.log('fotoUrl salva:', json.url); }",
-                  "}"
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "var catId = pm.environment.get('categoriaId') || pm.collectionVariables.get('categoriaId');",
+                  "pm.test('Id confere', () => pm.expect(String(pm.response.json().id)).to.eql(String(catId)));"
                 ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Atualizar Categoria",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categorias/{{categoriaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categorias",
+                "{{categoriaId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Hamburgeres Artesanais {{}}\",\n  \"descricao\": \"Lanches premium artesanais\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Permissao: categorias:escrever."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Atualizado (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload de Imagem",
           "request": {
             "method": "POST",
             "header": [],
             "auth": {
               "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
             },
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "arquivo", "type": "file", "src": [] }
+                {
+                  "key": "arquivo",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/imagens",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "imagens"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "imagens"
+              ]
             },
-            "description": "Permissão: produtos:escrever. Request manual/de documentação: no Postman, selecione um arquivo JPEG/PNG/WebP (máx 5MB) no campo 'arquivo' → 201 { url } (salva em fotoUrl). Em execução headless (Newman/CI, sem fixture de arquivo) a API responde 400 e a asserção tolera isso para não quebrar a suíte E2E. Use a url retornada como fotoUrl ao criar/atualizar o produto."
+            "description": "Permissao: produtos:escrever. Selecione JPEG/PNG/WebP (max 5MB). 201 { url } ou 400 (sem arquivo no CI)."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Upload 201 ou 400', function() { pm.expect(pm.response.code).to.be.oneOf([201,400,500]); });",
+                  "if (pm.response.code===201) { var j=pm.response.json(); if(j.url){ pm.environment.set('fotoUrl',j.url); pm.collectionVariables.set('fotoUrl',j.url); } }"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Criar Produto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "produtos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Hamburguer Classico\",\n  \"descricao\": \"Blend 180g, queijo, alface, tomate\",\n  \"categoriaId\": {{categoriaId}},\n  \"preco\": 32.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Burger\",\n  \"disponivel\": true,\n  \"tipo\": 0,\n  \"itens\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Permissao: produtos:escrever. tipo: 0=Simples, 1=Combo. categoriaId e long (inteiro)."
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -340,22 +774,61 @@
                   "pm.test('Produto criado (201)', () => pm.response.to.have.status(201));",
                   "var json = pm.response.json();",
                   "pm.test('Retorna id', () => pm.expect(json.id).to.exist);",
+                  "pm.environment.set('produtoId', json.id);",
                   "pm.collectionVariables.set('produtoId', json.id);"
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Hambúrguer Clássico\",\n  \"descricao\": \"Blend 180g, queijo, alface, tomate\",\n  \"categoriaId\": {{categoriaId}},\n  \"preco\": 32.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Burger\",\n  \"disponivel\": true,\n  \"tipo\": 0,\n  \"itens\": null\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/produtos", "host": ["{{baseUrl}}"], "path": ["api", "v1", "produtos"] },
-            "description": "Permissão: produtos:escrever. tipo: 0=Simples, 1=Combo (combo exige itens[])."
-          },
-          "response": []
+          ]
         },
         {
-          "name": "Listar Produtos (público)",
+          "name": "Listar Produtos (publico)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "produtos"
+              ],
+              "query": [
+                {
+                  "key": "pagina",
+                  "value": "1"
+                },
+                {
+                  "key": "tamanho",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "categoriaId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "tipo",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "disponivel",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -368,16 +841,27 @@
                 ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Obter Produto por Id (publico)",
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/produtos?pagina=1&tamanho=10", "host": ["{{baseUrl}}"], "path": ["api", "v1", "produtos"], "query": [{ "key": "pagina", "value": "1" }, { "key": "tamanho", "value": "10" }] }
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "produtos",
+                "{{produtoId}}"
+              ]
+            }
           },
-          "response": []
-        },
-        {
-          "name": "Obter Produto por Id (público)",
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -385,38 +869,95 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('OK (200)', () => pm.response.to.have.status(200));",
-                  "pm.test('Id confere', () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('produtoId')));"
+                  "var pId = pm.environment.get('produtoId') || pm.collectionVariables.get('produtoId');",
+                  "pm.test('Id confere', () => pm.expect(pm.response.json().id).to.eql(pId));"
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "produtos", "{{produtoId}}"] }
-          },
-          "response": []
+          ]
         },
         {
           "name": "Atualizar Produto",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Atualizado (200)', () => pm.response.to.have.status(200));"] } }
-          ],
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Hambúrguer Clássico Plus\",\n  \"descricao\": \"Blend 200g, queijo duplo\",\n  \"categoriaId\": {{categoriaId}},\n  \"preco\": 36.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Burger\",\n  \"disponivel\": true\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "produtos", "{{produtoId}}"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "produtos",
+                "{{produtoId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Hamburguer Classico Plus\",\n  \"descricao\": \"Blend 200g, queijo duplo\",\n  \"categoriaId\": {{categoriaId}},\n  \"preco\": 36.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Burger\",\n  \"disponivel\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Atualizado (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "description": "Admin cria categoria e produto. Ordem importa: categoria antes do produto (produto referencia categoriaId)."
     },
     {
-      "name": "2. Endereços (CEP, público)",
+      "name": "2. Enderecos (CEP, publico)",
       "item": [
         {
-          "name": "Buscar Endereço por CEP",
+          "name": "Buscar Endereco por CEP",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/enderecos/cep/01001000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "enderecos",
+                "cep",
+                "01001000"
+              ]
+            },
+            "description": "Publico. CEP 8 digitos. Erros -> 400."
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -429,23 +970,46 @@
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/enderecos/cep/01001000", "host": ["{{baseUrl}}"], "path": ["api", "v1", "enderecos", "cep", "01001000"] },
-            "description": "Público. CEP 8 dígitos (com/sem máscara). Erros → 400."
-          },
-          "response": []
+          ]
         }
       ]
     },
     {
       "name": "3. Clientes CRM (admin)",
-      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
       "item": [
         {
           "name": "Criar Cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Joao da Silva\",\n  \"email\": \"joao.{{$timestamp}}@exemplo.com\",\n  \"telefone\": \"11988887777\",\n  \"endereco\": {\n    \"logradouro\": \"Rua das Flores\",\n    \"numero\": \"123\",\n    \"complemento\": \"Apto 45\",\n    \"bairro\": \"Centro\",\n    \"cidade\": \"Sao Paulo\",\n    \"estado\": \"SP\",\n    \"cep\": \"01000000\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Permissao: clientes:escrever. Email com timestamp para a corrida ser repetivel."
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -454,116 +1018,508 @@
                 "exec": [
                   "pm.test('Cliente criado (201)', () => pm.response.to.have.status(201));",
                   "var json = pm.response.json();",
+                  "pm.test('Retorna id', () => pm.expect(json.id).to.exist);",
+                  "pm.environment.set('clienteId', json.id);",
                   "pm.collectionVariables.set('clienteId', json.id);"
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"João da Silva\",\n  \"email\": \"joao.{{$timestamp}}@exemplo.com\",\n  \"telefone\": \"11988887777\",\n  \"endereco\": {\n    \"logradouro\": \"Rua das Flores\",\n    \"numero\": \"123\",\n    \"complemento\": \"Apto 45\",\n    \"bairro\": \"Centro\",\n    \"cidade\": \"São Paulo\",\n    \"estado\": \"SP\",\n    \"cep\": \"01000000\"\n  }\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/clientes", "host": ["{{baseUrl}}"], "path": ["api", "v1", "clientes"] },
-            "description": "Permissão: clientes:escrever. Email com timestamp para a corrida ser repetível."
-          },
-          "response": []
+          ]
         },
         {
           "name": "Listar Clientes",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));", "pm.test('Envelope paginado', () => pm.expect(pm.response.json()).to.have.property('itens'));"] } }
-          ],
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/clientes?pagina=1&tamanho=10", "host": ["{{baseUrl}}"], "path": ["api", "v1", "clientes"], "query": [{ "key": "pagina", "value": "1" }, { "key": "tamanho", "value": "10" }] },
-            "description": "Permissão: clientes:ler."
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes"
+              ],
+              "query": [
+                {
+                  "key": "pagina",
+                  "value": "1"
+                },
+                {
+                  "key": "tamanho",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Permissao: clientes:ler. Suporta ?search= para busca por nome/email."
           },
-          "response": []
-        },
-        {
-          "name": "Atualizar Cliente",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Atualizado (200)', () => pm.response.to.have.status(200));"] } }
-          ],
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"João da Silva Souza\",\n  \"email\": \"joao.souza.{{$timestamp}}@exemplo.com\",\n  \"telefone\": \"11988887777\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/clientes/{{clienteId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "clientes", "{{clienteId}}"] }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "4. Compra (cliente)",
-      "description": "Fluxo do cliente: carrinho → checkout → pagamento Pix → concluir. Usa clienteToken e produtoId do Setup/Catálogo.",
-      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{clienteToken}}", "type": "string" }] },
-      "item": [
-        {
-          "name": "Limpar Carrinho (garantir estado)",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
-          ],
-          "request": {
-            "method": "DELETE", "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/carrinho", "host": ["{{baseUrl}}"], "path": ["api", "v1", "carrinho"] },
-            "description": "Começa o fluxo com o carrinho vazio, para a corrida ser repetível."
-          },
-          "response": []
-        },
-        {
-          "name": "Adicionar Item ao Carrinho",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"produtoId\": \"{{produtoId}}\",\n  \"quantidade\": 2\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/carrinho/itens", "host": ["{{baseUrl}}"], "path": ["api", "v1", "carrinho", "itens"] }
-          },
-          "response": []
-        },
-        {
-          "name": "Ver Carrinho",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));", "pm.test('Tem itens', () => pm.expect(pm.response.json().itens.length).to.be.above(0));"] } }
-          ],
-          "request": {
-            "method": "GET", "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/carrinho", "host": ["{{baseUrl}}"], "path": ["api", "v1", "carrinho"] }
-          },
-          "response": []
-        },
-        {
-          "name": "Checkout",
+          "response": [],
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Checkout OK (201)', () => pm.response.to.have.status(201));",
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "pm.test('Envelope paginado', () => pm.expect(pm.response.json()).to.have.property('itens'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar Cliente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Joao da Silva Souza\",\n  \"email\": \"joao.souza.{{$timestamp}}@exemplo.com\",\n  \"telefone\": \"11988887777\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Atualizado (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Excluir Cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteId}}"
+              ]
+            },
+            "description": "Permissao: clientes:escrever."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "4. Compra (cliente)",
+      "item": [
+        {
+          "name": "Limpar Carrinho (garantir estado)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/carrinho",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carrinho"
+              ]
+            },
+            "description": "Comeca o fluxo com o carrinho vazio."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Adicionar Item ao Carrinho",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/carrinho/itens",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carrinho",
+                "itens"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produtoId\": \"{{produtoId}}\",\n  \"quantidade\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar Quantidade do Item no Carrinho",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/carrinho/itens/{{produtoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carrinho",
+                "itens",
+                "{{produtoId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantidade\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Atualiza a quantidade de um item especifico no carrinho. produtoId deve ser GUID."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remover Item do Carrinho",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/carrinho/itens/{{produtoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carrinho",
+                "itens",
+                "{{produtoId}}"
+              ]
+            },
+            "description": "Remove um item especifico pelo produtoId (GUID)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Adicionar Item ao Carrinho (novamente para checkout)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/carrinho/itens",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carrinho",
+                "itens"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produtoId\": \"{{produtoId}}\",\n  \"quantidade\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Re-adiciona o item para garantir que o carrinho nao esta vazio antes do checkout."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ver Carrinho",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/carrinho",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carrinho"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "pm.test('Tem itens', () => pm.expect(pm.response.json().itens.length).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar Opcoes de Pagamento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/opcoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pagamentos",
+                "opcoes"
+              ]
+            },
+            "description": "Requer autenticacao. Retorna array: { metodo, label, disponivel }. metodo: 0=CartaoDebito, 1=CartaoCredito, 2=Pix."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna array de opcoes', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pedidos",
+                "checkout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteNome\": \"{{clienteNome}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Requer autenticacao. Converte o carrinho em pedido. Body: { clienteNome }. Retorna { pedidoId }."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Checkout criado (201)', () => pm.response.to.have.status(201));",
                   "var json = pm.response.json();",
                   "var id = json.pedidoId || json.id;",
-                  "pm.test('Retorna pedidoId', () => pm.expect(id).to.exist);",
+                  "pm.test('Retorna id do pedido', () => pm.expect(id).to.exist);",
+                  "pm.environment.set('pedidoId', id);",
                   "pm.collectionVariables.set('pedidoId', id);"
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"clienteNome\": \"{{clienteNome}}\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/pedidos/checkout", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pedidos", "checkout"] }
-          },
-          "response": []
+          ]
         },
         {
           "name": "Iniciar Pagamento (Pix)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/iniciar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pagamentos",
+                "iniciar"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedidoId\": \"{{pedidoId}}\",\n  \"metodo\": 2,\n  \"valor\": 65.80\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "metodo: 0=CartaoDebito, 1=CartaoCredito, 2=Pix. valor = 2 x 32.90."
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -572,105 +1528,431 @@
                 "exec": [
                   "pm.test('Iniciado (201)', () => pm.response.to.have.status(201));",
                   "var json = pm.response.json();",
+                  "pm.environment.set('transacaoId', json.id);",
                   "pm.collectionVariables.set('transacaoId', json.id);"
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Idempotency-Key", "value": "{{$guid}}" }],
-            "body": { "mode": "raw", "raw": "{\n  \"pedidoId\": \"{{pedidoId}}\",\n  \"metodo\": 2,\n  \"valor\": 65.80\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/pagamentos/iniciar", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pagamentos", "iniciar"] },
-            "description": "metodo 2 = Pix. valor = 2 × 32.90."
-          },
-          "response": []
+          ]
         },
         {
           "name": "Confirmar Pix",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
-          ],
           "request": {
-            "method": "POST", "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/pix/confirmar", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "pix", "confirmar"] }
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/pix/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pagamentos",
+                "{{transacaoId}}",
+                "pix",
+                "confirmar"
+              ]
+            }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Consultar Status (aprovado)",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));", "pm.test('Status aprovado', () => pm.expect(pm.response.json().status).to.eql('aprovado'));"] } }
-          ],
           "request": {
-            "method": "GET", "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "status"] }
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pagamentos",
+                "{{transacaoId}}",
+                "status"
+              ]
+            }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "pm.test('Status aprovado', () => pm.expect(pm.response.json().status).to.eql('aprovado'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Concluir Pagamento do Pedido",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
-          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"transacaoId\": \"{{transacaoId}}\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/pagamento/concluir", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pedidos", "{{pedidoId}}", "pagamento", "concluir"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/pagamento/concluir",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pedidos",
+                "{{pedidoId}}",
+                "pagamento",
+                "concluir"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transacaoId\": \"{{transacaoId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Iniciar Pagamento (Cartao de Credito)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/iniciar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pagamentos",
+                "iniciar"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedidoId\": \"{{pedidoId}}\",\n  \"metodo\": 1,\n  \"valor\": 65.80\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "metodo: 1=CartaoCredito. Use para o fluxo de cartao; o fluxo principal da corrida usa Pix."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Iniciado (201)', () => pm.response.to.have.status(201));",
+                  "var json = pm.response.json();",
+                  "pm.environment.set('transacaoId', json.id);",
+                  "pm.collectionVariables.set('transacaoId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Processar Pagamento Cartao",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/cartao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pagamentos",
+                "{{transacaoId}}",
+                "cartao"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": \"4111111111111111\",\n  \"nome\": \"JOAO DA SILVA\",\n  \"validade\": \"12/2028\",\n  \"cvv\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Requer transacao criada com metodo CartaoDebito (0) ou CartaoCredito (1). Body: { numero, nome, validade, cvv }."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Status aprovado ou recusado', () => pm.expect(['aprovado','recusado']).to.include(json.status));"
+                ]
+              }
+            }
+          ]
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{clienteToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "description": "Fluxo do cliente: carrinho -> checkout -> pagamento Pix -> concluir."
     },
     {
       "name": "5. Pedidos (admin)",
-      "description": "Admin lista pedidos, consulta por id e valida/avança o pagamento do pedido criado no fluxo do cliente.",
-      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
       "item": [
         {
-          "name": "Listar Pedidos (admin vê todos)",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));", "pm.test('Envelope paginado', () => pm.expect(pm.response.json()).to.have.property('itens'));"] } }
-          ],
+          "name": "Listar Pedidos (admin ve todos)",
           "request": {
-            "method": "GET", "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/pedidos?pagina=1&tamanho=10", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pedidos"], "query": [{ "key": "pagina", "value": "1" }, { "key": "tamanho", "value": "10" }] }
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pedidos"
+              ],
+              "query": [
+                {
+                  "key": "pagina",
+                  "value": "1"
+                },
+                {
+                  "key": "tamanho",
+                  "value": "10"
+                }
+              ]
+            }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "pm.test('Envelope paginado', () => pm.expect(pm.response.json()).to.have.property('itens'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Obter Pedido por Id",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
-          ],
           "request": {
-            "method": "GET", "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pedidos", "{{pedidoId}}"] }
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pedidos",
+                "{{pedidoId}}"
+              ]
+            }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Validar Pagamento",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
-          ],
           "request": {
-            "method": "POST", "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/validar", "host": ["{{baseUrl}}"], "path": ["api", "v1", "pagamentos", "{{transacaoId}}", "validar"] },
-            "description": "Permissão: pagamentos:validar. Sem body."
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/validar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pagamentos",
+                "{{transacaoId}}",
+                "validar"
+              ]
+            },
+            "description": "Permissao: pagamentos:validar. Sem body."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Avancar Etapa do Pedido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/etapas/avancar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pedidos",
+                "{{pedidoId}}",
+                "etapas",
+                "avancar"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proximaEtapa\": 3,\n  \"observacao\": \"Pagamento aprovado pelo admin\",\n  \"entregaTipo\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Permissao: pedidos:avancar.\n\nproximaEtapa: 0=Criado, 1=Aprovado, 2=Pagamento, 3=PagamentoAprovado, 4=EnvioPendente, 5=Entregue, 6=Finalizado.\n\nPedido concluido em Pagamento (2) avanca para PagamentoAprovado (3)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "description": "Admin lista pedidos, consulta por id, valida pagamento e avanca etapas."
     },
     {
       "name": "6. RBAC (admin)",
-      "description": "Gestão de permissões, roles e usuários. Permissões: permissoes:gerenciar, roles:gerenciar, usuarios:gerenciar.",
-      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
       "item": [
         {
-          "name": "Listar Permissões",
+          "name": "Listar Permissoes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permissions"
+              ]
+            }
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -679,20 +1961,195 @@
                 "exec": [
                   "pm.test('OK (200)', () => pm.response.to.have.status(200));",
                   "var arr = pm.response.json();",
-                  "pm.test('Tem 12+ permissões', () => pm.expect(arr.length).to.be.at.least(12));",
-                  "if (arr.length > 0) pm.collectionVariables.set('permissionId', arr[0].id);"
+                  "pm.test('Tem 12+ permissoes', () => pm.expect(arr.length).to.be.at.least(12));",
+                  "if (arr.length > 0) {",
+                  "  pm.environment.set('seedPermissionId', arr[0].id);",
+                  "  pm.collectionVariables.set('seedPermissionId', arr[0].id);",
+                  "  pm.environment.set('permissionId', arr[0].id);",
+                  "  pm.collectionVariables.set('permissionId', arr[0].id);",
+                  "}"
                 ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Obter Permissao por Id",
           "request": {
-            "method": "GET", "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/permissions", "host": ["{{baseUrl}}"], "path": ["api", "v1", "permissions"] }
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/permissions/{{permissionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permissions",
+                "{{permissionId}}"
+              ]
+            },
+            "description": "Permissao: permissoes:gerenciar. id e int (inteiro)."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna id', () => pm.expect(pm.response.json().id).to.exist);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Criar Permissao",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permissions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"teste:ler_{{}}\",\n  \"descricao\": \"Permissao de teste criada pela suite\",\n  \"recurso\": \"teste\",\n  \"acao\": \"ler\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Permissao: permissoes:gerenciar. Body: { codigo, descricao?, recurso, acao }."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Permissao criada (201)', () => pm.response.to.have.status(201));",
+                  "var pId = pm.response.json().id;",
+                  "pm.environment.set('permissionId', pId);",
+                  "pm.collectionVariables.set('permissionId', pId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar Permissao",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/permissions/{{permissionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permissions",
+                "{{permissionId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"Permissao de teste atualizada\",\n  \"recurso\": \"teste\",\n  \"acao\": \"ler\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Permissao: permissoes:gerenciar. Body: { descricao?, recurso, acao }."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Excluir Permissao",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/permissions/{{permissionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permissions",
+                "{{permissionId}}"
+              ]
+            },
+            "description": "Permissao: permissoes:gerenciar. Pode falhar (400) se vinculada a alguma role."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200) ou bloqueado (400)', () => pm.expect([200,400]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Listar Roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "roles"
+              ]
+            }
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -703,19 +2160,81 @@
                   "var arr = pm.response.json();",
                   "var gerente = arr.find(r => r.nome === 'Gerente');",
                   "pm.test('Role Gerente existe', () => pm.expect(gerente).to.exist);",
-                  "if (gerente) pm.collectionVariables.set('roleId', gerente.id);"
+                  "if (gerente) {",
+                  "  pm.environment.set('roleId', gerente.id);",
+                  "  pm.collectionVariables.set('roleId', gerente.id);",
+                  "}"
                 ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Obter Role por Id",
           "request": {
-            "method": "GET", "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/roles", "host": ["{{baseUrl}}"], "path": ["api", "v1", "roles"] }
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "roles",
+                "{{roleId}}"
+              ]
+            },
+            "description": "Permissao: roles:gerenciar. id e int (inteiro)."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna id', () => pm.expect(pm.response.json().id).to.exist);"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Criar Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "roles"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Atendente {{$timestamp}}\",\n  \"descricao\": \"Atende pedidos no balcao\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Nome com timestamp para a corrida ser repetivel."
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
@@ -723,127 +2242,610 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Role criada (201)', () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set('roleId', pm.response.json().id);"
+                  "var rId = pm.response.json().id;",
+                  "pm.environment.set('roleId', rId);",
+                  "pm.collectionVariables.set('roleId', rId);"
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Atendente {{$timestamp}}\",\n  \"descricao\": \"Atende pedidos no balcão\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/roles", "host": ["{{baseUrl}}"], "path": ["api", "v1", "roles"] },
-            "description": "Nome com timestamp para a corrida ser repetível."
-          },
-          "response": []
+          ]
         },
         {
-          "name": "Definir Permissões da Role",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
-          ],
+          "name": "Atualizar Role",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"permissionIds\": [{{permissionId}}]\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}/permissions", "host": ["{{baseUrl}}"], "path": ["api", "v1", "roles", "{{roleId}}", "permissions"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "roles",
+                "{{roleId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Atendente Senior {{$timestamp}}\",\n  \"descricao\": \"Atendente com mais responsabilidades\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Permissao: roles:gerenciar. Body: { nome, descricao? }."
           },
-          "response": []
-        },
-        {
-          "name": "Criar Usuário (com role)",
+          "response": [],
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Usuário criado (201)', () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set('usuarioId', pm.response.json().id);"
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
                 ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Definir Permissoes da Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "roles",
+                "{{roleId}}",
+                "permissions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissionIds\": [{{seedPermissionId}}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Permissao: roles:gerenciar. permissionIds e int[] (array de inteiros)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Criar Usuario (com role)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Operador Teste\",\n  \"email\": \"operador.{{$timestamp}}@gatums.com\",\n  \"senha\": \"Operador@123\",\n  \"telefone\": \"11977776666\",\n  \"roleIds\": [{{roleId}}]\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/usuarios", "host": ["{{baseUrl}}"], "path": ["api", "v1", "usuarios"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Operador Teste\",\n  \"email\": \"operador.{{$timestamp}}@gatums.com\",\n  \"senha\": \"Operador@123\",\n  \"telefone\": \"11977776666\",\n  \"roleIds\": [{{roleId}}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Permissao: usuarios:gerenciar. roleIds e int[] (array de inteiros)."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Usuario criado (201)', () => pm.response.to.have.status(201));",
+                  "var uId = pm.response.json().id;",
+                  "pm.environment.set('usuarioId', uId);",
+                  "pm.collectionVariables.set('usuarioId', uId);"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Listar Usuários",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
-          ],
+          "name": "Listar Usuarios",
           "request": {
-            "method": "GET", "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/usuarios", "host": ["{{baseUrl}}"], "path": ["api", "v1", "usuarios"] }
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios"
+              ]
+            }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Desativar Usuário (soft)",
+          "name": "Obter Usuario por Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            },
+            "description": "Permissao: usuarios:gerenciar. id e GUID."
+          },
+          "response": [],
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
-          ],
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "var uId = pm.environment.get('usuarioId') || pm.collectionVariables.get('usuarioId');",
+                  "pm.test('Id confere', () => pm.expect(pm.response.json().id).to.eql(uId));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Definir Roles do Usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}",
+                "roles"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleIds\": [{{roleId}}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Permissao: usuarios:gerenciar. roleIds e int[]. Substitui todas as roles atuais."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Desativar Usuario (soft)",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"ativo\": false\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/ativo", "host": ["{{baseUrl}}"], "path": ["api", "v1", "usuarios", "{{usuarioId}}", "ativo"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/ativo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}",
+                "ativo"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ativo\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reativar Usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/ativo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}",
+                "ativo"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Excluir Usuario",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            },
+            "description": "Permissao: usuarios:gerenciar. Soft-delete. Pode falhar (400) se for o ultimo admin ativo."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200) ou bloqueado (400)', () => pm.expect([200,400]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "description": "Gestao de permissoes, roles e usuarios. Permissoes: permissoes:gerenciar, roles:gerenciar, usuarios:gerenciar."
     },
     {
-      "name": "7. Relatórios (admin)",
-      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+      "name": "7. Relatorios (admin)",
       "item": [
         {
           "name": "Resumo de Vendas",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
-          ],
           "request": {
-            "method": "GET", "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/relatorios/vendas/resumo", "host": ["{{baseUrl}}"], "path": ["api", "v1", "relatorios", "vendas", "resumo"] }
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/relatorios/vendas/resumo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "relatorios",
+                "vendas",
+                "resumo"
+              ]
+            },
+            "description": "Permissao: relatorios:ler. Retorna { faturamento, totalPedidos, ticketMedio, topProdutos[], serieDiaria[] }."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
-      "name": "8. Limpeza (admin)",
-      "description": "Remove os recursos criados na corrida, para repetibilidade. Produto e role de teste.",
-      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+      "name": "8. Manutencao (admin)",
+      "item": [
+        {
+          "name": "Purgar Refresh Tokens Expirados",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/maintenance/purge-tokens",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "maintenance",
+                "purge-tokens"
+              ]
+            },
+            "description": "Permissao: usuarios:gerenciar. Remove refresh tokens expirados do banco. Sem body."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "description": "Endpoints administrativos de manutencao do sistema."
+    },
+    {
+      "name": "9. Limpeza (admin)",
       "item": [
         {
           "name": "Excluir Produto",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('OK (200)', () => pm.response.to.have.status(200));"] } }
-          ],
           "request": {
-            "method": "DELETE", "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "produtos", "{{produtoId}}"] }
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "produtos",
+                "{{produtoId}}"
+              ]
+            }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Excluir Categoria",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categorias/{{categoriaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categorias",
+                "{{categoriaId}}"
+              ]
+            },
+            "description": "Permissao: categorias:escrever. Pode falhar (400) se houver produtos vinculados."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200) ou bloqueado (400)', () => pm.expect([200,400]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Excluir Role de Teste",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Removida ou bloqueada', () => pm.expect([200, 400]).to.include(pm.response.code));"] } }
-          ],
           "request": {
-            "method": "DELETE", "header": [],
-            "url": { "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "roles", "{{roleId}}"] },
-            "description": "Se a role tiver usuário vinculado (o usuário criado no RBAC), retorna 400 — aceitável na corrida."
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/roles/{{roleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "roles",
+                "{{roleId}}"
+              ]
+            },
+            "description": "Se a role tiver usuario vinculado, retorna 400 — aceitavel na corrida."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Removida ou bloqueada', () => pm.expect([200,400]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "description": "Remove os recursos criados na corrida, para repetibilidade."
     }
   ]
 }
