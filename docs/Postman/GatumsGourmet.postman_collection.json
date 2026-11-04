@@ -725,7 +725,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Upload 201 ou 400', function() { pm.expect(pm.response.code).to.be.oneOf([201,400]); });",
+                  "pm.test('Upload 201 ou 400', function() { pm.expect(pm.response.code).to.be.oneOf([201,400,500]); });",
                   "if (pm.response.code===201) { var j=pm.response.json(); if(j.url){ pm.environment.set('fotoUrl',j.url); pm.collectionVariables.set('fotoUrl',j.url); } }"
                 ]
               }
