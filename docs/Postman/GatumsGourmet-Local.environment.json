@@ -111,6 +111,18 @@
       "type": "any",
       "value": "",
       "key": "usuarioId"
+    },
+    {
+      "enabled": true,
+      "key": "seedPermissionId",
+      "value": "",
+      "type": "any"
+    },
+    {
+      "enabled": true,
+      "key": "fotoUrl",
+      "value": "https://placehold.co/400x300?text=Burger",
+      "type": "any"
     }
   ],
   "_postman_variable_scope": "environment",
