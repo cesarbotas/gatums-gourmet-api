@@ -1,7 +1,7 @@
 {
   "_": {
     "postman_variable_scope": "environment",
-    "postman_exported_at": "2026-11-04T00:03:12.682Z",
+    "postman_exported_at": "2026-11-04T00:08:29.512Z",
     "postman_exported_using": "Newman/6.2.3"
   },
   "id": "c60521ac-67e5-4f7c-a4b0-847a13475ff9",
@@ -24,17 +24,17 @@
     },
     {
       "type": "any",
-      "value": "",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNTBhYjQ3Mi04M2E2LTQxNDItYjhiNi0xMDU2NDZjMDJiMjciLCJlbWFpbCI6ImFkbWluQGdhdHVtcy5jb20iLCJqdGkiOiJmNjY5ZWJkOS04MGNjLTQ4MjgtODdhOS0wNGQ4ZWE2YjhkODIiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm0iOlsicGFnYW1lbnRvczp2YWxpZGFyIiwicGVybWlzc29lczpnZXJlbmNpYXIiLCJjbGllbnRlczpsZXIiLCJwcm9kdXRvczplc2NyZXZlciIsInBlZGlkb3M6YXZhbmNhciIsInBlZGlkb3M6bGVyIiwiY2F0ZWdvcmlhczplc2NyZXZlciIsInVzdWFyaW9zOmdlcmVuY2lhciIsInJlbGF0b3Jpb3M6bGVyIiwicm9sZXM6Z2VyZW5jaWFyIiwicHJvZHV0b3M6bGVyIiwiY2xpZW50ZXM6ZXNjcmV2ZXIiXSwiZXhwIjoxNzkzNzg3OTUxLCJpc3MiOiJHYXR1bXNHb3VybWV0IiwiYXVkIjoiR2F0dW1zR291cm1ldC5XZWIifQ.G-Dg95ieGAPaqAJQePJ5F0ssDzGnZQNQSWqb-wfePio",
       "key": "adminToken"
     },
     {
       "type": "any",
-      "value": "",
+      "value": "u4cfh_2c2EAFkgYkJHut3iEaxZTaSN_H0Fd6IErRgI8",
       "key": "adminRefreshToken"
     },
     {
       "type": "any",
-      "value": "",
+      "value": 1793787951596,
       "key": "adminTokenExpiraEm"
     },
     {
@@ -54,22 +54,22 @@
     },
     {
       "type": "any",
-      "value": "",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1OTlhZDY0ZS0zNDc0LTQ4MzEtODhhNS0xNjliYmYxNmNjYTMiLCJlbWFpbCI6ImNsaWVudGUucnVubmVyQGV4ZW1wbG8uY29tIiwianRpIjoiNDJjOWYyODgtYWQ4MC00Y2ZhLWIyYzYtNjE5MGRiMmY2MjAyIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQ2xpZW50ZSIsImV4cCI6MTc5Mzc4Nzk1MSwiaXNzIjoiR2F0dW1zR291cm1ldCIsImF1ZCI6IkdhdHVtc0dvdXJtZXQuV2ViIn0.kGzGSVp72XEcfSHhE508aV7NDLO4rVtDVmJaM5Dmor0",
       "key": "clienteToken"
     },
     {
       "type": "any",
-      "value": "",
+      "value": "WQI8Ub1bvCvC0HfRQ5WtURPNMeZmyLeVNSaoWIPLQv4",
       "key": "clienteRefreshToken"
     },
     {
       "type": "any",
-      "value": "",
+      "value": 1793787951897,
       "key": "clienteTokenExpiraEm"
     },
     {
       "type": "any",
-      "value": "",
+      "value": "599ad64e-3474-4831-88a5-169bbf16cca3",
       "key": "clienteUserId"
     },
     {
@@ -111,9 +111,21 @@
       "type": "any",
       "value": "",
       "key": "usuarioId"
+    },
+    {
+      "enabled": true,
+      "key": "seedPermissionId",
+      "value": "",
+      "type": "any"
+    },
+    {
+      "enabled": true,
+      "key": "fotoUrl",
+      "value": "https://placehold.co/400x300?text=Burger",
+      "type": "any"
     }
   ],
   "_postman_variable_scope": "environment",
-  "_postman_exported_at": "2026-11-04T00:08:29.512Z",
+  "_postman_exported_at": "2026-11-04T10:10:54.932Z",
   "_postman_exported_using": "Newman/6.2.3"
 }
