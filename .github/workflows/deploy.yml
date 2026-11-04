@@ -41,7 +41,7 @@ on:
 
 env:
   DOTNET_VERSION: '10.0.x'
-  CONFIGURATION: Production
+  CONFIGURATION: Release
 
 jobs:
   # ============================================================
