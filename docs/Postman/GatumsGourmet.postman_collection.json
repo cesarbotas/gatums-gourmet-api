@@ -52,7 +52,7 @@
           "",
           "const tarefas = [];",
           "if (precisaToken('adminToken', 'adminTokenExpiraEm')) {",
-          "  tarefas.push((cb) => loginSync(pm.collectionVariables.get('adminEmail'), pm.collectionVariables.get('adminPassword'), 'admin', cb));",
+          "  tarefas.push((cb) => loginSync(pm.environment.get('adminEmail') || pm.collectionVariables.get('adminEmail'), pm.environment.get('adminPassword') || pm.collectionVariables.get('adminPassword'), 'admin', cb));",
           "}",
           "// cliente: só tenta logar se já existir token salvo perto de expirar (não força registro aqui;",
           "// o registro/login do cliente faz parte do fluxo de Setup da corrida).",
@@ -113,9 +113,9 @@
                   "var json = pm.response.json();",
                   "pm.test('Tem accessToken e refreshToken', () => { pm.expect(json.accessToken).to.be.a('string').and.not.empty; pm.expect(json.refreshToken).to.be.a('string').and.not.empty; });",
                   "pm.test('user.roles contém Admin', () => pm.expect(json.user.roles).to.include('Admin'));",
-                  "pm.collectionVariables.set('adminToken', json.accessToken);",
-                  "pm.collectionVariables.set('adminRefreshToken', json.refreshToken);",
-                  "pm.collectionVariables.set('adminTokenExpiraEm', Date.now() + (json.expiresIn || 900) * 1000);"
+                  "pm.environment.set('adminToken', json.accessToken);",
+                  "pm.environment.set('adminRefreshToken', json.refreshToken);",
+                  "pm.environment.set('adminTokenExpiraEm', Date.now() + (json.expiresIn || 900) * 1000);"
                 ]
               }
             }
