@@ -93,11 +93,11 @@ jobs:
         run: |
           newman run docs/Postman/GatumsGourmet.postman_collection.json \
             -e docs/Postman/GatumsGourmet-Local.environment.json \
+            --export-environment docs/Postman/GatumsGourmet-Local.environment.json \
             --env-var "baseUrl=http://localhost:5166" \
             -r cli,htmlextra,junit \
             --reporter-htmlextra-export newman-report.html \
             --reporter-junit-export newman-junit.xml
-
       - name: Upload Newman report
         if: always()
         uses: actions/upload-artifact@v4
