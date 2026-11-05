@@ -60,6 +60,21 @@ services:
   #     postgres:
   #       condition: service_healthy
 
+  # Seq: UI de logs estruturados (http://localhost:5341).
+  # O app (Development/LocalDocker) envia logs via Serilog Seq sink.
+  # Free para 1 usuário, dados ilimitados, sem custo.
+  seq:
+    image: datalust/seq:latest
+    container_name: gatums-seq
+    environment:
+      ACCEPT_EULA: "Y"
+    ports:
+      - "5341:80"
+    volumes:
+      - seqdata:/data
+    restart: unless-stopped
+
 volumes:
   pgdata:
   miniodata:
+  seqdata:

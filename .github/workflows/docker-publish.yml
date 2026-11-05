@@ -1,0 +1,54 @@
+name: Docker Hub — Build & Push
+
+# ============================================================
+# Builda a imagem Docker da API e publica no Docker Hub.
+# Dispara em push para main e release, e manualmente.
+#
+# Secrets necessários:
+#   DOCKERHUB_USERNAME  — seu usuário no Docker Hub
+#   DOCKERHUB_TOKEN     — Access Token (não a senha) do Docker Hub
+# ============================================================
+
+on:
+  push:
+    branches: [main, release]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/gatums-gourmet-api
+
+jobs:
+  build-and-push:
+    name: Build & Push to Docker Hub
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch      # main → :main, release → :release
+            type=sha,prefix={{branch}}- # main-abc1234
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache,mode=max

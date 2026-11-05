@@ -7,12 +7,12 @@ namespace GatumsGourmet.Api.Endpoints.V1.Imagens;
 
 public static class ImagensEndpoints
 {
-    // Teto de corpo da requisição ~6 MB: pouco acima do limite de negócio de
-    // 5 MB (Storage:MaxFileSizeMB) para dar folga ao overhead do multipart.
-    // Arquivos até ~6 MB chegam ao handler e, se passarem de 5 MB, recebem um
-    // 400 com mensagem clara; corpos grosseiramente grandes são barrados aqui
-    // pelo framework, em vez de contar com o teto default do Kestrel (~30 MB).
-    private const long LimiteCorpoBytes = 6L * 1024 * 1024;
+    // Teto de corpo alto (50 MB): confiamos na validação do handler (5 MB)
+    // para retornar 400 com mensagem amigável. O limite do framework fica
+    // alto apenas para evitar que Kestrel rejeite a conexão com 413/500
+    // antes do handler validar — assim o handler sempre tem chance de validar
+    // e retornar o 400 com a mensagem de negócio.
+    private const long LimiteCorpoBytes = 50L * 1024 * 1024;
 
     public static void Map(RouteGroupBuilder group)
     {
