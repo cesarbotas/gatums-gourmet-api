@@ -38,6 +38,8 @@ public sealed class S3ImageStorage(
             InputStream = conteudo,
             ContentType = contentType,
             AutoCloseStream = false,
+            DisablePayloadSigning = true,
+            DisableDefaultChecksumValidation = true
         };
 
         // NOTA: NÃO usamos DisablePayloadSigning — na V4 ele exige HTTPS e quebra
