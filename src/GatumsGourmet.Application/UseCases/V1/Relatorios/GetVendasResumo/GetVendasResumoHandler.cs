@@ -4,15 +4,6 @@ using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.V1.Relatorios.GetVendasResumo;
 
-public record TopProdutoResponse(Guid ProdutoId, string Nome, int Quantidade, decimal Total);
-public record VendaDiariaResponse(string Data, decimal Faturamento, int Pedidos);
-public record VendasResumoResponse(decimal Faturamento, int TotalPedidos, decimal TicketMedio, IReadOnlyList<TopProdutoResponse> TopProdutos, IReadOnlyList<VendaDiariaResponse> SerieDiaria);
-
-public interface IGetVendasResumoHandler
-{
-    Task<Result<VendasResumoResponse>> Handle(CancellationToken ct = default);
-}
-
 public sealed class GetVendasResumoHandler(IVendaRepository vendas) : IGetVendasResumoHandler
 {
     public async Task<Result<VendasResumoResponse>> Handle(CancellationToken ct = default)

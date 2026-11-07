@@ -4,6 +4,7 @@ using GatumsGourmet.Api.Endpoints.V1.Clientes;
 using GatumsGourmet.Api.Endpoints.V1.Imagens;
 using GatumsGourmet.Api.Endpoints.V1.Pedidos;
 using GatumsGourmet.Api.Endpoints.V1.Produtos;
+using GatumsGourmet.Api.Endpoints.V1.Relatorios;
 
 namespace GatumsGourmet.Api.Extensions;
 
@@ -37,6 +38,7 @@ public static class EndpointRouteBuilderExtensions
         PedidosEndpoints.Map(v1.MapGroup("/pedidos").WithTags("Pedidos"));
         PagamentosEndpoints.Map(v1.MapGroup("/pagamentos").WithTags("Pagamentos"));
         RelatoriosEndpoints.Map(v1.MapGroup("/relatorios").WithTags("Relatorios"));
+        RelatoriosEndpoints.MapRelatorioPorPeriodo(v1.MapGroup("/relatorios").WithTags("Relatorios"));
         RolesEndpoints.Map(v1.MapGroup("/roles").WithTags("Roles"));
         PermissionsEndpoints.Map(v1.MapGroup("/permissions").WithTags("Permissions"));
         UsuariosEndpoints.Map(v1.MapGroup("/usuarios").WithTags("Usuarios"));
