@@ -1,4 +1,7 @@
 ﻿using FluentValidation;
+using GatumsGourmet.Application.UseCases.V1.Estoque.AdjustEstoque;
+using GatumsGourmet.Application.UseCases.V1.Estoque.ListEstoqueBaixo;
+using GatumsGourmet.Application.UseCases.V1.Estoque.ListMovimentos;
 using GatumsGourmet.Application.UseCases.V1.Auth.GetCurrentUser;
 using GatumsGourmet.Application.UseCases.V1.Auth.Login;
 using GatumsGourmet.Application.UseCases.V1.Auth.Logout;
@@ -118,6 +121,9 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<IUploadImagemHandler, UploadImagemHandler>();
         services.AddScoped<IPurgeOrphanImagensHandler, PurgeOrphanImagensHandler>();
+        services.AddScoped<IAdjustEstoqueHandler, AdjustEstoqueHandler>();
+        services.AddScoped<IListEstoqueBaixoHandler, ListEstoqueBaixoHandler>();
+        services.AddScoped<IListMovimentosHandler, ListMovimentosHandler>();
 
         services.AddScoped<IListRolesHandler, ListRolesHandler>();
         services.AddScoped<IGetRoleByIdHandler, GetRoleByIdHandler>();

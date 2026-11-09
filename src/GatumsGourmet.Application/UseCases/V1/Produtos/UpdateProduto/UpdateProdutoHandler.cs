@@ -20,6 +20,7 @@ public sealed class UpdateProdutoHandler(IProdutoRepository produtos, ICategoria
         produto.Preco = request.Preco;
         produto.FotoUrl = request.FotoUrl;
         produto.Disponivel = request.Disponivel;
+        produto.EstoqueMinimo = request.EstoqueMinimo;
         await produtos.SaveChangesAsync(ct);
         return Result<bool>.Ok(true);
     }

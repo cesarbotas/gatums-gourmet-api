@@ -270,6 +270,47 @@ namespace GatumsGourmet.Infrastructure.Migrations
                     b.ToTable("Clientes");
                 });
 
+            modelBuilder.Entity("GatumsGourmet.Domain.Entities.Estoque.MovimentoEstoque", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Data")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Observacao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("PedidoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProdutoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Quantidade")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SaldoResultante")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Data");
+
+                    b.HasIndex("ProdutoId");
+
+                    b.ToTable("MovimentosEstoque");
+                });
+
             modelBuilder.Entity("GatumsGourmet.Domain.Entities.Pagamentos.TransacaoPagamento", b =>
                 {
                     b.Property<Guid>("Id")
@@ -485,6 +526,12 @@ namespace GatumsGourmet.Infrastructure.Migrations
                     b.Property<bool>("Disponivel")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("Estoque")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EstoqueMinimo")
+                        .HasColumnType("integer");
+
                     b.Property<string>("FotoUrl")
                         .IsRequired()
                         .HasColumnType("text");
@@ -504,6 +551,8 @@ namespace GatumsGourmet.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoriaId");
+
+                    b.HasIndex("Estoque");
 
                     b.ToTable("Produtos");
                 });

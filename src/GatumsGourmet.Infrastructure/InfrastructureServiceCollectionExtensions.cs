@@ -5,6 +5,7 @@ using GatumsGourmet.Infrastructure.Data;
 using GatumsGourmet.Infrastructure.Data.Repositories.Auth;
 using GatumsGourmet.Infrastructure.Data.Repositories.Carrinho;
 using GatumsGourmet.Infrastructure.Data.Repositories.Clientes;
+using GatumsGourmet.Infrastructure.Data.Repositories.Estoque;
 using GatumsGourmet.Infrastructure.Data.Repositories.Pagamentos;
 using GatumsGourmet.Infrastructure.Data.Repositories.Pedidos;
 using GatumsGourmet.Infrastructure.Data.Repositories.Produtos;
@@ -40,6 +41,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IPedidoRepository, PedidoRepository>();
         services.AddScoped<ITransacaoRepository, TransacaoRepository>();
         services.AddScoped<IVendaRepository, VendaRepository>();
+        services.AddScoped<IMovimentoEstoqueRepository, MovimentoEstoqueRepository>();
 
         services.AddSingleton<IClock, SystemClock>();
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
