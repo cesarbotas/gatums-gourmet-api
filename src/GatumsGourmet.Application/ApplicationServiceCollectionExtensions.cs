@@ -130,6 +130,8 @@ public static class ApplicationServiceCollectionExtensions
             GatumsGourmet.Application.UseCases.V2.Pagamentos.IniciarPix.IniciarPixV2Handler>();
         services.AddScoped<GatumsGourmet.Application.UseCases.V2.Pagamentos.ConsultarStatus.IConsultarStatusV2Handler,
             GatumsGourmet.Application.UseCases.V2.Pagamentos.ConsultarStatus.ConsultarStatusV2Handler>();
+        services.AddScoped<GatumsGourmet.Application.UseCases.V2.Pagamentos.ProcessarWebhookOrders.IProcessarWebhookOrdersHandler,
+            GatumsGourmet.Application.UseCases.V2.Pagamentos.ProcessarWebhookOrders.ProcessarWebhookOrdersHandler>();
 
         services.AddScoped<IGetVendasResumoHandler, GetVendasResumoHandler>();
         services.AddScoped<IGetVendasPorPeriodoHandler, GetVendasPorPeriodoHandler>();
