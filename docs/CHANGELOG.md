@@ -2,6 +2,38 @@
 
 Histórico de mudanças da API Gatums Gourmet para referência do site (front-end).
 
+## 2026-11-10 — Pagamentos: Mercado Pago Pix + Separação por Métodos (Pix, Débito, Crédito)
+
+### Novos endpoints de Pagamento
+| Método | Rota | Permissão | Descrição |
+|--------|------|-----------|-----------|
+| POST | `/api/v1/pagamentos/pix` | Autenticado | Iniciar pagamento via Pix (Mercado Pago). Cria ou reaproveita transação pendente |
+| GET | `/api/v1/pagamentos/pix/{transacaoId}/status` | Autenticado | Consulta status do Pix em tempo real no gateway e sincroniza automaticamente o pedido |
+| POST | `/api/v1/pagamentos/webhook/mercadopago` | **Público** | Webhook para notificações do Mercado Pago (consulta a API oficial antes de aprovar) |
+| POST | `/api/v1/pagamentos/cartao-credito` | Autenticado | Processar pagamento com cartão de crédito (com suporte a parcelamento) |
+| POST | `/api/v1/pagamentos/cartao-debito` | Autenticado | Processar pagamento com cartão de débito |
+
+### Integração Mercado Pago
+- **Provedor Real (`MercadoPagoPixProvider`):** Comunicação direta via HTTP com a API REST v1 do Mercado Pago (`POST /v1/payments`).
+- **Injeção Condicional:** Se `MercadoPago:AccessToken` estiver configurado, utiliza o provedor real do Mercado Pago; caso contrário, utiliza o `MockPixProvider` para desenvolvimento/testes locais.
+- **QR Code Base64:** O Pix agora retorna tanto a chave `pixCopiaCola` quanto a imagem `pixQrCodeBase64` pronta para renderização direta no front-end.
+- **Idempotência:** Header `X-Idempotency-Key` enviado em todas as chamadas para prevenir duplicidade de cobranças.
+- **Sincronização em Tempo Real (Polling / Webhook):** Ao consultar o status em `GET /api/v1/pagamentos/pix/{id}/status`, a API consulta o gateway do Mercado Pago imediatamente. Se já estiver pago, aprova a transação e o pedido no banco local sem depender exclusivamente do webhook.
+- **Webhook Seguro:** O endpoint `/api/v1/pagamentos/webhook/mercadopago` é público, mas busca os detalhes da transação diretamente na API oficial do Mercado Pago usando o token secreto da aplicação antes de aprovar qualquer pedido.
+
+### Nova Documentação
+- **`docs/CONTEXT.md`:** Documento mestre de contexto da API (.NET 10, Clean Architecture, CQRS, Minimal APIs, RBAC, workflows e diretrizes para IAs/LLMs).
+- **`docs/Integracao-MercadoPago-Pix.md`:** Guia passo a passo completo para criação da conta no Mercado Pago Developers, obtenção de credenciais de teste e produção, configuração de Webhook e URLs.
+
+### Mudanças no front-end recomendadas
+- **Fluxo Pix Dedicado:** Migrar o front-end para usar `POST /api/v1/pagamentos/pix` com `{ "pedidoId": "guid", "valor": 99.90 }` (valor é opcional; se omitido, assume o total do pedido).
+- **Renderização do QR Code:** Exibir imagem diretamente com `<img src="data:image/png;base64,{pixQrCodeBase64}" />` e botão "Copiar código" com `pixCopiaCola`.
+- **Status em Tempo Real:** O front-end pode fazer polling a cada 3 a 5 segundos em `GET /api/v1/pagamentos/pix/{transacaoId}/status`. Assim que o status for `"aprovado"`, redirecionar para a tela de confirmação do pedido.
+- **Cartões Dedicados:** Usar `POST /api/v1/pagamentos/cartao-credito` (aceita `parcelas`) e `POST /api/v1/pagamentos/cartao-debito`.
+- **Compatibilidade:** As rotas antigas (`/iniciar`, `/{id}/cartao`, `/{id}/status`, `/{id}/pix/confirmar` e `/{id}/validar`) continuam totalmente funcionais.
+
+---
+
 ## 2026-11-08 — Controle de Estoque
 
 ### Novos endpoints
@@ -145,3 +177,5 @@ Tabela auxiliar de auditoria. Cada ajuste de estoque gera um registro:
 4. **Validadores não são invocados**: validação de campos deve ser feita no front.
 5. **Estoque**: o checkout agora valida estoque. Se o front não tratar o 400 "Estoque insuficiente", o usuário verá um erro genérico. Adicionar tratamento específico.
 6. **Novos campos em produtos**: `estoque` e `estoqueMinimo` estão nas responses de listar e obter produto. O front pode exibir badges de "Estoque baixo" quando `estoque <= estoqueMinimo`.
+7. **QR Code Base64 no Pix**: `TransacaoResponse` agora inclui `pixQrCodeBase64`. O front pode renderizar a imagem diretamente sem precisar de gerador de QR code no client (`<img src="data:image/png;base64,${pixQrCodeBase64}" />`).
+8. **Separação de Endpoints de Pagamento**: Prefira os novos endpoints dedicados `/pagamentos/pix`, `/pagamentos/cartao-credito` e `/pagamentos/cartao-debito`. As rotas legadas `/iniciar` e `/{id}/cartao` continuam disponíveis para retrocompatibilidade.

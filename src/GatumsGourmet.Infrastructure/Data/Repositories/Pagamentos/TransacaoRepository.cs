@@ -1,5 +1,4 @@
-﻿using GatumsGourmet.Domain.Repositories;
-using GatumsGourmet.Domain.Services.Interfaces;
+using GatumsGourmet.Domain.Repositories;
 using GatumsGourmet.Domain.Entities.Pagamentos;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,9 +12,11 @@ public class TransacaoRepository(GatumsDbContext db) : ITransacaoRepository
     public Task<TransacaoPagamento?> GetByPedidoIdAsync(Guid pedidoId, CancellationToken ct = default) =>
         db.TransacoesPagamento.AsNoTracking().FirstOrDefaultAsync(t => t.PedidoId == pedidoId, ct);
 
+    public Task<TransacaoPagamento?> GetByOperadoraRefAsync(string operadoraRef, CancellationToken ct = default) =>
+        db.TransacoesPagamento.FirstOrDefaultAsync(t => t.OperadoraRef == operadoraRef, ct);
+
     public async Task AddAsync(TransacaoPagamento transacao, CancellationToken ct = default) =>
         await db.TransacoesPagamento.AddAsync(transacao, ct);
 
     public Task SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);
 }
-

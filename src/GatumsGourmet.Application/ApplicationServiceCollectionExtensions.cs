@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using GatumsGourmet.Application.UseCases.V1.Estoque.AdjustEstoque;
 using GatumsGourmet.Application.UseCases.V1.Estoque.ListEstoqueBaixo;
 using GatumsGourmet.Application.UseCases.V1.Estoque.ListMovimentos;
@@ -24,8 +24,12 @@ using GatumsGourmet.Application.UseCases.V1.Manutencao.PurgeExpiredRefreshTokens
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ConfirmarPagamentoPix;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ConsultarStatusPagamento;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.IniciarPagamento;
+using GatumsGourmet.Application.UseCases.V1.Pagamentos.IniciarPix;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ListOpcoesPagamento;
+using GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarCartaoCredito;
+using GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarCartaoDebito;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarPagamentoCartao;
+using GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarWebhookMercadoPago;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ValidarPagamentoParaAprovacao;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.AvancarPedidoEtapa;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.CheckoutPedido;
@@ -111,6 +115,10 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<IListOpcoesPagamentoHandler, ListOpcoesPagamentoHandler>();
         services.AddScoped<IIniciarPagamentoHandler, IniciarPagamentoHandler>();
+        services.AddScoped<IIniciarPixHandler, IniciarPixHandler>();
+        services.AddScoped<IProcessarCartaoCreditoHandler, ProcessarCartaoCreditoHandler>();
+        services.AddScoped<IProcessarCartaoDebitoHandler, ProcessarCartaoDebitoHandler>();
+        services.AddScoped<IProcessarWebhookMercadoPagoHandler, ProcessarWebhookMercadoPagoHandler>();
         services.AddScoped<IProcessarPagamentoCartaoHandler, ProcessarPagamentoCartaoHandler>();
         services.AddScoped<IConsultarStatusPagamentoHandler, ConsultarStatusPagamentoHandler>();
         services.AddScoped<IConfirmarPagamentoPixHandler, ConfirmarPagamentoPixHandler>();

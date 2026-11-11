@@ -1,4 +1,4 @@
-﻿using GatumsGourmet.Domain.Repositories;
+using GatumsGourmet.Domain.Repositories;
 using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Domain.Services;
 using GatumsGourmet.Infrastructure.Data;
@@ -51,7 +51,24 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IPedidoWorkflowService, PedidoWorkflowService>();
 
         services.AddScoped<IPaymentGateway, MockPaymentGateway>();
-        services.AddScoped<IPixProvider, MockPixProvider>();
+
+        // Provedor de PIX — Mercado Pago quando AccessToken estiver configurado; fallback para MockPixProvider em desenvolvimento/testes
+        var mpBaseUrl = configuration["MercadoPago:BaseUrl"] ?? "https://api.mercadopago.com/";
+        services.AddHttpClient<MercadoPagoPixProvider>(client =>
+        {
+            client.BaseAddress = new Uri(mpBaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(20);
+        });
+
+        var mpAccessToken = configuration["MercadoPago:AccessToken"];
+        if (!string.IsNullOrWhiteSpace(mpAccessToken))
+        {
+            services.AddScoped<IPixProvider, MercadoPagoPixProvider>();
+        }
+        else
+        {
+            services.AddScoped<IPixProvider, MockPixProvider>();
+        }
 
         // Provedor de CEP (ViaCEP) — primeira integração HTTP de saída do projeto.
         var viaCepBaseUrl = configuration["ViaCep:BaseUrl"] ?? "https://viacep.com.br/ws/";

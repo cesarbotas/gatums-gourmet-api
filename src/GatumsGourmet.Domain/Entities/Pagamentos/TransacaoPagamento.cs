@@ -12,6 +12,7 @@ public class TransacaoPagamento
     public string Operadora { get; set; } = default!;
     public string? OperadoraRef { get; set; }
     public string? PixCopiaCola { get; set; }
+    public string? PixQrCodeBase64 { get; set; }
     public DateTime? PixExpiraEm { get; set; }
     public string? CartaoUltimos4 { get; set; }
     public string? CartaoBandeira { get; set; }
