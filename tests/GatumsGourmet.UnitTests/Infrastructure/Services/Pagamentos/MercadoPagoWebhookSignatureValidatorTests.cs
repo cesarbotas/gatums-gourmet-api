@@ -92,6 +92,67 @@ public class MercadoPagoWebhookSignatureValidatorTests
         CriarValidator(Segredo).IsValid(header, RequestId, DataId).Should().BeFalse();
     }
 
+    [Theory]
+    [InlineData("-9223372036854775808")] // long.MinValue
+    [InlineData("9223372036854775807")]  // long.MaxValue
+    [InlineData("99999999999999999999")] // estoura long
+    [InlineData("-1")]
+    [InlineData("+1")]
+    [InlineData(" 1 ")]
+    public void TsExtremoOuMalformado_RetornaFalseSemLancar(string ts)
+    {
+        var header = $"ts={ts},v1={Assinar(ts)}";
+
+        var act = () => CriarValidator(Segredo).IsValid(header, RequestId, DataId);
+
+        act.Should().NotThrow();
+        act().Should().BeFalse();
+    }
+
+    [Fact]
+    public void TsQueEstouraSubtracaoDeLong_RetornaFalseSemLancar()
+    {
+        // agora - ts == long.MinValue (unchecked): Math.Abs lançaria OverflowException.
+        var agoraMs = new DateTimeOffset(Agora).ToUnixTimeMilliseconds();
+        var ts = unchecked(agoraMs - long.MinValue).ToString();
+        var header = $"ts={ts},v1={Assinar(ts)}";
+
+        var act = () => CriarValidator(Segredo).IsValid(header, RequestId, DataId);
+
+        act.Should().NotThrow();
+        act().Should().BeFalse();
+    }
+
+    [Fact]
+    public void V1EmMaiusculas_RetornaTrue()
+    {
+        var ts = TsAgora();
+        var header = $"ts={ts},v1={Assinar(ts).ToUpperInvariant()}";
+
+        CriarValidator(Segredo).IsValid(header, RequestId, DataId).Should().BeTrue();
+    }
+
+    [Fact]
+    public void RequestIdNulo_AssinadoComVazio_RetornaTrueSemLancar()
+    {
+        var ts = TsAgora();
+        var header = $"ts={ts},v1={Assinar(ts, requestId: string.Empty)}";
+
+        var act = () => CriarValidator(Segredo).IsValid(header, null, DataId);
+
+        act.Should().NotThrow();
+        act().Should().BeTrue();
+    }
+
+    [Fact]
+    public void RequestIdNulo_AssinadoComOutroRequestId_RetornaFalse()
+    {
+        var ts = TsAgora();
+        var header = $"ts={ts},v1={Assinar(ts)}";
+
+        CriarValidator(Segredo).IsValid(header, null, DataId).Should().BeFalse();
+    }
+
     [Fact]
     public void SemSegredoEmDevelopment_RetornaTrue()
     {

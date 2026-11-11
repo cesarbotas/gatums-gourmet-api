@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using GatumsGourmet.Domain.Services.Interfaces;
@@ -53,14 +54,16 @@ public class MercadoPagoWebhookSignatureValidator : IMercadoPagoWebhookSignature
             return false;
         }
 
-        if (!long.TryParse(ts, out var tsMs))
+        if (!long.TryParse(ts, NumberStyles.None, CultureInfo.InvariantCulture, out var tsMs))
         {
             _logger.LogWarning("x-signature com ts inválido.");
             return false;
         }
 
         var agoraMs = new DateTimeOffset(DateTime.SpecifyKind(_clock.UtcNow, DateTimeKind.Utc)).ToUnixTimeMilliseconds();
-        if (Math.Abs(agoraMs - tsMs) > Tolerancia.TotalMilliseconds)
+        // tsMs >= 0 (NumberStyles.None) e agoraMs >= 0: a subtração em decimal nunca estoura.
+        var diferenca = Math.Abs((decimal)agoraMs - tsMs);
+        if (diferenca > (decimal)Tolerancia.TotalMilliseconds)
         {
             _logger.LogWarning("x-signature com ts fora da tolerância de {Minutos} min.", Tolerancia.TotalMinutes);
             return false;
