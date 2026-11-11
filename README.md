@@ -101,6 +101,9 @@ Entregas recentes, em ordem lógica:
   a URL pública que o produto guarda em `fotoUrl`. Storage por ambiente:
   **MinIO** local, **Supabase Storage** em homologação, **Cloudflare R2** em
   produção. Ver [`docs/Site/Upload-Imagens.md`](docs/Site/Upload-Imagens.md).
+- **Pagamentos V2 (Pix via Mercado Pago Orders API):** `/api/v2/pagamentos`, em
+  paralelo à V1, com criação de order, status e webhook assinado. Ver
+  [`docs/Integracao-MercadoPago-Pix.md`](docs/Integracao-MercadoPago-Pix.md).
 
 ## Estrutura
 

@@ -2,6 +2,28 @@
 
 Histórico de mudanças da API Gatums Gourmet para referência do site (front-end).
 
+## 2026-11-11 — Pagamentos V2: Pix via Mercado Pago Orders API
+
+Novo módulo `/api/v2/pagamentos`, **em paralelo** à V1 (a V1 não mudou). O front pode
+migrar quando quiser: corpo e resposta (`TransacaoResponse`) são os mesmos.
+
+| Método | Rota | Permissão | Descrição |
+|--------|------|-----------|-----------|
+| POST | `/api/v2/pagamentos/pix` | Autenticado | Cria order Pix (`POST /v1/orders`). Reaproveita Pix pendente da V2 |
+| GET | `/api/v2/pagamentos/pix/{transacaoId}/status` | Autenticado | Consulta a order e sincroniza transação/pedido |
+| GET | `/api/v2/pagamentos/{transacaoId}/status` | Autenticado | Mesmo handler da rota acima |
+| POST | `/api/v2/pagamentos/webhook/mercadopago` | **Público** + `x-signature` | Webhook do evento Order (401 se assinatura inválida) |
+| GET | `/api/v2/pagamentos/opcoes` | Autenticado | Igual à V1 |
+| POST | `/api/v2/pagamentos/cartao-credito` | Autenticado | Igual à V1 |
+| POST | `/api/v2/pagamentos/cartao-debito` | Autenticado | Igual à V1 |
+
+- Erros do Mercado Pago voltam ao cliente como falha com mensagem útil (antes só iam para o log).
+- Pagador sem e-mail utilizável: falha clara, nada é persistido.
+- Transações V2 usam `operadora = "mercadopago-orders"` e `operadoraRef = ORD...` (sem migration).
+- Novas chaves de configuração: `MercadoPago:WebhookSecret` e `MercadoPago:PixExpirationMinutes` (opcional).
+
+---
+
 ## 2026-11-10 — Pagamentos: Mercado Pago Pix + Separação por Métodos (Pix, Débito, Crédito)
 
 ### Novos endpoints de Pagamento
