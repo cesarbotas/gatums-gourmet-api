@@ -83,6 +83,9 @@ public static class InfrastructureServiceCollectionExtensions
             services.AddScoped<IPixOrdersProvider, MockPixOrdersProvider>();
         }
 
+        // Validador da assinatura (x-signature) do webhook de orders do Mercado Pago.
+        services.AddSingleton<IMercadoPagoWebhookSignatureValidator, MercadoPagoWebhookSignatureValidator>();
+
         // Provedor de CEP (ViaCEP) — primeira integração HTTP de saída do projeto.
         var viaCepBaseUrl = configuration["ViaCep:BaseUrl"] ?? "https://viacep.com.br/ws/";
         services.AddHttpClient<ICepProvider, ViaCepProvider>(client =>
