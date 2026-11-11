@@ -53,17 +53,15 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IPaymentGateway, MockPaymentGateway>();
 
         // Provedor de PIX — Mercado Pago quando AccessToken estiver configurado; fallback para MockPixProvider em desenvolvimento/testes
-        var mpBaseUrl = configuration["MercadoPago:BaseUrl"] ?? "https://api.mercadopago.com/";
-        services.AddHttpClient<MercadoPagoPixProvider>(client =>
-        {
-            client.BaseAddress = new Uri(mpBaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(20);
-        });
-
         var mpAccessToken = configuration["MercadoPago:AccessToken"];
         if (!string.IsNullOrWhiteSpace(mpAccessToken))
         {
-            services.AddScoped<IPixProvider, MercadoPagoPixProvider>();
+            var mpBaseUrl = configuration["MercadoPago:BaseUrl"] ?? "https://api.mercadopago.com/";
+            services.AddHttpClient<IPixProvider, MercadoPagoPixProvider>(client =>
+            {
+                client.BaseAddress = new Uri(mpBaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
         }
         else
         {
