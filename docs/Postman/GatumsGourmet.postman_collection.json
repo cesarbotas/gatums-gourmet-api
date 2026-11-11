@@ -755,7 +755,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"Hamburguer Classico\",\n  \"descricao\": \"Blend 180g, queijo, alface, tomate\",\n  \"categoriaId\": {{categoriaId}},\n  \"preco\": 32.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Burger\",\n  \"disponivel\": true,\n  \"tipo\": 0,\n  \"itens\": null\n}",
+              "raw": "{\n  \"nome\": \"Hamburguer Classico\",\n  \"descricao\": \"Blend 180g, queijo, alface, tomate\",\n  \"categoriaId\": {{categoriaId}},\n  \"preco\": 32.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Burger\",\n  \"disponivel\": true,\n  \"tipo\": 0,\n  \"itens\": null,\n  \"estoqueInicial\": 50,\n  \"estoqueMinimo\": 5\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -900,7 +900,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"Hamburguer Classico Plus\",\n  \"descricao\": \"Blend 200g, queijo duplo\",\n  \"categoriaId\": {{categoriaId}},\n  \"preco\": 36.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Burger\",\n  \"disponivel\": true\n}",
+              "raw": "{\n  \"nome\": \"Hamburguer Classico Plus\",\n  \"descricao\": \"Blend 200g, queijo duplo\",\n  \"categoriaId\": {{categoriaId}},\n  \"preco\": 36.90,\n  \"fotoUrl\": \"https://placehold.co/400x300?text=Burger\",\n  \"disponivel\": true,\n  \"estoqueMinimo\": 5\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -933,6 +933,259 @@
         ]
       },
       "description": "Admin cria categoria e produto. Ordem importa: categoria antes do produto (produto referencia categoriaId)."
+    },
+    {
+      "name": "Estoque",
+      "description": "Controle de estoque: ver/ajustar estoque, historico de movimentos, alerta de estoque baixo.",
+      "item": [
+        {
+          "name": "Ver Estoque do Produto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}/estoque",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "produtos",
+                "{{produtoId}}",
+                "estoque"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Tem estoque e estoqueMinimo', () => { pm.expect(json).to.have.property('estoque'); pm.expect(json).to.have.property('estoqueMinimo'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ajustar Estoque (Entrada)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": 0,\n  \"quantidade\": 20,\n  \"observacao\": \"Reposicao de estoque\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}/estoque",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "produtos",
+                "{{produtoId}}",
+                "estoque"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Ajuste OK (200)', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Retorna estoque anterior e novo', () => { pm.expect(json).to.have.property('estoqueAnterior'); pm.expect(json).to.have.property('estoqueNovo'); });",
+                  "pm.test('Estoque aumentou', () => pm.expect(json.estoqueNovo).to.be.above(json.estoqueAnterior));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ajustar Estoque (Saida)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": 1,\n  \"quantidade\": 5,\n  \"observacao\": \"Saida manual\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}/estoque",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "produtos",
+                "{{produtoId}}",
+                "estoque"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Saida OK (200)', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Historico de Movimentos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}/estoque/movimentos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "produtos",
+                "{{produtoId}}",
+                "estoque",
+                "movimentos"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Retorna array de movimentos', () => pm.expect(json).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Produtos com Estoque Baixo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/estoque/baixo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "estoque",
+                "baixo"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Retorna array', () => pm.expect(json).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "name": "2. Enderecos (CEP, publico)",

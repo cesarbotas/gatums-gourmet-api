@@ -1,6 +1,7 @@
 using GatumsGourmet.Domain.Entities.Auth;
 using GatumsGourmet.Domain.Entities.Carrinho;
 using GatumsGourmet.Domain.Entities.Clientes;
+using GatumsGourmet.Domain.Entities.Estoque;
 using GatumsGourmet.Domain.Entities.Pagamentos;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Entities.Produtos;
@@ -8,6 +9,7 @@ using GatumsGourmet.Domain.Entities.Vendas;
 using GatumsGourmet.Infrastructure.Data.Configurations.Auth;
 using GatumsGourmet.Infrastructure.Data.Configurations.Carrinho;
 using GatumsGourmet.Infrastructure.Data.Configurations.Clientes;
+using GatumsGourmet.Infrastructure.Data.Configurations.Estoque;
 using GatumsGourmet.Infrastructure.Data.Configurations.Pagamentos;
 using GatumsGourmet.Infrastructure.Data.Configurations.Pedidos;
 using GatumsGourmet.Infrastructure.Data.Configurations.Produtos;
@@ -36,6 +38,7 @@ public class GatumsDbContext(DbContextOptions<GatumsDbContext> options) : DbCont
     public DbSet<PedidoPagamento> PedidoPagamentos => Set<PedidoPagamento>();
     public DbSet<TransacaoPagamento> TransacoesPagamento => Set<TransacaoPagamento>();
     public DbSet<Venda> Vendas => Set<Venda>();
+    public DbSet<MovimentoEstoque> MovimentosEstoque => Set<MovimentoEstoque>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -56,6 +59,7 @@ public class GatumsDbContext(DbContextOptions<GatumsDbContext> options) : DbCont
         modelBuilder.ApplyConfiguration(new PedidoPagamentoConfiguration());
         modelBuilder.ApplyConfiguration(new TransacaoPagamentoConfiguration());
         modelBuilder.ApplyConfiguration(new VendaConfiguration());
+        modelBuilder.ApplyConfiguration(new MovimentoEstoqueConfiguration());
     }
 }
 

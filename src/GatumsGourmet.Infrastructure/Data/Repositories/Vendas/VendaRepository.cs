@@ -17,6 +17,14 @@ public class VendaRepository(GatumsDbContext db) : IVendaRepository
             .ContinueWith(t => (IReadOnlyList<Venda>)t.Result, ct);
     }
 
+    public Task<IReadOnlyList<Venda>> ConsultaPorPeriodo(DateTime dataInicio, DateTime dataFim, CancellationToken ct = default)
+    {
+        return db.Vendas.AsNoTracking()
+            .Where(v => v.Data >= dataInicio && v.Data <= dataFim)
+            .ToListAsync(ct)
+            .ContinueWith(t => (IReadOnlyList<Venda>)t.Result, ct);
+    }
+
     public Task SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);
 }
 

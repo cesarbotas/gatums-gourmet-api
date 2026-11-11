@@ -6,5 +6,6 @@ public interface IVendaRepository
 {
     Task AddRangeAsync(IEnumerable<Venda> vendas, CancellationToken ct = default);
     Task<IReadOnlyList<Venda>> GetUltimos30DiasAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<Venda>> ConsultaPorPeriodo(DateTime dataInicio, DateTime dataFim, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }

@@ -21,7 +21,8 @@ public class AddCarrinhoItemHandlerTests
     private static Produto CreateProduto(Guid id) => new()
     {
         Id = id, Nome = "Pizza", Descricao = "d", CategoriaId = 1,
-        Preco = 40m, FotoUrl = "foto", Disponivel = true, Tipo = TipoProduto.Simples
+        Preco = 40m, FotoUrl = "foto", Disponivel = true, Tipo = TipoProduto.Simples,
+        Estoque = 100, EstoqueMinimo = 5
     };
 
     [Fact]

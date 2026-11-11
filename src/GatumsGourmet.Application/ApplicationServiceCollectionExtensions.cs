@@ -1,4 +1,7 @@
-﻿using FluentValidation;
+using FluentValidation;
+using GatumsGourmet.Application.UseCases.V1.Estoque.AdjustEstoque;
+using GatumsGourmet.Application.UseCases.V1.Estoque.ListEstoqueBaixo;
+using GatumsGourmet.Application.UseCases.V1.Estoque.ListMovimentos;
 using GatumsGourmet.Application.UseCases.V1.Auth.GetCurrentUser;
 using GatumsGourmet.Application.UseCases.V1.Auth.Login;
 using GatumsGourmet.Application.UseCases.V1.Auth.Logout;
@@ -21,8 +24,12 @@ using GatumsGourmet.Application.UseCases.V1.Manutencao.PurgeExpiredRefreshTokens
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ConfirmarPagamentoPix;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ConsultarStatusPagamento;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.IniciarPagamento;
+using GatumsGourmet.Application.UseCases.V1.Pagamentos.IniciarPix;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ListOpcoesPagamento;
+using GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarCartaoCredito;
+using GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarCartaoDebito;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarPagamentoCartao;
+using GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarWebhookMercadoPago;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ValidarPagamentoParaAprovacao;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.AvancarPedidoEtapa;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.CheckoutPedido;
@@ -58,6 +65,7 @@ using GatumsGourmet.Application.UseCases.V1.Usuarios.ListUsuarios;
 using GatumsGourmet.Application.UseCases.V1.Usuarios.SetUsuarioAtivo;
 using GatumsGourmet.Application.UseCases.V1.Usuarios.SetUsuarioRoles;
 using Microsoft.Extensions.DependencyInjection;
+using GatumsGourmet.Application.UseCases.V1.Relatorios.GetVendasPorPeriodo;
 
 namespace GatumsGourmet.Application;
 
@@ -107,17 +115,25 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<IListOpcoesPagamentoHandler, ListOpcoesPagamentoHandler>();
         services.AddScoped<IIniciarPagamentoHandler, IniciarPagamentoHandler>();
+        services.AddScoped<IIniciarPixHandler, IniciarPixHandler>();
+        services.AddScoped<IProcessarCartaoCreditoHandler, ProcessarCartaoCreditoHandler>();
+        services.AddScoped<IProcessarCartaoDebitoHandler, ProcessarCartaoDebitoHandler>();
+        services.AddScoped<IProcessarWebhookMercadoPagoHandler, ProcessarWebhookMercadoPagoHandler>();
         services.AddScoped<IProcessarPagamentoCartaoHandler, ProcessarPagamentoCartaoHandler>();
         services.AddScoped<IConsultarStatusPagamentoHandler, ConsultarStatusPagamentoHandler>();
         services.AddScoped<IConfirmarPagamentoPixHandler, ConfirmarPagamentoPixHandler>();
         services.AddScoped<IValidarPagamentoParaAprovacaoHandler, ValidarPagamentoParaAprovacaoHandler>();
 
         services.AddScoped<IGetVendasResumoHandler, GetVendasResumoHandler>();
+        services.AddScoped<IGetVendasPorPeriodoHandler, GetVendasPorPeriodoHandler>();
 
         services.AddScoped<IBuscarEnderecoPorCepHandler, BuscarEnderecoPorCepHandler>();
 
         services.AddScoped<IUploadImagemHandler, UploadImagemHandler>();
         services.AddScoped<IPurgeOrphanImagensHandler, PurgeOrphanImagensHandler>();
+        services.AddScoped<IAdjustEstoqueHandler, AdjustEstoqueHandler>();
+        services.AddScoped<IListEstoqueBaixoHandler, ListEstoqueBaixoHandler>();
+        services.AddScoped<IListMovimentosHandler, ListMovimentosHandler>();
 
         services.AddScoped<IListRolesHandler, ListRolesHandler>();
         services.AddScoped<IGetRoleByIdHandler, GetRoleByIdHandler>();
