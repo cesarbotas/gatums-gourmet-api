@@ -16,7 +16,7 @@ public static class RelatoriosEndpoints
 
     public static void MapRelatorioPorPeriodo(RouteGroupBuilder group)
     {
-        group.MapGet("/vendas/resumo", async (
+        group.MapGet("/vendas/periodo", async (
             [AsParameters] RelatorioVendaPorPeriodoRequest request,
             IGetVendasPorPeriodoHandler handler,
             CancellationToken ct) =>

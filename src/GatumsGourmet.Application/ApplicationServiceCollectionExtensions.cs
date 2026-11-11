@@ -61,6 +61,7 @@ using GatumsGourmet.Application.UseCases.V1.Usuarios.ListUsuarios;
 using GatumsGourmet.Application.UseCases.V1.Usuarios.SetUsuarioAtivo;
 using GatumsGourmet.Application.UseCases.V1.Usuarios.SetUsuarioRoles;
 using Microsoft.Extensions.DependencyInjection;
+using GatumsGourmet.Application.UseCases.V1.Relatorios.GetVendasPorPeriodo;
 
 namespace GatumsGourmet.Application;
 
@@ -116,6 +117,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IValidarPagamentoParaAprovacaoHandler, ValidarPagamentoParaAprovacaoHandler>();
 
         services.AddScoped<IGetVendasResumoHandler, GetVendasResumoHandler>();
+        services.AddScoped<IGetVendasPorPeriodoHandler, GetVendasPorPeriodoHandler>();
 
         services.AddScoped<IBuscarEnderecoPorCepHandler, BuscarEnderecoPorCepHandler>();
 
