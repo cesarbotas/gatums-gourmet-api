@@ -68,6 +68,21 @@ public static class InfrastructureServiceCollectionExtensions
             services.AddScoped<IPixProvider, MockPixProvider>();
         }
 
+        // Provedor de Pix via Orders API (V2), em paralelo ao IPixProvider acima.
+        if (!string.IsNullOrWhiteSpace(mpAccessToken))
+        {
+            var mpOrdersBaseUrl = configuration["MercadoPago:BaseUrl"] ?? "https://api.mercadopago.com/";
+            services.AddHttpClient<IPixOrdersProvider, MercadoPagoOrdersPixProvider>(client =>
+            {
+                client.BaseAddress = new Uri(mpOrdersBaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
+        }
+        else
+        {
+            services.AddScoped<IPixOrdersProvider, MockPixOrdersProvider>();
+        }
+
         // Provedor de CEP (ViaCEP) — primeira integração HTTP de saída do projeto.
         var viaCepBaseUrl = configuration["ViaCep:BaseUrl"] ?? "https://viacep.com.br/ws/";
         services.AddHttpClient<ICepProvider, ViaCepProvider>(client =>
