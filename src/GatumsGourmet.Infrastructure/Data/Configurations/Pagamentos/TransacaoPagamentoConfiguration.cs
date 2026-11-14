@@ -12,6 +12,8 @@ public class TransacaoPagamentoConfiguration : IEntityTypeConfiguration<Transaca
         b.HasIndex(x => x.PedidoId);
         b.HasIndex(x => x.OperadoraRef);
         b.Property(x => x.Valor).HasColumnType("numeric(18,2)");
+        b.Property(x => x.ValorRecebido).HasColumnType("numeric(18,2)");
+        b.Property(x => x.Troco).HasColumnType("numeric(18,2)");
         b.Property(x => x.Metodo).HasConversion<string>();
         b.Property(x => x.Status).HasConversion<string>();
         b.Property(x => x.PixQrCodeBase64).HasColumnType("text");

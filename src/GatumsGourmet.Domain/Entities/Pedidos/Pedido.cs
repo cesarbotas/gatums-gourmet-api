@@ -10,6 +10,8 @@ public class Pedido
     public decimal Total { get; set; }
     public DateTime Data { get; set; }
     public PedidoEtapa StatusAtual { get; set; }
+    /// <summary>Canal de origem do pedido: Online (fluxo cliente) ou Presencial (venda rápida admin).</summary>
+    public CanalVenda Canal { get; set; } = CanalVenda.Online;
     public ICollection<PedidoItem> Itens { get; set; } = [];
     public ICollection<PedidoTimelineEvento> Timeline { get; set; } = [];
     public PedidoPagamento? Pagamento { get; set; }

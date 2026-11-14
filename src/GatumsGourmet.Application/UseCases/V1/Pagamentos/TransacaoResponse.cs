@@ -19,7 +19,9 @@ public record TransacaoResponse(
     DateTime AtualizadoEm,
     string? PixQrCodeBase64 = null,
     string? Operadora = null,
-    string? OperadoraRef = null);
+    string? OperadoraRef = null,
+    decimal? ValorRecebido = null,
+    decimal? Troco = null);
 
 public static class TransacaoMapper
 {
@@ -38,5 +40,7 @@ public static class TransacaoMapper
         t.AtualizadoEm,
         t.PixQrCodeBase64,
         t.Operadora,
-        t.OperadoraRef);
+        t.OperadoraRef,
+        t.ValorRecebido,
+        t.Troco);
 }

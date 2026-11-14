@@ -1,4 +1,5 @@
 using GatumsGourmet.Api.Endpoints.V1;
+using GatumsGourmet.Api.Endpoints.V1.Admin;
 using GatumsGourmet.Api.Endpoints.V1.Categorias;
 using GatumsGourmet.Api.Endpoints.V1.Clientes;
 using GatumsGourmet.Api.Endpoints.V1.Estoque;
@@ -58,5 +59,6 @@ public static class EndpointRouteBuilderExtensions
         RolesEndpoints.Map(v1.MapGroup("/roles").WithTags("Roles"));
         PermissionsEndpoints.Map(v1.MapGroup("/permissions").WithTags("Permissions"));
         UsuariosEndpoints.Map(v1.MapGroup("/usuarios").WithTags("Usuarios"));
+        VendaPresencialEndpoints.Map(v1.MapGroup("/admin/vendas-presenciais").WithTags("Admin - Venda Presencial"));
     }
 }
