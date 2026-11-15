@@ -54,7 +54,7 @@ public class ValidarPagamentoParaAprovacaoHandlerTests
         var result = await _handler.Handle(transacao.Id);
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Status.Should().Be("aprovado");
+        result.Data!.Status.Should().Be(StatusTransacao.Aprovado);
     }
 }
 

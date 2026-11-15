@@ -115,7 +115,7 @@ public sealed class CancelarPedidoHandler(
 
         return Result<CancelarPedidoResponse>.Ok(new CancelarPedidoResponse(
             pedidoId,
-            etapaAnterior.ToString().ToLower(),
+            etapaAnterior,
             movimentosEstoque.Count));
     }
 }

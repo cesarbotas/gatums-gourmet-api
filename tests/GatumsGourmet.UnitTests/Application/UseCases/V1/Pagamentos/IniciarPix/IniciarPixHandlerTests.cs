@@ -96,7 +96,7 @@ public class IniciarPixHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         result.Data!.Valor.Should().Be(50m);
-        result.Data.Metodo.Should().Be("pix");
+        result.Data.Metodo.Should().Be(MetodoPagamento.Pix);
         result.Data.PixCopiaCola.Should().Be("0002012658...copia");
         result.Data.PixQrCodeBase64.Should().Be("iVBORw0KGgo...");
         result.Data.Operadora.Should().Be("mercadopago");

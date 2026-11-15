@@ -75,7 +75,7 @@ public class ConsultarStatusV2HandlerTests
         var result = await _handler.Handle(t.Id);
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Status.Should().Be("aprovado");
+        result.Data!.Status.Should().Be(StatusTransacao.Aprovado);
         _aplicar.Verify(a => a.AplicarAsync(t, status, Origem, default), Times.Once);
     }
 
@@ -102,7 +102,7 @@ public class ConsultarStatusV2HandlerTests
         var result = await _handler.Handle(t.Id);
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Status.Should().Be("pendente");
+        result.Data!.Status.Should().Be(StatusTransacao.Pendente);
         _provider.Verify(p => p.ConsultarOrderAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _aplicar.Verify(a => a.AplicarAsync(It.IsAny<TransacaoPagamento>(), It.IsAny<PixOrderStatus>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -116,7 +116,7 @@ public class ConsultarStatusV2HandlerTests
         var result = await _handler.Handle(t.Id);
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Status.Should().Be("pendente");
+        result.Data!.Status.Should().Be(StatusTransacao.Pendente);
         _aplicar.Verify(a => a.AplicarAsync(It.IsAny<TransacaoPagamento>(), It.IsAny<PixOrderStatus>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -130,7 +130,7 @@ public class ConsultarStatusV2HandlerTests
         var result = await _handler.Handle(t.Id);
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Status.Should().Be("pendente");
+        result.Data!.Status.Should().Be(StatusTransacao.Pendente);
         VerificaWarningComOrderId();
     }
 
@@ -144,7 +144,7 @@ public class ConsultarStatusV2HandlerTests
         var result = await _handler.Handle(t.Id);
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Status.Should().Be("pendente");
+        result.Data!.Status.Should().Be(StatusTransacao.Pendente);
         VerificaWarningComOrderId();
     }
 

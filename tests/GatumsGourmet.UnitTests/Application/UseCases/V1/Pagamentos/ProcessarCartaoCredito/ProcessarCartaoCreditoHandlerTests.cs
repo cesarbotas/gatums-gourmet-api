@@ -70,8 +70,8 @@ public class ProcessarCartaoCreditoHandlerTests
         var result = await _handler.Handle(req);
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Status.Should().Be("aprovado");
-        result.Data.Metodo.Should().Be("cartaocredito");
+        result.Data!.Status.Should().Be(StatusTransacao.Aprovado);
+        result.Data.Metodo.Should().Be(MetodoPagamento.CartaoCredito);
         result.Data.CartaoUltimos4.Should().Be("1111");
         result.Data.CartaoBandeira.Should().Be("VISA");
 
