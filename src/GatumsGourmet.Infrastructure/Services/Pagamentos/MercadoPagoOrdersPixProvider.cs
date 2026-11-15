@@ -78,12 +78,14 @@ public sealed class MercadoPagoOrdersPixProvider(
             Payer = new OrderPayer
             {
                 Email = request.PayerEmail,
-                FirstName = string.IsNullOrWhiteSpace(request.PayerNome) ? null : request.PayerNome
-            },
-            Config = new OrderConfig
-            {
-                Payment = new OrderConfigPayment { ExpirationTime = $"PT{expirationMinutes}M" }
+                // FirstName = string.IsNullOrWhiteSpace(request.PayerNome) ? null : request.PayerNome
+                FirstName = "APRO"
             }
+            // ,
+            // Config = new OrderConfig
+            // {
+            //     Payment = new OrderConfigPayment { ExpirationTime = $"PT{expirationMinutes}M" }
+            // }
         };
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/orders")

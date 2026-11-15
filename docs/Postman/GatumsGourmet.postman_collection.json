@@ -141,6 +141,11 @@
       "key": "seedPermissionId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "pixCopiaCola",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -1736,7 +1741,7 @@
           ]
         },
         {
-          "name": "Iniciar Pagamento (Pix)",
+          "name": "Iniciar Pagamento Pix (V2 - Orders)",
           "request": {
             "method": "POST",
             "header": [
@@ -1746,31 +1751,32 @@
               },
               {
                 "key": "Idempotency-Key",
-                "value": "{{$guid}}"
+                "value": "{{$guid}}",
+                "description": "UUID único por tentativa de pagamento"
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/pagamentos/iniciar",
+              "raw": "{{baseUrl}}/api/v2/pagamentos/pix",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "v1",
+                "v2",
                 "pagamentos",
-                "iniciar"
+                "pix"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"pedidoId\": \"{{pedidoId}}\",\n  \"metodo\": 2,\n  \"valor\": 65.80\n}",
+              "raw": "{\n  \"pedidoId\": \"{{pedidoId}}\",\n  \"payerEmail\": \"{{clienteEmail}}\",\n  \"payerNome\": \"{{clienteNome}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "metodo: 0=CartaoDebito, 1=CartaoCredito, 2=Pix. valor = 2 x 32.90."
+            "description": "V2 — Pix via Mercado Pago Orders API (v1/orders).\n\nRequer: MercadoPago:AccessToken configurado no servidor.\npayerEmail é OBRIGATÓRIO na V2 (exigido pela Orders API).\nValor = pedido.Total (calculado no servidor).\n\nResposta 201 inclui: pixCopiaCola, pixQrCodeBase64, pixExpiraEm."
           },
           "response": [],
           "event": [
@@ -1779,8 +1785,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Iniciado (201)', () => pm.response.to.have.status(201));",
+                  "pm.test('Pix V2 iniciado (201)', () => pm.response.to.have.status(201));",
                   "var json = pm.response.json();",
+                  "pm.test('Tem transacaoId', () => pm.expect(json.id).to.exist);",
+                  "pm.test('Tem pixCopiaCola', () => pm.expect(json.pixCopiaCola).to.be.a('string').and.not.empty);",
+                  "pm.test('Status pendente', () => pm.expect(json.status).to.eql('pendente'));",
                   "pm.environment.set('transacaoId', json.id);",
                   "pm.collectionVariables.set('transacaoId', json.id);"
                 ]
@@ -1822,23 +1831,24 @@
           ]
         },
         {
-          "name": "Consultar Status (aprovado)",
+          "name": "Consultar Status Pix (V2 - polling)",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/pagamentos/{{transacaoId}}/status",
+              "raw": "{{baseUrl}}/api/v2/pagamentos/{{transacaoId}}/status",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "v1",
+                "v2",
                 "pagamentos",
                 "{{transacaoId}}",
                 "status"
               ]
-            }
+            },
+            "description": "V2 — Consulta status e sincroniza com o Mercado Pago (Orders API).\n\nPara Pix V2: a cada chamada o backend consulta a Orders API e atualiza o status se aprovado.\nFazer polling a cada 4s até status == \"aprovado\" ou pixExpiraEm ultrapassado."
           },
           "response": [],
           "event": [
@@ -1847,8 +1857,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('OK (200)', () => pm.response.to.have.status(200));",
-                  "pm.test('Status aprovado', () => pm.expect(pm.response.json().status).to.eql('aprovado'));"
+                  "pm.test('Status consultado (200)', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Tem status', () => pm.expect(json.status).to.be.a('string'));",
+                  "console.log('Status Pix:', json.status);"
                 ]
               }
             }
@@ -2015,6 +2027,306 @@
         ]
       },
       "description": "Fluxo do cliente: carrinho -> checkout -> pagamento Pix -> concluir."
+    },
+    {
+      "name": "Pagamentos V2 (Pix Orders)",
+      "description": "Endpoints V2 de pagamento via Mercado Pago Orders API (v1/orders).\n\nBASE: /api/v2/pagamentos\n\nDIFERENÇAS em relação à V1:\n- POST /pix usa a Orders API (mais confiável, QR Code nativo)\n- payerEmail é obrigatório\n- Webhook valida assinatura x-signature\n- Status sincroniza automaticamente com o Mercado Pago\n\nRequer: MercadoPago:AccessToken configurado no servidor.",
+      "item": [
+        {
+          "name": "POST /api/v2/pagamentos/pix — Iniciar Pix (Orders)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedidoId\": \"{{pedidoId}}\",\n  \"payerEmail\": \"{{clienteEmail}}\",\n  \"payerNome\": \"{{clienteNome}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/pagamentos/pix",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "pagamentos",
+                "pix"
+              ]
+            },
+            "description": "Cria cobrança Pix via Orders API. payerEmail obrigatório. Resposta inclui pixCopiaCola, pixQrCodeBase64, pixExpiraEm."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "var json = pm.response.json();",
+                  "pm.test('pixCopiaCola presente', () => pm.expect(json.pixCopiaCola).to.be.a('string').and.not.empty);",
+                  "pm.test('pixQrCodeBase64 presente', () => pm.expect(json.pixQrCodeBase64).to.be.a('string').and.not.empty);",
+                  "pm.test('pixExpiraEm presente', () => pm.expect(json.pixExpiraEm).to.exist);",
+                  "pm.test('status pendente', () => pm.expect(json.status).to.eql('pendente'));",
+                  "pm.test('operadora mercadopago-orders', () => pm.expect(json.operadora).to.eql('mercadopago-orders'));",
+                  "pm.environment.set('transacaoId', json.id);",
+                  "pm.collectionVariables.set('transacaoId', json.id);",
+                  "pm.environment.set('pixCopiaCola', json.pixCopiaCola || '');",
+                  "pm.collectionVariables.set('pixCopiaCola', json.pixCopiaCola || '');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "GET /api/v2/pagamentos/{id}/status — Consultar Status (polling)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/pagamentos/{{transacaoId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "pagamentos",
+                "{{transacaoId}}",
+                "status"
+              ]
+            },
+            "description": "Consulta status e sincroniza com Orders API. Polling a cada 4s até status=aprovado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Tem status', () => pm.expect(['pendente','aprovado','recusado','expirado']).to.include(json.status));",
+                  "console.log('Pix status:', json.status);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "GET /api/v2/pagamentos/pix/{id}/status — Status (alias)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/pagamentos/pix/{{transacaoId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "pagamentos",
+                "pix",
+                "{{transacaoId}}",
+                "status"
+              ]
+            },
+            "description": "Alias do status com prefixo /pix/. Mesmo comportamento do endpoint sem prefixo."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v2/pagamentos/cartao-credito",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedidoId\": \"{{pedidoId}}\",\n  \"token\": \"tok_xxxx\",\n  \"installments\": 1,\n  \"issuerId\": \"24\",\n  \"paymentMethodId\": \"visa\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/pagamentos/cartao-credito",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "pagamentos",
+                "cartao-credito"
+              ]
+            },
+            "description": "Reaproveitado da V1. token = token do cartão tokenizado pelo SDK do Mercado Pago no front."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v2/pagamentos/cartao-debito",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedidoId\": \"{{pedidoId}}\",\n  \"token\": \"tok_xxxx\",\n  \"issuerId\": \"24\",\n  \"paymentMethodId\": \"elo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/pagamentos/cartao-debito",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "pagamentos",
+                "cartao-debito"
+              ]
+            },
+            "description": "Reaproveitado da V1. token = token do cartão tokenizado pelo SDK do Mercado Pago no front."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v2/pagamentos/webhook/mercadopago (simular)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-signature",
+                "value": "ts=0,v1=test",
+                "description": "Validado pelo servidor — deixar vazio em dev (WebhookSecret vazio = aceita tudo)"
+              },
+              {
+                "key": "x-request-id",
+                "value": "{{$guid}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"order\",\n  \"data\": { \"id\": \"ORDER_ID_DO_MERCADOPAGO\" }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/pagamentos/webhook/mercadopago?type=order&data.id=ORDER_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "pagamentos",
+                "webhook",
+                "mercadopago"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "order"
+                },
+                {
+                  "key": "data.id",
+                  "value": "ORDER_ID"
+                }
+              ]
+            },
+            "description": "Webhook público (AllowAnonymous). Valida x-signature antes de processar.\nEm dev com WebhookSecret vazio, qualquer assinatura é aceita.\nSubstitua ORDER_ID pelo id da order no Mercado Pago."
+          },
+          "response": []
+        }
+      ]
     },
     {
       "name": "5. Pedidos (admin)",
