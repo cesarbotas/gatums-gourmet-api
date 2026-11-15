@@ -2,6 +2,9 @@ using FluentValidation;
 using GatumsGourmet.Application.UseCases.V1.Estoque.AdjustEstoque;
 using GatumsGourmet.Application.UseCases.V1.Estoque.ListEstoqueBaixo;
 using GatumsGourmet.Application.UseCases.V1.Estoque.ListMovimentos;
+using GatumsGourmet.Application.UseCases.V1.Admin.VendaPresencial.CriarVendaPresencial;
+using GatumsGourmet.Application.UseCases.V1.Admin.VendaPresencial.ConfirmarPagamentoPresencialCartao;
+using GatumsGourmet.Application.UseCases.V1.Admin.VendaPresencial.RegistrarPagamentoPresencial;
 using GatumsGourmet.Application.UseCases.V1.Auth.GetCurrentUser;
 using GatumsGourmet.Application.UseCases.V1.Auth.Login;
 using GatumsGourmet.Application.UseCases.V1.Auth.Logout;
@@ -32,6 +35,7 @@ using GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarPagamentoCartao;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarWebhookMercadoPago;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ValidarPagamentoParaAprovacao;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.AvancarPedidoEtapa;
+using GatumsGourmet.Application.UseCases.V1.Pedidos.CancelarPedido;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.CheckoutPedido;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.ConcluirPagamentoPedido;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.GetPedidoById;
@@ -64,6 +68,7 @@ using GatumsGourmet.Application.UseCases.V1.Usuarios.GetUsuarioById;
 using GatumsGourmet.Application.UseCases.V1.Usuarios.ListUsuarios;
 using GatumsGourmet.Application.UseCases.V1.Usuarios.SetUsuarioAtivo;
 using GatumsGourmet.Application.UseCases.V1.Usuarios.SetUsuarioRoles;
+using GatumsGourmet.Application.UseCases.V2.Pagamentos;
 using Microsoft.Extensions.DependencyInjection;
 using GatumsGourmet.Application.UseCases.V1.Relatorios.GetVendasPorPeriodo;
 
@@ -112,6 +117,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IGetPedidoByIdHandler, GetPedidoByIdHandler>();
         services.AddScoped<IAvancarPedidoEtapaHandler, AvancarPedidoEtapaHandler>();
         services.AddScoped<IConcluirPagamentoPedidoHandler, ConcluirPagamentoPedidoHandler>();
+        services.AddScoped<ICancelarPedidoHandler, CancelarPedidoHandler>();
 
         services.AddScoped<IListOpcoesPagamentoHandler, ListOpcoesPagamentoHandler>();
         services.AddScoped<IIniciarPagamentoHandler, IniciarPagamentoHandler>();
@@ -123,6 +129,14 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IConsultarStatusPagamentoHandler, ConsultarStatusPagamentoHandler>();
         services.AddScoped<IConfirmarPagamentoPixHandler, ConfirmarPagamentoPixHandler>();
         services.AddScoped<IValidarPagamentoParaAprovacaoHandler, ValidarPagamentoParaAprovacaoHandler>();
+        services.AddScoped<IAplicarResultadoPagamentoPixService, AplicarResultadoPagamentoPixService>();
+
+        services.AddScoped<GatumsGourmet.Application.UseCases.V2.Pagamentos.IniciarPix.IIniciarPixV2Handler,
+            GatumsGourmet.Application.UseCases.V2.Pagamentos.IniciarPix.IniciarPixV2Handler>();
+        services.AddScoped<GatumsGourmet.Application.UseCases.V2.Pagamentos.ConsultarStatus.IConsultarStatusV2Handler,
+            GatumsGourmet.Application.UseCases.V2.Pagamentos.ConsultarStatus.ConsultarStatusV2Handler>();
+        services.AddScoped<GatumsGourmet.Application.UseCases.V2.Pagamentos.ProcessarWebhookOrders.IProcessarWebhookOrdersHandler,
+            GatumsGourmet.Application.UseCases.V2.Pagamentos.ProcessarWebhookOrders.ProcessarWebhookOrdersHandler>();
 
         services.AddScoped<IGetVendasResumoHandler, GetVendasResumoHandler>();
         services.AddScoped<IGetVendasPorPeriodoHandler, GetVendasPorPeriodoHandler>();
@@ -134,6 +148,11 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IAdjustEstoqueHandler, AdjustEstoqueHandler>();
         services.AddScoped<IListEstoqueBaixoHandler, ListEstoqueBaixoHandler>();
         services.AddScoped<IListMovimentosHandler, ListMovimentosHandler>();
+
+        // Admin — Venda Presencial
+        services.AddScoped<ICriarVendaPresencialHandler, CriarVendaPresencialHandler>();
+        services.AddScoped<IRegistrarPagamentoPresencialHandler, RegistrarPagamentoPresencialHandler>();
+        services.AddScoped<IConfirmarPagamentoPresencialCartaoHandler, ConfirmarPagamentoPresencialCartaoHandler>();
 
         services.AddScoped<IListRolesHandler, ListRolesHandler>();
         services.AddScoped<IGetRoleByIdHandler, GetRoleByIdHandler>();

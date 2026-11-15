@@ -67,7 +67,7 @@ public class IniciarPagamentoHandlerTests
         var pedidoId = Guid.NewGuid();
         _pedidos.Setup(r => r.GetByIdAsync(pedidoId, default)).ReturnsAsync(CreatePedido(pedidoId));
         _transacoes.Setup(r => r.GetByPedidoIdAsync(pedidoId, default)).ReturnsAsync((TransacaoPagamento?)null);
-        _pix.Setup(p => p.GerarAsync(It.IsAny<Guid>(), 10m, default))
+        _pix.Setup(p => p.GerarAsync(It.IsAny<Guid>(), 10m, It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>(), default))
             .ReturnsAsync(new PixResult("copia-cola-123", new DateTime(2026, 5, 1, 0, 30, 0, DateTimeKind.Utc)));
         TransacaoPagamento? criada = null;
         _transacoes.Setup(r => r.AddAsync(It.IsAny<TransacaoPagamento>(), default))

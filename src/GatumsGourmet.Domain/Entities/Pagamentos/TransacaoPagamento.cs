@@ -17,6 +17,10 @@ public class TransacaoPagamento
     public string? CartaoUltimos4 { get; set; }
     public string? CartaoBandeira { get; set; }
     public string? MensagemErro { get; set; }
+    /// <summary>Valor pago em espécie pelo cliente (somente canal presencial, dinheiro).</summary>
+    public decimal? ValorRecebido { get; set; }
+    /// <summary>Troco calculado pelo servidor (ValorRecebido - Valor). Somente dinheiro.</summary>
+    public decimal? Troco { get; set; }
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
 }

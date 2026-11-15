@@ -70,8 +70,8 @@ public class ProcessarCartaoDebitoHandlerTests
         var result = await _handler.Handle(req);
 
         result.IsSuccess.Should().BeTrue();
-        result.Data!.Status.Should().Be("aprovado");
-        result.Data.Metodo.Should().Be("cartaodebito");
+        result.Data!.Status.Should().Be(StatusTransacao.Aprovado);
+        result.Data.Metodo.Should().Be(MetodoPagamento.CartaoDebito);
         result.Data.CartaoUltimos4.Should().Be("2222");
 
         _transacoes.Verify(r => r.AddAsync(It.Is<TransacaoPagamento>(t =>

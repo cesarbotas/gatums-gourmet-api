@@ -53,22 +53,38 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IPaymentGateway, MockPaymentGateway>();
 
         // Provedor de PIX — Mercado Pago quando AccessToken estiver configurado; fallback para MockPixProvider em desenvolvimento/testes
-        var mpBaseUrl = configuration["MercadoPago:BaseUrl"] ?? "https://api.mercadopago.com/";
-        services.AddHttpClient<MercadoPagoPixProvider>(client =>
-        {
-            client.BaseAddress = new Uri(mpBaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(20);
-        });
-
         var mpAccessToken = configuration["MercadoPago:AccessToken"];
         if (!string.IsNullOrWhiteSpace(mpAccessToken))
         {
-            services.AddScoped<IPixProvider, MercadoPagoPixProvider>();
+            var mpBaseUrl = configuration["MercadoPago:BaseUrl"] ?? "https://api.mercadopago.com/";
+            services.AddHttpClient<IPixProvider, MercadoPagoPixProvider>(client =>
+            {
+                client.BaseAddress = new Uri(mpBaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
         }
         else
         {
             services.AddScoped<IPixProvider, MockPixProvider>();
         }
+
+        // Provedor de Pix via Orders API (V2), em paralelo ao IPixProvider acima.
+        if (!string.IsNullOrWhiteSpace(mpAccessToken))
+        {
+            var mpOrdersBaseUrl = configuration["MercadoPago:BaseUrl"] ?? "https://api.mercadopago.com/";
+            services.AddHttpClient<IPixOrdersProvider, MercadoPagoOrdersPixProvider>(client =>
+            {
+                client.BaseAddress = new Uri(mpOrdersBaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
+        }
+        else
+        {
+            services.AddScoped<IPixOrdersProvider, MockPixOrdersProvider>();
+        }
+
+        // Validador da assinatura (x-signature) do webhook de orders do Mercado Pago.
+        services.AddSingleton<IMercadoPagoWebhookSignatureValidator, MercadoPagoWebhookSignatureValidator>();
 
         // Provedor de CEP (ViaCEP) — primeira integração HTTP de saída do projeto.
         var viaCepBaseUrl = configuration["ViaCep:BaseUrl"] ?? "https://viacep.com.br/ws/";

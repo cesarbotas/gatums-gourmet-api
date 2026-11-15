@@ -37,66 +37,74 @@ public sealed class MercadoPagoPixProvider(
         string? payerNome,
         CancellationToken ct = default)
     {
-        var token = GetAccessToken();
-        if (string.IsNullOrWhiteSpace(token))
+        try
         {
-            throw new InvalidOperationException("MercadoPago:AccessToken não está configurado. Configure a variável de ambiente MercadoPago__AccessToken.");
-        }
-
-        var notificationUrl = configuration["MercadoPago:NotificationUrl"];
-
-        var requestBody = new MercadoPagoCreatePaymentRequest
-        {
-            TransactionAmount = valor,
-            Description = string.IsNullOrWhiteSpace(descricao) ? $"Pedido {transacaoId} - Gatums Gourmet" : descricao,
-            PaymentMethodId = "pix",
-            NotificationUrl = string.IsNullOrWhiteSpace(notificationUrl) ? null : notificationUrl,
-            Payer = new MercadoPagoPayer
+            var token = GetAccessToken();
+            if (string.IsNullOrWhiteSpace(token))
             {
-                Email = string.IsNullOrWhiteSpace(payerEmail) ? "contato@gatumsgourmet.com.br" : payerEmail,
-                FirstName = string.IsNullOrWhiteSpace(payerNome) ? "Cliente" : payerNome
+                throw new InvalidOperationException("MercadoPago:AccessToken não está configurado. Configure a variável de ambiente MercadoPago__AccessToken.");
             }
-        };
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "v1/payments")
-        {
-            Content = JsonContent.Create(requestBody, options: JsonOptions)
-        };
+            var notificationUrl = configuration["MercadoPago:NotificationUrl"];
 
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        request.Headers.Add("X-Idempotency-Key", transacaoId.ToString());
+            var requestBody = new MercadoPagoCreatePaymentRequest
+            {
+                TransactionAmount = valor,
+                Description = string.IsNullOrWhiteSpace(descricao) ? $"Pedido {transacaoId} - Gatums Gourmet" : descricao,
+                PaymentMethodId = "pix",
+                NotificationUrl = string.IsNullOrWhiteSpace(notificationUrl) ? null : notificationUrl,
+                Payer = new MercadoPagoPayer
+                {
+                    Email = string.IsNullOrWhiteSpace(payerEmail) ? "contato@gatumsgourmet.com.br" : payerEmail,
+                    FirstName = string.IsNullOrWhiteSpace(payerNome) ? "Cliente" : payerNome
+                }
+            };
 
-        logger.LogInformation("Enviando requisição PIX para Mercado Pago. TransacaoId={TransacaoId} Valor={Valor}", transacaoId, valor);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "v1/payments")
+            {
+                Content = JsonContent.Create(requestBody, options: JsonOptions)
+            };
 
-        using var response = await http.SendAsync(request, ct);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Add("X-Idempotency-Key", transacaoId.ToString());
 
-        if (!response.IsSuccessStatusCode)
-        {
-            var errorBody = await response.Content.ReadAsStringAsync(ct);
-            logger.LogError("Erro retornado pelo Mercado Pago ao gerar PIX ({StatusCode}): {ErrorBody}", response.StatusCode, errorBody);
-            throw new InvalidOperationException($"Falha na integração com Mercado Pago ({response.StatusCode}): {errorBody}");
+            logger.LogInformation("Enviando requisição PIX para Mercado Pago. TransacaoId={TransacaoId} Valor={Valor}", transacaoId, valor);
+
+            using var response = await http.SendAsync(request, ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(ct);
+                logger.LogError("Erro retornado pelo Mercado Pago ao gerar PIX ({StatusCode}): {ErrorBody}", response.StatusCode, errorBody);
+                throw new InvalidOperationException($"Falha na integração com Mercado Pago ({response.StatusCode}): {errorBody}");
+            }
+
+            var mpResponse = await response.Content.ReadFromJsonAsync<MercadoPagoPaymentResponse>(JsonOptions, ct);
+
+            if (mpResponse?.PointOfInteraction?.TransactionData is null)
+            {
+                logger.LogError("Resposta do Mercado Pago não conteve dados do PIX (PointOfInteraction nulo).");
+                throw new InvalidOperationException("Resposta do Mercado Pago inválida ao gerar cobrança PIX.");
+            }
+
+            var qrCode = mpResponse.PointOfInteraction.TransactionData.QrCode;
+            var qrCodeBase64 = mpResponse.PointOfInteraction.TransactionData.QrCodeBase64;
+            var expiration = mpResponse.DateOfExpiration ?? DateTime.UtcNow.AddMinutes(30);
+            var operadoraRef = mpResponse.Id.ToString();
+
+            logger.LogInformation("PIX gerado com sucesso via Mercado Pago. TransacaoId={TransacaoId} OperadoraRef={OperadoraRef}", transacaoId, operadoraRef);
+
+            return new PixResult(
+                CopiaCola: qrCode ?? string.Empty,
+                ExpiraEm: expiration,
+                QrCodeBase64: qrCodeBase64,
+                OperadoraRef: operadoraRef);
         }
-
-        var mpResponse = await response.Content.ReadFromJsonAsync<MercadoPagoPaymentResponse>(JsonOptions, ct);
-
-        if (mpResponse?.PointOfInteraction?.TransactionData is null)
+        catch (Exception ex)
         {
-            logger.LogError("Resposta do Mercado Pago não conteve dados do PIX (PointOfInteraction nulo).");
-            throw new InvalidOperationException("Resposta do Mercado Pago inválida ao gerar cobrança PIX.");
+            logger.LogError(ex, "Falha ao gerar PIX via Mercado Pago. TransacaoId={TransacaoId} Valor={Valor}", transacaoId, valor);
+            throw;
         }
-
-        var qrCode = mpResponse.PointOfInteraction.TransactionData.QrCode;
-        var qrCodeBase64 = mpResponse.PointOfInteraction.TransactionData.QrCodeBase64;
-        var expiration = mpResponse.DateOfExpiration ?? DateTime.UtcNow.AddMinutes(30);
-        var operadoraRef = mpResponse.Id.ToString();
-
-        logger.LogInformation("PIX gerado com sucesso via Mercado Pago. TransacaoId={TransacaoId} OperadoraRef={OperadoraRef}", transacaoId, operadoraRef);
-
-        return new PixResult(
-            CopiaCola: qrCode ?? string.Empty,
-            ExpiraEm: expiration,
-            QrCodeBase64: qrCodeBase64,
-            OperadoraRef: operadoraRef);
     }
 
     public async Task<bool> ConfirmarAsync(Guid transacaoId, CancellationToken ct = default)

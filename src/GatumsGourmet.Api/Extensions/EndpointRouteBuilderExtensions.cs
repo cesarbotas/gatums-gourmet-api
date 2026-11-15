@@ -1,4 +1,5 @@
 using GatumsGourmet.Api.Endpoints.V1;
+using GatumsGourmet.Api.Endpoints.V1.Admin;
 using GatumsGourmet.Api.Endpoints.V1.Categorias;
 using GatumsGourmet.Api.Endpoints.V1.Clientes;
 using GatumsGourmet.Api.Endpoints.V1.Estoque;
@@ -6,6 +7,7 @@ using GatumsGourmet.Api.Endpoints.V1.Imagens;
 using GatumsGourmet.Api.Endpoints.V1.Pedidos;
 using GatumsGourmet.Api.Endpoints.V1.Produtos;
 using GatumsGourmet.Api.Endpoints.V1.Relatorios;
+using PagamentosEndpointsV2 = GatumsGourmet.Api.Endpoints.V2.PagamentosEndpoints;
 
 namespace GatumsGourmet.Api.Extensions;
 
@@ -15,11 +17,21 @@ public static class EndpointRouteBuilderExtensions
     {
         app.MapV1Endpoints();
 
-        // Quando existir uma V2, basta criar os endpoints em Endpoints/V2/ e
-        // adicionar aqui: app.MapV2Endpoints();
-        // A V2 mapeia apenas os módulos que mudaram e reaproveita a V1 no resto.
+        // A V2 mapeia apenas os módulos que mudaram (hoje: pagamentos) e reaproveita
+        // a V1 no resto. Novos módulos V2 entram em Endpoints/V2/ e em MapV2Endpoints.
+        app.MapV2Endpoints();
 
         return app;
+    }
+
+    /// <summary>
+    /// Mapeia os endpoints da versão 2 sob o prefixo <c>/api/v2</c> (apenas módulos alterados).
+    /// </summary>
+    private static void MapV2Endpoints(this IEndpointRouteBuilder app)
+    {
+        var v2 = app.MapGroup("/api/v2");
+
+        PagamentosEndpointsV2.Map(v2.MapGroup("/pagamentos").WithTags("Pagamentos V2"));
     }
 
     /// <summary>
@@ -47,5 +59,6 @@ public static class EndpointRouteBuilderExtensions
         RolesEndpoints.Map(v1.MapGroup("/roles").WithTags("Roles"));
         PermissionsEndpoints.Map(v1.MapGroup("/permissions").WithTags("Permissions"));
         UsuariosEndpoints.Map(v1.MapGroup("/usuarios").WithTags("Usuarios"));
+        VendaPresencialEndpoints.Map(v1.MapGroup("/admin/vendas-presenciais").WithTags("Admin - Venda Presencial"));
     }
 }

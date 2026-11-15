@@ -560,6 +560,28 @@ Guia de consumo no front: [Busca-CEP.md](Busca-CEP.md).
 - **200**: `TransacaoResponse`
   > Valida a transação para aprovação do pedido. Chamar antes de avançar para `PagamentoAprovado`.
 
+### Pagamentos V2 (Pix via Orders API) — prefixo `/api/v2/pagamentos`
+
+Mesmo corpo e resposta (`TransacaoResponse`) da V1; a V1 permanece disponível.
+
+#### POST /api/v2/pagamentos/pix
+- **Auth**: Bearer · header opcional `Idempotency-Key`
+- **Body**: `IniciarPixRequest` (igual à V1)
+- **201**: `TransacaoResponse` (com `pixCopiaCola`, `pixQrCodeBase64`, `pixExpiraEm`)
+- **Falha**: mensagem do Mercado Pago quando a order é rejeitada
+
+#### GET /api/v2/pagamentos/pix/{transacaoId}/status
+#### GET /api/v2/pagamentos/{transacaoId}/status
+- **Auth**: Bearer
+- **200**: `TransacaoResponse` (sincroniza com a order se ainda `pendente`)
+
+#### POST /api/v2/pagamentos/webhook/mercadopago
+- **Auth**: pública, validada por header `x-signature`
+- **200**: evento processado/ignorado · **401**: assinatura inválida
+
+#### GET /api/v2/pagamentos/opcoes · POST /api/v2/pagamentos/cartao-credito · POST /api/v2/pagamentos/cartao-debito
+- Idênticos à V1.
+
 ---
 
 ## Relatórios

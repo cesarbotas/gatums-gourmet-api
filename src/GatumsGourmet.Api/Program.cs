@@ -4,6 +4,7 @@ using GatumsGourmet.Api.Middleware;
 using GatumsGourmet.Application;
 using GatumsGourmet.Infrastructure;
 using Serilog;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,14 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.Host.UseSerilog(Log.Logger);
+
+// Serializa enums como string camelCase em toda a API (Minimal API + JSON).
+// Afeta respostas e leitura de bodies — garante que PedidoEtapa, PedidoActor,
+// EntregaTipo, CanalVenda etc. trafeguem como "criado", "admin", "retirada" etc.
+builder.Services.ConfigureHttpJsonOptions(o =>
+{
+    o.SerializerOptions.Converters.Add(new JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase));
+});
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);

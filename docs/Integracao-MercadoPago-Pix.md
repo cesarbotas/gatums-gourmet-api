@@ -253,3 +253,41 @@ Além do PIX, os pagamentos foram separados e ganharam endpoints dedicados:
    * Certifique-se de que a URL configurada no painel do Mercado Pago é pública e acessível via HTTPS.
    * Se estiver em localhost, use o `ngrok` ou consulte diretamente o endpoint `GET /api/v1/pagamentos/pix/{transacaoId}/status`, que possui sincronização automática em tempo real.
 
+
+---
+
+## 8. V2 — Pix via Orders API (`/api/v2/pagamentos`)
+
+A V2 usa `POST /v1/orders` (modo `automatic`) e roda em paralelo à V1.
+
+* **Rotas:** `POST /api/v2/pagamentos/pix`, `GET /api/v2/pagamentos/pix/{id}/status`, `GET /api/v2/pagamentos/{id}/status`, `POST /api/v2/pagamentos/webhook/mercadopago` (mais `opcoes` e cartões, idênticos à V1).
+* **Contrato:** `type: online`, `processing_mode: automatic`, `payment_method: { id: pix, type: bank_transfer }`, `payer.email` obrigatório, expiração em `config.payment.expiration_time` (ISO 8601, padrão `PT30M`, limites de 30 min a 30 dias). O header `X-Idempotency-Key` é o id da transação.
+* **Dados:** sem migration. A transação grava `operadora = mercadopago-orders` e `operadoraRef = ORD...`.
+* **Mapeamento de status:** `processed/accredited` → aprovado; `canceled` e `failed` → recusado; demais → continua pendente.
+
+### Configuração
+
+| Chave | Descrição |
+|-------|-----------|
+| `MercadoPago:AccessToken` | `<definir via user-secrets / variável de ambiente>` |
+| `MercadoPago:WebhookSecret` | `<definir via user-secrets / variável de ambiente>` — assinatura secreta da aplicação, usada para validar `x-signature` |
+| `MercadoPago:PixExpirationMinutes` | Opcional. Padrão 30 (mínimo 30, máximo 43200) |
+
+Nunca versione valores reais. Use `dotnet user-secrets` ou `MercadoPago__WebhookSecret` / `MercadoPago__AccessToken`.
+Sem `WebhookSecret`, o webhook só é aceito em `Development`; nos demais ambientes responde 401.
+
+### Painel do Mercado Pago
+
+1. Em Webhooks da aplicação, ativar as notificações do evento **Order**.
+2. URL: `https://<seu-host>/api/v2/pagamentos/webhook/mercadopago`.
+3. Copiar a assinatura secreta para `MercadoPago:WebhookSecret`.
+
+### Teste com credenciais de teste
+
+Use o Access Token **de teste**. Não é preciso usuário de teste: qualquer e-mail válido serve em `payer.email`, e `payerNome = "APRO"` (first_name) simula aprovação.
+
+### Troubleshooting V2
+
+* **Webhook 401:** `WebhookSecret` ausente ou diferente do painel, ou `ts` do header fora da tolerância de 5 min.
+* **Pagador sem e-mail:** informe `payerEmail` no body ou garanta e-mail no usuário do pedido; a V2 não usa e-mail fixo de fallback.
+* **Order rejeitada:** a mensagem do Mercado Pago (`errors[]`) é devolvida na resposta.

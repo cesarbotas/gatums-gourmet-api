@@ -1,4 +1,5 @@
 using GatumsGourmet.Domain.Entities.Pagamentos;
+using GatumsGourmet.Domain.Enums.Pagamentos;
 
 namespace GatumsGourmet.Application.UseCases.V1.Pagamentos;
 
@@ -7,9 +8,9 @@ public record OpcaoPagamentoResponse(string Metodo, string Label, bool Disponive
 public record TransacaoResponse(
     Guid Id,
     Guid PedidoId,
-    string Metodo,
+    MetodoPagamento Metodo,
     decimal Valor,
-    string Status,
+    StatusTransacao Status,
     string? PixCopiaCola,
     DateTime? PixExpiraEm,
     string? CartaoUltimos4,
@@ -19,16 +20,18 @@ public record TransacaoResponse(
     DateTime AtualizadoEm,
     string? PixQrCodeBase64 = null,
     string? Operadora = null,
-    string? OperadoraRef = null);
+    string? OperadoraRef = null,
+    decimal? ValorRecebido = null,
+    decimal? Troco = null);
 
 public static class TransacaoMapper
 {
     public static TransacaoResponse Map(TransacaoPagamento t) => new(
         t.Id,
         t.PedidoId,
-        t.Metodo.ToString().ToLower(),
+        t.Metodo,
         t.Valor,
-        t.Status.ToString().ToLower(),
+        t.Status,
         t.PixCopiaCola,
         t.PixExpiraEm,
         t.CartaoUltimos4,
@@ -38,5 +41,7 @@ public static class TransacaoMapper
         t.AtualizadoEm,
         t.PixQrCodeBase64,
         t.Operadora,
-        t.OperadoraRef);
+        t.OperadoraRef,
+        t.ValorRecebido,
+        t.Troco);
 }
