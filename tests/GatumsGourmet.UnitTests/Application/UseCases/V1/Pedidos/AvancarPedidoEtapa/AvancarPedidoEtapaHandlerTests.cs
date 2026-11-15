@@ -5,7 +5,6 @@ using GatumsGourmet.Application.UseCases.V1.Pedidos.AvancarPedidoEtapa;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Enums.Pedidos;
 using GatumsGourmet.Domain.Exceptions;
-using GatumsGourmet.Domain.Services.Interfaces;
 using Moq;
 using Xunit;
 

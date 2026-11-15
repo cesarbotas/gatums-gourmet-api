@@ -4,7 +4,6 @@ using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.ListPedidos;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Enums.Pedidos;
-using GatumsGourmet.Domain.Enums.Pedidos;
 using Moq;
 using Xunit;
 
