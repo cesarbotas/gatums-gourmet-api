@@ -2,6 +2,7 @@
 using GatumsGourmet.Api.Authorization;
 using GatumsGourmet.Api.Extensions;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.AvancarPedidoEtapa;
+using GatumsGourmet.Application.UseCases.V1.Pedidos.CancelarPedido;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.CheckoutPedido;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.ConcluirPagamentoPedido;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.GetPedidoById;
@@ -43,6 +44,19 @@ public static class PedidosEndpoints
         group.MapPost("/{id:guid}/pagamento/concluir", async (Guid id, [FromBody] ConcluirPagamentoPedidoRequest request, IConcluirPagamentoPedidoHandler handler, CancellationToken ct) =>
             (await handler.Handle(id, request, ct)).ToHttpResult())
             .RequireAuthorization();
+
+        // DELETE /{id}/cancelar — cliente cancela o próprio; admin cancela qualquer um
+        group.MapDelete("/{id:guid}/cancelar", async (
+            Guid id,
+            ClaimsPrincipal user,
+            [FromBody] CancelarPedidoRequest? body,
+            ICancelarPedidoHandler handler,
+            CancellationToken ct) =>
+        {
+            var actor = user.HasPermission("pedidos:ler") ? PedidoActor.Admin : PedidoActor.Cliente;
+            return (await handler.Handle(id, body ?? new CancelarPedidoRequest(), user.GetUserId(), actor, ct))
+                .ToHttpResult();
+        }).RequireAuthorization();
     }
 
     private record CheckoutBody(string ClienteNome);

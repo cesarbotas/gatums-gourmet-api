@@ -35,6 +35,7 @@ using GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarPagamentoCartao;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarWebhookMercadoPago;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ValidarPagamentoParaAprovacao;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.AvancarPedidoEtapa;
+using GatumsGourmet.Application.UseCases.V1.Pedidos.CancelarPedido;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.CheckoutPedido;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.ConcluirPagamentoPedido;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.GetPedidoById;
@@ -116,6 +117,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IGetPedidoByIdHandler, GetPedidoByIdHandler>();
         services.AddScoped<IAvancarPedidoEtapaHandler, AvancarPedidoEtapaHandler>();
         services.AddScoped<IConcluirPagamentoPedidoHandler, ConcluirPagamentoPedidoHandler>();
+        services.AddScoped<ICancelarPedidoHandler, CancelarPedidoHandler>();
 
         services.AddScoped<IListOpcoesPagamentoHandler, ListOpcoesPagamentoHandler>();
         services.AddScoped<IIniciarPagamentoHandler, IniciarPagamentoHandler>();
