@@ -41,8 +41,8 @@ public class ConsultarStatusPagamentoHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         result.Data!.Id.Should().Be(transacao.Id);
-        result.Data.Status.Should().Be("pendente");
-        result.Data.Metodo.Should().Be("pix");
+        result.Data.Status.Should().Be(StatusTransacao.Pendente);
+        result.Data.Metodo.Should().Be(MetodoPagamento.Pix);
     }
 }
 

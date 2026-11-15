@@ -17,6 +17,7 @@ public class PedidoConfiguration : IEntityTypeConfiguration<Pedido>
         b.HasIndex(x => x.UsuarioId);
         b.Property(x => x.Total).HasColumnType("numeric(18,2)");
         b.Property(x => x.StatusAtual).HasConversion<string>();
+        b.Property(x => x.Canal).HasConversion<string>();
         b.HasMany(x => x.Itens).WithOne().HasForeignKey(x => x.PedidoId).OnDelete(DeleteBehavior.Cascade);
         b.HasMany(x => x.Timeline).WithOne().HasForeignKey(x => x.PedidoId).OnDelete(DeleteBehavior.Cascade);
         b.HasOne(x => x.Pagamento).WithOne().HasForeignKey<PedidoPagamento>(x => x.PedidoId).OnDelete(DeleteBehavior.Cascade);

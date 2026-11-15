@@ -27,7 +27,9 @@ public sealed class CreateProdutoHandler(IProdutoRepository produtos, ICategoria
             FotoUrl = request.FotoUrl,
             Disponivel = request.Disponivel,
             Tipo = request.Tipo,
-            CriadoEm = clock.UtcNow
+            CriadoEm = clock.UtcNow,
+            Estoque = request.EstoqueInicial,
+            EstoqueMinimo = request.EstoqueMinimo
         };
 
         if (request.Tipo == TipoProduto.Combo)

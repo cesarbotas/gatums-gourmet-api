@@ -7,6 +7,15 @@ public interface IProdutoRepository
 {
     Task<(IReadOnlyList<Produto> Items, int Total)> ListAsync(int page, int pageSize, string? search, long? categoriaId, TipoProduto? tipo, bool? disponivel, CancellationToken ct = default);
     Task<Produto?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    /// <summary>
+    /// Carrega múltiplos produtos por ID em uma única query (batch lookup).
+    /// Usado no checkout para validar estoque de todos os itens do carrinho.
+    /// </summary>
+    Task<IReadOnlyList<Produto>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default);
+    /// <summary>
+    /// Retorna produtos com estoque menor ou igual ao estoque mínimo (alerta).
+    /// </summary>
+    Task<IReadOnlyList<Produto>> ListEstoqueBaixoAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Retorna as <c>FotoUrl</c> atualmente referenciadas por produtos (fonte de

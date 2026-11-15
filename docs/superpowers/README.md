@@ -35,6 +35,7 @@ uma conversa.
 | Fix paginação (`int?` nos GET) | — (fix) | — | `execucao/fix-paginacao-asparameters/` | Concluída (PR #37 no `develop`) |
 | CORS por origem (restrição por ambiente) | — (bounded) | — | `execucao/cors-origins/` | Concluída (PR #38 no `develop`) |
 | Limpeza de imagens órfãs (background service) | — (bounded) | — | `execucao/limpeza-imagens-orfas/` | Concluída (branch `feature/limpeza-imagens-orfas`) |
+| Pagamentos V2 (Pix via Mercado Pago Orders API) | `specs/2026-11-11-pagamentos-v2-orders-pix-design.md` | `plans/2026-11-11-pagamentos-v2-orders-pix.md` | — | Implementada (branch `feature/AjustePagamentosPix`); falta teste manual com token de teste |
 
 ## Como o rastro é gravado
 

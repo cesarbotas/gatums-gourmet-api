@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using GatumsGourmet.Domain.Common.V1;
 using GatumsGourmet.Domain.Repositories;
 using GatumsGourmet.Domain.Services.Interfaces;
@@ -54,9 +54,16 @@ public sealed class IniciarPagamentoHandler(
 
         if (request.Metodo == MetodoPagamento.Pix)
         {
-            var pix = await pixProvider.GerarAsync(transacao.Id, request.Valor, ct);
+            var descricao = $"Pedido Gatums #{pedido.Id.ToString()[..8]}";
+            var pix = await pixProvider.GerarAsync(transacao.Id, request.Valor, descricao, null, pedido.ClienteNome, ct);
             transacao.PixCopiaCola = pix.CopiaCola;
             transacao.PixExpiraEm = pix.ExpiraEm;
+            transacao.PixQrCodeBase64 = pix.QrCodeBase64;
+            if (!string.IsNullOrWhiteSpace(pix.OperadoraRef))
+            {
+                transacao.OperadoraRef = pix.OperadoraRef;
+                transacao.Operadora = "mercadopago";
+            }
         }
 
         await transacoes.AddAsync(transacao, ct);

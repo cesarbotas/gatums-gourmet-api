@@ -4,6 +4,7 @@ using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.V1.Pedidos.ListPedidos;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Enums.Pedidos;
+using GatumsGourmet.Domain.Enums.Pedidos;
 using Moq;
 using Xunit;
 
@@ -45,8 +46,8 @@ public class ListPedidosHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         result.Data!.TotalRegistros.Should().Be(1);
-        result.Data.Itens[0].StatusAtual.Should().Be("criado");
-        result.Data.Itens[0].Timeline[0].Por.Should().Be("cliente");
+        result.Data.Itens[0].StatusAtual.Should().Be(PedidoEtapa.Criado);
+        result.Data.Itens[0].Timeline[0].Por.Should().Be(PedidoActor.Cliente);
     }
 
     [Fact]

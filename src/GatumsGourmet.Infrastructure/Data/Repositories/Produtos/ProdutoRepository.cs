@@ -27,6 +27,12 @@ public class ProdutoRepository(GatumsDbContext db) : IProdutoRepository
     public Task<Produto?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         db.Produtos.Include(p => p.ComboItens).Include(p => p.Categoria).FirstOrDefaultAsync(p => p.Id == id, ct);
 
+    public async Task<IReadOnlyList<Produto>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default) =>
+        await db.Produtos.Include(p => p.ComboItens).Where(p => ids.Contains(p.Id)).ToListAsync(ct);
+
+    public async Task<IReadOnlyList<Produto>> ListEstoqueBaixoAsync(CancellationToken ct = default) =>
+        await db.Produtos.Where(p => p.Estoque <= p.EstoqueMinimo).OrderBy(p => p.Estoque).ToListAsync(ct);
+
     public async Task<IReadOnlyList<string>> ListFotoUrlsEmUsoAsync(CancellationToken ct = default) =>
         await db.Produtos
             .AsNoTracking()

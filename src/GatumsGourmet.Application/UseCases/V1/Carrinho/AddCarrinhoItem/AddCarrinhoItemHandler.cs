@@ -29,7 +29,15 @@ public sealed class AddCarrinhoItemHandler(ICarrinhoRepository carrinho, IProdut
         var produto = await produtos.GetByIdAsync(request.ProdutoId, ct);
         if (produto is null) return Result<bool>.Fail("Produto não encontrado.");
 
+        // Validar estoque: a quantidade total no carrinho + nova não pode exceder o estoque
         var existing = await carrinho.GetItemAsync(usuarioId, request.ProdutoId, ct);
+        var quantidadeAtualNoCarrinho = existing?.Quantidade ?? 0;
+        var quantidadeTotal = quantidadeAtualNoCarrinho + request.Quantidade;
+
+        if (quantidadeTotal > produto.Estoque)
+            return Result<bool>.Fail(
+                $"Estoque insuficiente. Disponível: {produto.Estoque}, no carrinho: {quantidadeAtualNoCarrinho}, solicitado: {request.Quantidade}.");
+
         if (existing is not null)
             existing.Quantidade += request.Quantidade;
         else

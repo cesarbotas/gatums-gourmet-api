@@ -14,6 +14,10 @@ public class Produto
     public bool Disponivel { get; set; }
     public TipoProduto Tipo { get; set; }
     public DateTime CriadoEm { get; set; }
+    /// <summary>Quantidade em estoque (saldo atual).</summary>
+    public int Estoque { get; set; }
+    /// <summary>Estoque mínimo para alerta de reposição.</summary>
+    public int EstoqueMinimo { get; set; }
     public ICollection<ProdutoComboItem> ComboItens { get; set; } = [];
 }
 

@@ -20,6 +20,11 @@ public class ProdutoConfiguration : IEntityTypeConfiguration<Produto>
             .HasForeignKey(x => x.CategoriaId)
             .OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(x => x.CategoriaId);
+
+        // Estoque
+        b.Property(x => x.Estoque).IsRequired();
+        b.Property(x => x.EstoqueMinimo).IsRequired();
+        b.HasIndex(x => x.Estoque);
     }
 }
 
