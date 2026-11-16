@@ -4,7 +4,6 @@ using GatumsGourmet.Domain.Services.Interfaces;
 using GatumsGourmet.Application.UseCases.V1.Pagamentos.ConfirmarPagamentoPix;
 using GatumsGourmet.Domain.Entities.Pagamentos;
 using GatumsGourmet.Domain.Enums.Pagamentos;
-using GatumsGourmet.Domain.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;

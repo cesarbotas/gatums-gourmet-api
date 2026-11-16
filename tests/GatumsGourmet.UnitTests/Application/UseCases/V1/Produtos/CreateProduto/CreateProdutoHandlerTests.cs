@@ -5,7 +5,6 @@ using GatumsGourmet.Application.UseCases.V1.Produtos.CreateProduto;
 using GatumsGourmet.Domain.Entities.Produtos;
 using GatumsGourmet.Domain.Enums.Produtos;
 using GatumsGourmet.Domain.Exceptions;
-using GatumsGourmet.Domain.Services.Interfaces;
 using Moq;
 using Xunit;
 
