@@ -6,7 +6,6 @@ using GatumsGourmet.Domain.Entities.Pagamentos;
 using GatumsGourmet.Domain.Entities.Pedidos;
 using GatumsGourmet.Domain.Enums.Pagamentos;
 using GatumsGourmet.Domain.Enums.Pedidos;
-using GatumsGourmet.Domain.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
