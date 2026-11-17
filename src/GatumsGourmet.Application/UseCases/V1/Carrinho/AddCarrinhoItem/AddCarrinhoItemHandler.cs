@@ -11,7 +11,11 @@ public sealed class AddCarrinhoItemHandler(ICarrinhoRepository carrinho, IProdut
     public async Task<Result<bool>> Handle(Guid usuarioId, AddCarrinhoItemRequest request, CancellationToken ct = default)
     {
         var produto = await produtos.GetByIdAsync(request.ProdutoId, ct);
-        if (produto is null) return Result<bool>.Fail("Produto não encontrado.");
+
+        if (produto is null)
+        {
+            return Result<bool>.Fail("Produto não encontrado.");
+        }
 
         // Validar estoque: a quantidade total no carrinho + nova não pode exceder o estoque
         var existing = await carrinho.GetItemAsync(usuarioId, request.ProdutoId, ct);
@@ -19,13 +23,19 @@ public sealed class AddCarrinhoItemHandler(ICarrinhoRepository carrinho, IProdut
         var quantidadeTotal = quantidadeAtualNoCarrinho + request.Quantidade;
 
         if (quantidadeTotal > produto.Estoque)
+        {
             return Result<bool>.Fail(
                 $"Estoque insuficiente. Disponível: {produto.Estoque}, no carrinho: {quantidadeAtualNoCarrinho}, solicitado: {request.Quantidade}.");
+        }
 
         if (existing is not null)
+        {
             existing.Quantidade += request.Quantidade;
+        }
         else
+        {
             await carrinho.AddAsync(new CarrinhoItem { Id = Guid.NewGuid(), UsuarioId = usuarioId, ProdutoId = produto.Id, Quantidade = request.Quantidade, Nome = produto.Nome, Preco = produto.Preco, FotoUrl = produto.FotoUrl }, ct);
+        }
 
         await carrinho.SaveChangesAsync(ct);
         return Result<bool>.Ok(true);

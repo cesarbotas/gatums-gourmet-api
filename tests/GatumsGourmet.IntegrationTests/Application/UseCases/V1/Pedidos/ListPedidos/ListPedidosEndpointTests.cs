@@ -5,6 +5,7 @@ using FluentAssertions;
 using GatumsGourmet.IntegrationTests.Factory;
 using Xunit;
 using Xunit.Abstractions;
+using GatumsGourmet.Domain.Enums.Produtos;
 
 namespace GatumsGourmet.IntegrationTests.Application.UseCases.V1.Pedidos.ListPedidos;
 
@@ -70,8 +71,9 @@ public class ListPedidosEndpointTests
             preco = 30m,
             fotoUrl = "http://img/x.png",
             disponivel = true,
-            tipo = 0,
-            itens = (object?)null
+            tipo = TipoProduto.Simples,
+            itens = (object?)null,
+            estoqueInicial = 2
         });
         using var prodDoc = JsonDocument.Parse(await createProduto.Content.ReadAsStringAsync());
         var produtoId = prodDoc.RootElement.GetProperty("id").GetGuid();

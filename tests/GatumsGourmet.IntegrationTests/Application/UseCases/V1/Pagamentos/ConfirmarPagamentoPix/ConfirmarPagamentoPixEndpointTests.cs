@@ -5,6 +5,7 @@ using FluentAssertions;
 using GatumsGourmet.IntegrationTests.Factory;
 using Xunit;
 using Xunit.Abstractions;
+using GatumsGourmet.Domain.Enums.Produtos;
 
 namespace GatumsGourmet.IntegrationTests.Application.UseCases.V1.Pagamentos.ConfirmarPagamentoPix;
 
@@ -49,7 +50,7 @@ public class ConfirmarPagamentoPixEndpointTests
         resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    private async Task<(HttpClient Cliente, Guid PedidoId, decimal Total)> CriarPedidoViaHttpAsync()
+    private async Task<(HttpClient Cliente, Guid PedidoId, decimal Total)> CriarPedidoViaHttpAsync(int estoqueInicial = 2)
     {
         const decimal preco = 30m;
         const int quantidade = 2;
@@ -68,8 +69,9 @@ public class ConfirmarPagamentoPixEndpointTests
             preco,
             fotoUrl = "http://img/x.png",
             disponivel = true,
-            tipo = 0,
-            itens = (object?)null
+            tipo = TipoProduto.Simples,
+            itens = (object?)null,
+            estoqueInicial
         });
         using var prodDoc = JsonDocument.Parse(await createProduto.Content.ReadAsStringAsync());
         var produtoId = prodDoc.RootElement.GetProperty("id").GetGuid();

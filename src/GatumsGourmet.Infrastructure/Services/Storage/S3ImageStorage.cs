@@ -31,6 +31,8 @@ public sealed class S3ImageStorage(
         // o ponto é adicionado aqui ao montar a chave do objeto.
         var objectKey = $"{prefixo}/{Guid.NewGuid():N}.{extensao}";
 
+        var isHttps = _options.ServiceUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
+
         var request = new PutObjectRequest
         {
             BucketName = _options.Bucket,
@@ -38,7 +40,7 @@ public sealed class S3ImageStorage(
             InputStream = conteudo,
             ContentType = contentType,
             AutoCloseStream = false,
-            DisablePayloadSigning = true,
+            DisablePayloadSigning = isHttps,
             DisableDefaultChecksumValidation = true
         };
 

@@ -32,7 +32,8 @@ public class UpdateCarrinhoItemQuantidadeEndpointTests
             fotoUrl = "http://img/x.png",
             disponivel = true,
             tipo = TipoProduto.Simples,
-            itens = (object?)null
+            itens = (object?)null,
+            estoqueInicial = 2
         });
         create.StatusCode.Should().Be(HttpStatusCode.Created);
         using var doc = JsonDocument.Parse(await create.Content.ReadAsStringAsync());

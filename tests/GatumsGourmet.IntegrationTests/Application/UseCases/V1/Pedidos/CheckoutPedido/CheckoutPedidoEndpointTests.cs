@@ -4,6 +4,7 @@ using System.Text.Json;
 using FluentAssertions;
 using GatumsGourmet.IntegrationTests.Factory;
 using Xunit;
+using GatumsGourmet.Domain.Enums.Produtos;
 
 namespace GatumsGourmet.IntegrationTests.Application.UseCases.V1.Pedidos.CheckoutPedido;
 
@@ -30,8 +31,9 @@ public class CheckoutPedidoEndpointTests
             preco,
             fotoUrl = "http://img/x.png",
             disponivel = true,
-            tipo = 0,
-            itens = (object?)null
+            tipo = TipoProduto.Simples,
+            itens = (object?)null,
+            estoqueInicial = 2
         });
         create.StatusCode.Should().Be(HttpStatusCode.Created);
         using var doc = JsonDocument.Parse(await create.Content.ReadAsStringAsync());
