@@ -82,9 +82,9 @@ public class MigrationSeedTests
         var clienteCount = await db.RolePermissions.CountAsync(rp => rp.RoleId == cliente.Id);
         var gerenteCount = await db.RolePermissions.CountAsync(rp => rp.RoleId == gerente.Id);
 
-        adminCount.Should().Be(12);
+        adminCount.Should().Be(14);
         clienteCount.Should().Be(0);
-        gerenteCount.Should().Be(8);
+        gerenteCount.Should().Be(10);
     }
 
     [Fact]

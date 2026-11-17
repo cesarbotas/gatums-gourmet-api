@@ -4,6 +4,7 @@ using System.Text.Json;
 using FluentAssertions;
 using GatumsGourmet.IntegrationTests.Factory;
 using Xunit;
+using GatumsGourmet.Domain.Enums.Produtos;
 
 namespace GatumsGourmet.IntegrationTests.Application.UseCases.V1.Carrinho.RemoveCarrinhoItem;
 
@@ -30,7 +31,7 @@ public class RemoveCarrinhoItemEndpointTests
             preco,
             fotoUrl = "http://img/x.png",
             disponivel = true,
-            tipo = 0,
+            tipo = TipoProduto.Simples,
             itens = (object?)null
         });
         create.StatusCode.Should().Be(HttpStatusCode.Created);
