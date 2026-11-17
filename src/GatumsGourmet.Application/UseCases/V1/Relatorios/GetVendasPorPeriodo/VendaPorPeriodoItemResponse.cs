@@ -2,7 +2,7 @@ namespace GatumsGourmet.Application.UseCases.V1.Relatorios.GetVendasPorPeriodo;
 
 public class VendaPorPeriodoItemResponse
 {
-    public string Metodo { get; set; }
+    public string Metodo { get; set; } = string.Empty;
     public int Quantidade { get; set; }
     public decimal Total { get; set; }
     public int Aprovados { get; set; }

@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarWebhookMercadoPago;
 
-public sealed record MercadoPagoWebhookBody
+public record MercadoPagoWebhookBody
 {
     [JsonPropertyName("action")]
     public string? Action { get; init; }
@@ -14,7 +14,7 @@ public sealed record MercadoPagoWebhookBody
     public MercadoPagoWebhookData? Data { get; init; }
 };
 
-public sealed record MercadoPagoWebhookData
+public record MercadoPagoWebhookData
 {
     [JsonPropertyName("id")]
     public string? Id { get; init; }
