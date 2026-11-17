@@ -4,13 +4,6 @@ using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.V1.Clientes.UpdateCliente;
 
-public record UpdateClienteRequest(Guid Id, string Nome, string Email, string? Telefone);
-
-public interface IUpdateClienteHandler
-{
-    Task<Result<bool>> Handle(UpdateClienteRequest request, CancellationToken ct = default);
-}
-
 public sealed class UpdateClienteHandler(IClienteRepository clientes) : IUpdateClienteHandler
 {
     public async Task<Result<bool>> Handle(UpdateClienteRequest request, CancellationToken ct = default)
@@ -24,4 +17,3 @@ public sealed class UpdateClienteHandler(IClienteRepository clientes) : IUpdateC
         return Result<bool>.Ok(true);
     }
 }
-

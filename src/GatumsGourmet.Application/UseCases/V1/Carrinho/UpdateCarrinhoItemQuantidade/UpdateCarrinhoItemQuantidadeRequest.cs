@@ -1,0 +1,3 @@
+namespace GatumsGourmet.Application.UseCases.V1.Carrinho.UpdateCarrinhoItemQuantidade;
+
+public record UpdateCarrinhoItemQuantidadeRequest(int Quantidade);

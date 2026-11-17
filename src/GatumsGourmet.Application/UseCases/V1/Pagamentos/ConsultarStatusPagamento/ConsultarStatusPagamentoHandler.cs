@@ -7,11 +7,6 @@ using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.V1.Pagamentos.ConsultarStatusPagamento;
 
-public interface IConsultarStatusPagamentoHandler
-{
-    Task<Result<TransacaoResponse>> Handle(Guid transacaoId, CancellationToken ct = default);
-}
-
 public sealed class ConsultarStatusPagamentoHandler : IConsultarStatusPagamentoHandler
 {
     private readonly ITransacaoRepository _transacoes;

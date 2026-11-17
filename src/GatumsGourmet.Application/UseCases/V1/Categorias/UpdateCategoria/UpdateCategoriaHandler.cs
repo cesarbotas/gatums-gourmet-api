@@ -5,22 +5,6 @@ using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.V1.Categorias.UpdateCategoria;
 
-public record UpdateCategoriaRequest(long Id, string Nome, string? Descricao, bool Ativo);
-
-public class UpdateCategoriaValidator : AbstractValidator<UpdateCategoriaRequest>
-{
-    public UpdateCategoriaValidator()
-    {
-        RuleFor(x => x.Nome).NotEmpty().MaximumLength(100);
-        RuleFor(x => x.Descricao).MaximumLength(500);
-    }
-}
-
-public interface IUpdateCategoriaHandler
-{
-    Task<Result<bool>> Handle(UpdateCategoriaRequest request, CancellationToken ct = default);
-}
-
 public sealed class UpdateCategoriaHandler(ICategoriaRepository categorias) : IUpdateCategoriaHandler
 {
     public async Task<Result<bool>> Handle(UpdateCategoriaRequest request, CancellationToken ct = default)
@@ -38,4 +22,3 @@ public sealed class UpdateCategoriaHandler(ICategoriaRepository categorias) : IU
         return Result<bool>.Ok(true);
     }
 }
-

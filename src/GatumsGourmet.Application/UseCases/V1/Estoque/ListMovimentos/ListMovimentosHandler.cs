@@ -3,20 +3,6 @@ using GatumsGourmet.Domain.Repositories;
 
 namespace GatumsGourmet.Application.UseCases.V1.Estoque.ListMovimentos;
 
-public record MovimentoResponse(
-    Guid Id,
-    string Tipo,
-    int Quantidade,
-    int SaldoResultante,
-    Guid? PedidoId,
-    string? Observacao,
-    DateTime Data);
-
-public interface IListMovimentosHandler
-{
-    Task<Result<IReadOnlyList<MovimentoResponse>>> Handle(Guid produtoId, CancellationToken ct = default);
-}
-
 public sealed class ListMovimentosHandler(IMovimentoEstoqueRepository movimentos)
     : IListMovimentosHandler
 {

@@ -3,13 +3,6 @@ using GatumsGourmet.Domain.Repositories;
 
 namespace GatumsGourmet.Application.UseCases.V1.Estoque.ListEstoqueBaixo;
 
-public record EstoqueBaixoResponse(Guid Id, string Nome, int Estoque, int EstoqueMinimo);
-
-public interface IListEstoqueBaixoHandler
-{
-    Task<Result<IReadOnlyList<EstoqueBaixoResponse>>> Handle(CancellationToken ct = default);
-}
-
 public sealed class ListEstoqueBaixoHandler(IProdutoRepository produtos) : IListEstoqueBaixoHandler
 {
     public async Task<Result<IReadOnlyList<EstoqueBaixoResponse>>>

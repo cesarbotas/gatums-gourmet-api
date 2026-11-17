@@ -6,11 +6,6 @@ using Microsoft.Extensions.Logging;
 
 namespace GatumsGourmet.Application.UseCases.V1.Pagamentos.ConfirmarPagamentoPix;
 
-public interface IConfirmarPagamentoPixHandler
-{
-    Task<Result<TransacaoResponse>> Handle(Guid transacaoId, CancellationToken ct = default);
-}
-
 public sealed class ConfirmarPagamentoPixHandler(
     ITransacaoRepository transacoes,
     IPixProvider pixProvider,
@@ -33,4 +28,3 @@ public sealed class ConfirmarPagamentoPixHandler(
         return Result<TransacaoResponse>.Ok(TransacaoMapper.Map(transacao));
     }
 }
-

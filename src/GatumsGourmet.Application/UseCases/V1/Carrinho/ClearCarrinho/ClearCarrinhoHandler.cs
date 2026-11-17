@@ -4,11 +4,6 @@ using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.V1.Carrinho.ClearCarrinho;
 
-public interface IClearCarrinhoHandler
-{
-    Task<Result<bool>> Handle(Guid usuarioId, CancellationToken ct = default);
-}
-
 public sealed class ClearCarrinhoHandler(ICarrinhoRepository carrinho) : IClearCarrinhoHandler
 {
     public async Task<Result<bool>> Handle(Guid usuarioId, CancellationToken ct = default)
@@ -18,4 +13,3 @@ public sealed class ClearCarrinhoHandler(ICarrinhoRepository carrinho) : IClearC
         return Result<bool>.Ok(true);
     }
 }
-

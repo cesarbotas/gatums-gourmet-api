@@ -6,11 +6,6 @@ using Microsoft.Extensions.Logging;
 
 namespace GatumsGourmet.Application.UseCases.V1.Enderecos.BuscarEnderecoPorCep;
 
-public interface IBuscarEnderecoPorCepHandler
-{
-    Task<Result<EnderecoCepResponse>> Handle(string cep, CancellationToken ct = default);
-}
-
 public sealed partial class BuscarEnderecoPorCepHandler(
     ICepProvider provider,
     ILogger<BuscarEnderecoPorCepHandler> logger) : IBuscarEnderecoPorCepHandler

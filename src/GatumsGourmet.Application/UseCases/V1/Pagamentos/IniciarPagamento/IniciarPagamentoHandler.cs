@@ -8,22 +8,6 @@ using Microsoft.Extensions.Logging;
 
 namespace GatumsGourmet.Application.UseCases.V1.Pagamentos.IniciarPagamento;
 
-public record IniciarPagamentoRequest(Guid PedidoId, MetodoPagamento Metodo, decimal Valor);
-
-public class IniciarPagamentoValidator : AbstractValidator<IniciarPagamentoRequest>
-{
-    public IniciarPagamentoValidator()
-    {
-        RuleFor(x => x.PedidoId).NotEmpty();
-        RuleFor(x => x.Valor).GreaterThan(0);
-    }
-}
-
-public interface IIniciarPagamentoHandler
-{
-    Task<Result<TransacaoResponse>> Handle(IniciarPagamentoRequest request, string? idempotencyKey, CancellationToken ct = default);
-}
-
 public sealed class IniciarPagamentoHandler(
     ITransacaoRepository transacoes,
     IPedidoRepository pedidos,
@@ -73,4 +57,3 @@ public sealed class IniciarPagamentoHandler(
         return Result<TransacaoResponse>.Ok(TransacaoMapper.Map(transacao));
     }
 }
-

@@ -6,14 +6,6 @@ using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.V1.Estoque.AdjustEstoque;
 
-public record AdjustEstoqueRequest(TipoMovimentoEstoque Tipo, int Quantidade, Guid? UsuarioId = null, string? Observacao = null);
-public record AdjustEstoqueResponse(int EstoqueAnterior, int EstoqueNovo);
-
-public interface IAdjustEstoqueHandler
-{
-    Task<Result<AdjustEstoqueResponse>> Handle(Guid produtoId, AdjustEstoqueRequest request, CancellationToken ct = default);
-}
-
 /// <summary>
 /// Ajusta o estoque de um produto (entrada/saída/ajuste) e registra o movimento
 /// na tabela auxiliar de auditoria. Venda não é permitida por este endpoint —

@@ -8,33 +8,6 @@ using Microsoft.Extensions.Logging;
 
 namespace GatumsGourmet.Application.UseCases.V1.Pagamentos.IniciarPix;
 
-public record IniciarPixRequest(
-    Guid PedidoId,
-    decimal? Valor = null,
-    string? PayerEmail = null,
-    string? PayerNome = null);
-
-public class IniciarPixValidator : AbstractValidator<IniciarPixRequest>
-{
-    public IniciarPixValidator()
-    {
-        RuleFor(x => x.PedidoId).NotEmpty().WithMessage("PedidoId é obrigatório.");
-        When(x => x.Valor.HasValue, () =>
-        {
-            RuleFor(x => x.Valor!.Value).GreaterThan(0).WithMessage("Valor deve ser maior que zero.");
-        });
-        When(x => !string.IsNullOrWhiteSpace(x.PayerEmail), () =>
-        {
-            RuleFor(x => x.PayerEmail!).EmailAddress().WithMessage("E-mail do pagador inválido.");
-        });
-    }
-}
-
-public interface IIniciarPixHandler
-{
-    Task<Result<TransacaoResponse>> Handle(IniciarPixRequest request, string? idempotencyKey, CancellationToken ct = default);
-}
-
 public sealed class IniciarPixHandler(
     ITransacaoRepository transacoes,
     IPedidoRepository pedidos,
@@ -93,4 +66,3 @@ public sealed class IniciarPixHandler(
         return Result<TransacaoResponse>.Ok(TransacaoMapper.Map(transacao));
     }
 }
-

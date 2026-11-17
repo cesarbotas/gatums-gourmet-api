@@ -4,11 +4,6 @@ using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.V1.Clientes.DeleteCliente;
 
-public interface IDeleteClienteHandler
-{
-    Task<Result<bool>> Handle(Guid id, CancellationToken ct = default);
-}
-
 public sealed class DeleteClienteHandler(IClienteRepository clientes) : IDeleteClienteHandler
 {
     public async Task<Result<bool>> Handle(Guid id, CancellationToken ct = default)
@@ -20,4 +15,3 @@ public sealed class DeleteClienteHandler(IClienteRepository clientes) : IDeleteC
         return Result<bool>.Ok(true);
     }
 }
-

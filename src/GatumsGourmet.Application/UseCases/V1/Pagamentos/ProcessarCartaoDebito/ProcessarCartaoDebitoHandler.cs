@@ -8,31 +8,6 @@ using Microsoft.Extensions.Logging;
 
 namespace GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarCartaoDebito;
 
-public record ProcessarCartaoDebitoRequest(
-    Guid PedidoId,
-    decimal? Valor,
-    string Numero,
-    string Nome,
-    string Validade,
-    string Cvv);
-
-public class ProcessarCartaoDebitoValidator : AbstractValidator<ProcessarCartaoDebitoRequest>
-{
-    public ProcessarCartaoDebitoValidator()
-    {
-        RuleFor(x => x.PedidoId).NotEmpty().WithMessage("PedidoId é obrigatório.");
-        RuleFor(x => x.Numero).NotEmpty().CreditCard().WithMessage("Número de cartão de débito inválido.");
-        RuleFor(x => x.Nome).NotEmpty().WithMessage("Nome do titular é obrigatório.");
-        RuleFor(x => x.Validade).NotEmpty().Matches(@"^(0[1-9]|1[0-2])\/?([0-9]{2}|[0-9]{4})$").WithMessage("Validade inválida (MM/AA).");
-        RuleFor(x => x.Cvv).NotEmpty().Length(3, 4).WithMessage("CVV deve ter 3 ou 4 dígitos.");
-    }
-}
-
-public interface IProcessarCartaoDebitoHandler
-{
-    Task<Result<TransacaoResponse>> Handle(ProcessarCartaoDebitoRequest request, CancellationToken ct = default);
-}
-
 public sealed class ProcessarCartaoDebitoHandler(
     ITransacaoRepository transacoes,
     IPedidoRepository pedidos,
@@ -82,4 +57,3 @@ public sealed class ProcessarCartaoDebitoHandler(
         return Result<TransacaoResponse>.Ok(TransacaoMapper.Map(transacao));
     }
 }
-

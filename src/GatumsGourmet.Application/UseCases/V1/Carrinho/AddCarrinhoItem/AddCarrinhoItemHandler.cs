@@ -6,22 +6,6 @@ using GatumsGourmet.Domain.Entities.Carrinho;
 
 namespace GatumsGourmet.Application.UseCases.V1.Carrinho.AddCarrinhoItem;
 
-public record AddCarrinhoItemRequest(Guid ProdutoId, int Quantidade);
-
-public class AddCarrinhoItemValidator : AbstractValidator<AddCarrinhoItemRequest>
-{
-    public AddCarrinhoItemValidator()
-    {
-        RuleFor(x => x.ProdutoId).NotEmpty();
-        RuleFor(x => x.Quantidade).GreaterThan(0);
-    }
-}
-
-public interface IAddCarrinhoItemHandler
-{
-    Task<Result<bool>> Handle(Guid usuarioId, AddCarrinhoItemRequest request, CancellationToken ct = default);
-}
-
 public sealed class AddCarrinhoItemHandler(ICarrinhoRepository carrinho, IProdutoRepository produtos) : IAddCarrinhoItemHandler
 {
     public async Task<Result<bool>> Handle(Guid usuarioId, AddCarrinhoItemRequest request, CancellationToken ct = default)
@@ -47,4 +31,3 @@ public sealed class AddCarrinhoItemHandler(ICarrinhoRepository carrinho, IProdut
         return Result<bool>.Ok(true);
     }
 }
-

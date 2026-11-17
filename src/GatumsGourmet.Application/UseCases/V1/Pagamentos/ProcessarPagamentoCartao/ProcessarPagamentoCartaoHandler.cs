@@ -7,13 +7,6 @@ using Microsoft.Extensions.Logging;
 
 namespace GatumsGourmet.Application.UseCases.V1.Pagamentos.ProcessarPagamentoCartao;
 
-public record ProcessarPagamentoCartaoRequest(string Numero, string Nome, string Validade, string Cvv);
-
-public interface IProcessarPagamentoCartaoHandler
-{
-    Task<Result<TransacaoResponse>> Handle(Guid transacaoId, ProcessarPagamentoCartaoRequest request, CancellationToken ct = default);
-}
-
 public sealed class ProcessarPagamentoCartaoHandler(
     ITransacaoRepository transacoes,
     IPaymentGateway gateway,

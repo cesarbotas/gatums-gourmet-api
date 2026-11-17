@@ -4,11 +4,6 @@ using GatumsGourmet.Domain.Services.Interfaces;
 
 namespace GatumsGourmet.Application.UseCases.V1.Categorias.DeleteCategoria;
 
-public interface IDeleteCategoriaHandler
-{
-    Task<Result<bool>> Handle(long id, CancellationToken ct = default);
-}
-
 public sealed class DeleteCategoriaHandler(ICategoriaRepository categorias) : IDeleteCategoriaHandler
 {
     public async Task<Result<bool>> Handle(long id, CancellationToken ct = default)
@@ -25,4 +20,3 @@ public sealed class DeleteCategoriaHandler(ICategoriaRepository categorias) : ID
         return Result<bool>.Ok(true);
     }
 }
-
